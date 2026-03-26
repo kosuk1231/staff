@@ -63,6 +63,11 @@ const TABLE_CONFIG = {
   5: { seats: 10, label: "테이블 5", color: "#F59E0B" },
 };
 
+const ATTENDEE_TABLES = Array.from({ length: 26 }, (_, i) => ({
+  id: i + 6,
+  label: `테이블 ${i + 6}`,
+}));
+
 const ZONES = ["A구역", "B구역", "C구역", "D구역", "E구역"];
 
 const generateAttendees = () => {
@@ -76,11 +81,14 @@ const generateAttendees = () => {
     const fn = firstNames[Math.floor(Math.random() * firstNames.length)];
     const dist = districts[Math.floor(Math.random() * districts.length)];
     const org = orgs[Math.floor(Math.random() * orgs.length)];
+    const tableIdx = Math.floor((i - 1) / 10);
+    const tableId = ATTENDEE_TABLES[tableIdx] ? ATTENDEE_TABLES[tableIdx].id : ATTENDEE_TABLES[ATTENDEE_TABLES.length - 1].id;
     arr.push({
       id: i,
       name: ln + fn,
       org: `${dist}구 ${org}`,
       zone: ZONES[Math.floor(Math.random() * ZONES.length)],
+      table: tableId,
       checked: false,
     });
   }
@@ -373,9 +381,14 @@ function VipTab({ guests, setGuests }) {
   const [search, setSearch] = useState("");
   const [filterTable, setFilterTable] = useState(0);
   const [selectedTable, setSelectedTable] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   const toggle = (id) => {
     setGuests((prev) => prev.map((g) => g.id === id ? { ...g, checked: !g.checked } : g));
+  };
+
+  const updateSeat = (id, field, value) => {
+    setGuests((prev) => prev.map((g) => g.id === id ? { ...g, [field]: Number(value) } : g));
   };
 
   const filtered = useMemo(() => {
@@ -478,31 +491,56 @@ function VipTab({ guests, setGuests }) {
       <div className="card-grid-2">
         {filtered.map((g) => (
           <div key={g.id} style={{
-            ...cardStyle, display: "flex", alignItems: "center", gap: "10px",
+            ...cardStyle,
             borderLeft: `3px solid ${g.table === 3 ? T.accent : "transparent"}`,
-            cursor: "pointer",
-          }} onClick={() => toggle(g.id)}>
-            <div style={{
-              width: "32px", height: "32px", borderRadius: "50%",
-              background: g.checked ? T.successBg : "rgba(255,255,255,0.05)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "14px", flexShrink: 0, transition: "all 0.2s",
-              border: g.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
-            }}>
-              {g.checked ? "\u2713" : ""}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, color: T.text, fontSize: "15px" }}>{g.name}</div>
-              <div style={{ fontSize: "13px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {g.org} · {g.role}
+          }}>
+            {/* Top row: check + name + edit button */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }} onClick={() => toggle(g.id)}>
+              <div style={{
+                width: "32px", height: "32px", borderRadius: "50%",
+                background: g.checked ? T.successBg : "rgba(255,255,255,0.05)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "14px", flexShrink: 0, transition: "all 0.2s",
+                border: g.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
+              }}>
+                {g.checked ? "\u2713" : ""}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, color: T.text, fontSize: "15px" }}>{g.name}</div>
+                <div style={{ fontSize: "13px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {g.org} · {g.role}
+                </div>
+              </div>
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                <span style={badgeStyle(
+                  g.checked ? T.successBg : "rgba(255,255,255,0.05)",
+                  g.checked ? T.success : T.textMuted,
+                )}>{g.checked ? "참석" : "대기"}</span>
               </div>
             </div>
-            <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <div style={{ fontSize: "12px", color: T.accentDark }}>T{g.table}-{g.seat}</div>
-              <span style={badgeStyle(
-                g.checked ? T.successBg : "rgba(255,255,255,0.05)",
-                g.checked ? T.success : T.textMuted,
-              )}>{g.checked ? "참석" : "대기"}</span>
+            {/* Seat info row */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px", paddingTop: "8px", borderTop: `1px solid ${T.border}` }}>
+              <span style={{ fontSize: "13px", color: T.textSec, flexShrink: 0 }}>좌석</span>
+              <select
+                value={g.table}
+                onChange={(e) => { e.stopPropagation(); updateSeat(g.id, "table", e.target.value); }}
+                onClick={(e) => e.stopPropagation()}
+                style={{ ...inputStyle, width: "auto", flex: 1, padding: "6px 8px", fontSize: "13px" }}
+              >
+                {Object.entries(TABLE_CONFIG).map(([k, v]) => (
+                  <option key={k} value={k}>{v.label}</option>
+                ))}
+              </select>
+              <select
+                value={g.seat}
+                onChange={(e) => { e.stopPropagation(); updateSeat(g.id, "seat", e.target.value); }}
+                onClick={(e) => e.stopPropagation()}
+                style={{ ...inputStyle, width: "auto", flex: 1, padding: "6px 8px", fontSize: "13px" }}
+              >
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((s) => (
+                  <option key={s} value={s}>{s}번</option>
+                ))}
+              </select>
             </div>
           </div>
         ))}
@@ -512,28 +550,56 @@ function VipTab({ guests, setGuests }) {
 }
 
 // ============================================================
-// TAB: ATTENDEES (300)
+// TAB: ATTENDEES (260)
 // ============================================================
 function AttendeesTab({ attendees, setAttendees }) {
   const [search, setSearch] = useState("");
   const [filterZone, setFilterZone] = useState("전체");
+  const [filterTable, setFilterTable] = useState(0);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [viewMode, setViewMode] = useState("zone"); // "zone" | "table"
 
   const toggle = (id) => {
     setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, checked: !a.checked } : a));
+  };
+
+  const toggleAllInGroup = (ids) => {
+    setAttendees((prev) => {
+      const groupItems = prev.filter((a) => ids.includes(a.id));
+      const allChecked = groupItems.every((a) => a.checked);
+      return prev.map((a) => ids.includes(a.id) ? { ...a, checked: !allChecked } : a);
+    });
   };
 
   const filtered = useMemo(() => {
     return attendees.filter((a) => {
       if (search && !a.name.includes(search) && !a.org.includes(search)) return false;
       if (filterZone !== "전체" && a.zone !== filterZone) return false;
+      if (filterTable > 0 && a.table !== filterTable) return false;
       if (filterStatus === "checked" && !a.checked) return false;
       if (filterStatus === "unchecked" && a.checked) return false;
       return true;
     });
-  }, [attendees, search, filterZone, filterStatus]);
+  }, [attendees, search, filterZone, filterTable, filterStatus]);
 
   const stats = { total: attendees.length, checked: attendees.filter((a) => a.checked).length };
+
+  // Group stats
+  const zoneStats = useMemo(() => {
+    return ZONES.map((z) => {
+      const items = attendees.filter((a) => a.zone === z);
+      return { name: z, total: items.length, checked: items.filter((a) => a.checked).length, ids: items.map((a) => a.id) };
+    });
+  }, [attendees]);
+
+  const tableStats = useMemo(() => {
+    return ATTENDEE_TABLES.map((t) => {
+      const items = attendees.filter((a) => a.table === t.id);
+      return { name: t.label, id: t.id, total: items.length, checked: items.filter((a) => a.checked).length, ids: items.map((a) => a.id) };
+    }).filter((t) => t.total > 0);
+  }, [attendees]);
+
+  const groupStats = viewMode === "zone" ? zoneStats : tableStats;
 
   return (
     <div>
@@ -543,11 +609,58 @@ function AttendeesTab({ attendees, setAttendees }) {
         <StatCard icon={"\u{23F3}"} label="미참석" value={stats.total - stats.checked} accent={T.textMuted} />
       </div>
 
+      {/* Group Summary */}
+      <div style={cardStyle}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent }}>
+            {viewMode === "zone" ? "구역별" : "테이블별"} 참석 현황
+          </div>
+          <div style={{ display: "flex", gap: "4px" }}>
+            <button style={pillNav(viewMode === "zone")} onClick={() => setViewMode("zone")}>구역</button>
+            <button style={pillNav(viewMode === "table")} onClick={() => setViewMode("table")}>테이블</button>
+          </div>
+        </div>
+        {groupStats.map((g) => {
+          const pct = g.total > 0 ? Math.round((g.checked / g.total) * 100) : 0;
+          const allChecked = g.checked === g.total && g.total > 0;
+          return (
+            <div key={g.name} style={{ marginBottom: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "13px", marginBottom: "3px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ color: T.text, fontWeight: 600 }}>{g.name}</span>
+                  <span style={{ color: T.textMuted, fontSize: "12px" }}>{g.checked}/{g.total}</span>
+                </div>
+                <button
+                  style={{
+                    ...ghostBtnStyle,
+                    padding: "3px 10px",
+                    fontSize: "12px",
+                    color: allChecked ? T.warn : T.success,
+                    borderColor: allChecked ? T.warn : T.success,
+                  }}
+                  onClick={() => toggleAllInGroup(g.ids)}
+                >
+                  {allChecked ? "전체 취소" : "전체 참석"}
+                </button>
+              </div>
+              <ProgressBar value={g.checked} max={g.total} color={T.accent} />
+            </div>
+          );
+        })}
+      </div>
+
       <SearchBar value={search} onChange={setSearch} placeholder="참석자 검색 (이름, 소속)" />
 
       <FilterPills
         options={[{ value: "전체", label: "전체" }, ...ZONES.map((z) => ({ value: z, label: z }))]}
-        value={filterZone} onChange={setFilterZone}
+        value={filterZone} onChange={(v) => { setFilterZone(v); setFilterTable(0); }}
+      />
+      <FilterPills
+        options={[
+          { value: 0, label: "전체 테이블" },
+          ...ATTENDEE_TABLES.filter((t) => attendees.some((a) => a.table === t.id)).map((t) => ({ value: t.id, label: `T${t.id}` })),
+        ]}
+        value={filterTable} onChange={(v) => { setFilterTable(v); setFilterZone("전체"); }}
       />
       <FilterPills
         options={[{ value: "all", label: "전체" }, { value: "checked", label: "참석" }, { value: "unchecked", label: "미참석" }]}
@@ -581,6 +694,7 @@ function AttendeesTab({ attendees, setAttendees }) {
             </div>
             <div style={{ textAlign: "right", flexShrink: 0 }}>
               <span style={badgeStyle(T.accentBg, T.accentDark)}>{a.zone}</span>
+              <div style={{ fontSize: "11px", color: T.textMuted, marginTop: "2px" }}>T{a.table}</div>
             </div>
           </div>
         ))}
