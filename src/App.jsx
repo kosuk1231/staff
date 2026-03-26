@@ -111,29 +111,31 @@ const INITIAL_SUPPLIES = [
 // THEME
 // ============================================================
 const T = {
-  bg: "#0F1117",
-  bgCard: "#1A1D27",
-  bgCardHover: "#22263A",
-  bgInput: "#14161F",
-  gold: "#C8A44E",
-  goldLight: "#E8D5A0",
-  goldDark: "#8B7033",
-  goldBg: "rgba(200,164,78,0.08)",
-  goldBorder: "rgba(200,164,78,0.2)",
-  text: "#F0EDE6",
-  textSec: "#9B978E",
-  textMuted: "#5E5B54",
-  border: "rgba(255,255,255,0.06)",
+  bg: "#0a1616",
+  bgCard: "#111f1f",
+  bgCardHover: "#162828",
+  bgInput: "#0d1a1a",
+  accent: "#91c9c0",
+  accentLight: "#b5ddd6",
+  accentDark: "#5a9e93",
+  accentBg: "rgba(145,201,192,0.08)",
+  accentBorder: "rgba(145,201,192,0.2)",
+  text: "#e8eded",
+  textSec: "#8a9e9b",
+  textMuted: "#506664",
+  border: "rgba(145,201,192,0.12)",
   danger: "#E24B4A",
   dangerBg: "rgba(226,75,74,0.12)",
   success: "#3CB371",
   successBg: "rgba(60,179,113,0.12)",
-  warn: "#F59E0B",
-  warnBg: "rgba(245,158,11,0.12)",
+  warn: "#e8a848",
+  warnBg: "rgba(232,168,72,0.12)",
   info: "#60A5FA",
   infoBg: "rgba(96,165,250,0.12)",
-  radius: "10px",
-  radiusSm: "6px",
+  coral: "#d88a72",
+  coralBorder: "rgba(216,138,114,0.3)",
+  radius: "12px",
+  radiusSm: "8px",
   font: "'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 };
 
@@ -142,18 +144,18 @@ const T = {
 // ============================================================
 const cardStyle = {
   background: T.bgCard, borderRadius: T.radius, border: `1px solid ${T.border}`,
-  padding: "14px", marginBottom: "10px",
+  padding: "16px", marginBottom: "10px",
 };
 
-const goldBtnStyle = {
-  background: `linear-gradient(135deg, ${T.gold} 0%, ${T.goldDark} 100%)`,
-  color: "#0F1117", border: "none", borderRadius: T.radiusSm,
+const accentBtnStyle = {
+  background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accentDark} 100%)`,
+  color: "#0a1616", border: "none", borderRadius: T.radiusSm,
   padding: "8px 16px", fontWeight: 700, fontSize: "13px", cursor: "pointer",
   fontFamily: T.font,
 };
 
 const ghostBtnStyle = {
-  background: "transparent", color: T.gold, border: `1px solid ${T.goldBorder}`,
+  background: "transparent", color: T.accent, border: `1px solid ${T.accentBorder}`,
   borderRadius: T.radiusSm, padding: "6px 12px", fontSize: "12px",
   cursor: "pointer", fontWeight: 600, fontFamily: T.font,
 };
@@ -172,8 +174,8 @@ const badgeStyle = (bg, color) => ({
 
 const pillNav = (active) => ({
   padding: "6px 12px", borderRadius: "999px", border: "none",
-  background: active ? T.gold : "transparent",
-  color: active ? "#0F1117" : T.textSec,
+  background: active ? T.accent : "transparent",
+  color: active ? "#0a1616" : T.textSec,
   fontSize: "12px", fontWeight: active ? 700 : 500, cursor: "pointer",
   whiteSpace: "nowrap", fontFamily: T.font, transition: "all 0.2s",
 });
@@ -184,12 +186,13 @@ const pillNav = (active) => ({
 function StatCard({ icon, label, value, sub, accent }) {
   return (
     <div style={{
-      ...cardStyle, flex: "1 1 0", minWidth: "70px", textAlign: "center",
-      borderTop: `2px solid ${accent || T.goldBorder}`, padding: "10px 6px",
+      ...cardStyle, textAlign: "center",
+      borderTop: `2px solid ${accent || T.accentBorder}`, padding: "12px 8px",
+      marginBottom: 0,
     }}>
       <div style={{ fontSize: "18px", marginBottom: "2px" }}>{icon}</div>
-      <div style={{ fontSize: "20px", fontWeight: 800, color: accent || T.gold, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: "10px", color: T.textSec, marginTop: "2px" }}>{label}</div>
+      <div style={{ fontSize: "20px", fontWeight: 800, color: accent || T.accent, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: "11px", color: T.textSec, marginTop: "4px" }}>{label}</div>
       {sub && <div style={{ fontSize: "10px", color: T.textMuted }}>{sub}</div>}
     </div>
   );
@@ -200,7 +203,7 @@ function Toast({ msg }) {
   return (
     <div style={{
       position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)",
-      background: T.gold, color: "#0F1117", padding: "10px 20px", borderRadius: "8px",
+      background: T.accent, color: "#0a1616", padding: "10px 20px", borderRadius: "8px",
       fontSize: "13px", fontWeight: 700, zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
       animation: "toastIn 0.3s ease",
     }}>{msg}</div>
@@ -268,21 +271,21 @@ function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: "6px", marginBottom: "12px", flexWrap: "wrap" }}>
-        <StatCard icon={"\u{1F465}"} label="전체" value={total} sub={`참석 ${totalChecked}`} accent={T.gold} />
-        <StatCard icon={"\u{2B50}"} label="내빈" value={`${vipChecked}/${vipGuests.length}`} accent={T.gold} />
+      <div className="stat-grid">
+        <StatCard icon={"\u{1F465}"} label="전체" value={total} sub={`참석 ${totalChecked}`} accent={T.accent} />
+        <StatCard icon={"\u{2B50}"} label="내빈" value={`${vipChecked}/${vipGuests.length}`} accent={T.accent} />
         <StatCard icon={"\u{2705}"} label="참석자" value={`${attChecked}/${attendees.length}`} accent={T.success} />
         <StatCard icon={"\u{1F6A8}"} label="긴급" value={activeEmergencies} accent={activeEmergencies > 0 ? T.danger : T.textMuted} />
       </div>
 
-      <ProgressBar value={totalChecked} max={total} />
+      <ProgressBar value={totalChecked} max={total} color={T.accent} />
       <div style={{ fontSize: "11px", color: T.textSec, textAlign: "right", marginTop: "4px", marginBottom: "14px" }}>
         전체 참석률 {total > 0 ? Math.round((totalChecked / total) * 100) : 0}%
       </div>
 
       {/* Current / Next Program */}
-      <div style={{ ...cardStyle, borderLeft: `3px solid ${T.gold}` }}>
-        <div style={{ fontSize: "11px", color: T.goldDark, fontWeight: 600, marginBottom: "4px" }}>
+      <div style={{ ...cardStyle, borderLeft: `3px solid ${T.accent}` }}>
+        <div style={{ fontSize: "11px", color: T.accentDark, fontWeight: 600, marginBottom: "4px" }}>
           {currentProg ? "현재 진행 중" : "다음 프로그램"}
         </div>
         {(() => {
@@ -300,7 +303,7 @@ function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
 
       {/* Program Timeline Mini */}
       <div style={cardStyle}>
-        <div style={{ fontSize: "12px", fontWeight: 700, color: T.gold, marginBottom: "8px" }}>프로그램 타임라인</div>
+        <div style={{ fontSize: "12px", fontWeight: 700, color: T.accent, marginBottom: "8px" }}>프로그램 타임라인</div>
         {program.map((p, i) => {
           const isCurrent = currentProg && currentProg.id === p.id;
           const isPast = false;
@@ -311,11 +314,11 @@ function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
             }}>
               <div style={{
                 width: "8px", height: "8px", borderRadius: "50%", marginTop: "4px", flexShrink: 0,
-                background: isCurrent ? T.gold : p.part === 2 ? T.warn : T.textMuted,
-                boxShadow: isCurrent ? `0 0 8px ${T.gold}` : "none",
+                background: isCurrent ? T.accent : p.part === 2 ? T.warn : T.textMuted,
+                boxShadow: isCurrent ? `0 0 8px ${T.accent}` : "none",
               }} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: isCurrent ? T.gold : T.text }}>
+                <div style={{ fontSize: "12px", fontWeight: 600, color: isCurrent ? T.accent : T.text }}>
                   {p.time} {p.title}
                 </div>
                 {p.speaker && <div style={{ fontSize: "11px", color: T.textSec }}>{p.speaker}</div>}
@@ -338,7 +341,7 @@ function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
 
       {/* Zone Distribution */}
       <div style={cardStyle}>
-        <div style={{ fontSize: "12px", fontWeight: 700, color: T.gold, marginBottom: "8px" }}>구역별 참석 현황</div>
+        <div style={{ fontSize: "12px", fontWeight: 700, color: T.accent, marginBottom: "8px" }}>구역별 참석 현황</div>
         {ZONES.map((z) => {
           const zoneAtt = attendees.filter((a) => a.zone === z);
           const zoneChecked = zoneAtt.filter((a) => a.checked).length;
@@ -348,7 +351,7 @@ function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
                 <span style={{ color: T.textSec }}>{z}</span>
                 <span style={{ color: T.text, fontWeight: 600 }}>{zoneChecked}/{zoneAtt.length}</span>
               </div>
-              <ProgressBar value={zoneChecked} max={zoneAtt.length} color={T.gold} />
+              <ProgressBar value={zoneChecked} max={zoneAtt.length} color={T.accent} />
             </div>
           );
         })}
@@ -390,21 +393,21 @@ function VipTab({ guests, setGuests }) {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
-        <StatCard icon={"\u{2B50}"} label="내빈" value={stats.total} accent={T.gold} />
+      <div className="stat-grid">
+        <StatCard icon={"\u{2B50}"} label="내빈" value={stats.total} accent={T.accent} />
         <StatCard icon={"\u{2705}"} label="참석" value={stats.checked} accent={T.success} />
         <StatCard icon={"\u{23F3}"} label="대기" value={stats.total - stats.checked} accent={T.textMuted} />
       </div>
 
       {/* Seat Map */}
-      <div style={{ ...cardStyle, padding: "16px", overflow: "hidden" }}>
-        <div style={{ fontSize: "12px", fontWeight: 700, color: T.gold, marginBottom: "12px", textAlign: "center" }}>
+      <div style={{ ...cardStyle, padding: "18px", overflow: "hidden" }}>
+        <div style={{ fontSize: "12px", fontWeight: 700, color: T.accent, marginBottom: "12px", textAlign: "center" }}>
           좌석 배치도
         </div>
         <div style={{
           textAlign: "center", padding: "6px 0", marginBottom: "12px",
-          background: "rgba(200,164,78,0.1)", borderRadius: "4px",
-          fontSize: "11px", fontWeight: 700, color: T.gold, letterSpacing: "3px",
+          background: "rgba(145,201,192,0.1)", borderRadius: "6px",
+          fontSize: "11px", fontWeight: 700, color: T.accent, letterSpacing: "3px",
         }}>STAGE</div>
 
         <div style={{ display: "flex", justifyContent: "center", gap: "4px", flexWrap: "wrap", marginBottom: "8px" }}>
@@ -416,14 +419,14 @@ function VipTab({ guests, setGuests }) {
             return (
               <button key={t} onClick={() => setSelectedTable(isSelected ? null : t)} style={{
                 width: isVIP ? "72px" : "60px", height: isVIP ? "72px" : "60px",
-                borderRadius: "50%", border: `2px solid ${isVIP ? T.gold : isSelected ? T.gold : T.border}`,
-                background: isSelected ? "rgba(200,164,78,0.15)" : "rgba(255,255,255,0.03)",
+                borderRadius: "50%", border: `2px solid ${isVIP ? T.accent : isSelected ? T.accent : T.border}`,
+                background: isSelected ? "rgba(145,201,192,0.1)" : "rgba(255,255,255,0.03)",
                 cursor: "pointer", display: "flex", flexDirection: "column",
                 alignItems: "center", justifyContent: "center", fontFamily: T.font,
-                boxShadow: isVIP ? `0 0 12px rgba(200,164,78,0.2)` : "none",
+                boxShadow: isVIP ? `0 0 12px rgba(145,201,192,0.15)` : "none",
                 transition: "all 0.2s",
               }}>
-                <span style={{ fontSize: "10px", fontWeight: 700, color: isVIP ? T.gold : T.textSec }}>
+                <span style={{ fontSize: "10px", fontWeight: 700, color: isVIP ? T.accent : T.textSec }}>
                   {cfg.label}
                 </span>
                 <span style={{ fontSize: "14px", fontWeight: 800, color: T.text }}>
@@ -439,7 +442,7 @@ function VipTab({ guests, setGuests }) {
             background: "rgba(255,255,255,0.03)", borderRadius: T.radiusSm,
             padding: "10px", marginTop: "8px",
           }}>
-            <div style={{ fontSize: "12px", fontWeight: 700, color: T.gold, marginBottom: "6px" }}>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: T.accent, marginBottom: "6px" }}>
               {TABLE_CONFIG[selectedTable].label} 좌석 현황
             </div>
             {guests.filter((g) => g.table === selectedTable).map((g) => (
@@ -466,36 +469,38 @@ function VipTab({ guests, setGuests }) {
         value={filterTable} onChange={setFilterTable}
       />
 
-      {filtered.map((g) => (
-        <div key={g.id} style={{
-          ...cardStyle, display: "flex", alignItems: "center", gap: "10px",
-          borderLeft: `3px solid ${g.table === 3 ? T.gold : "transparent"}`,
-          cursor: "pointer",
-        }} onClick={() => toggle(g.id)}>
-          <div style={{
-            width: "32px", height: "32px", borderRadius: "50%",
-            background: g.checked ? T.successBg : "rgba(255,255,255,0.05)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "14px", flexShrink: 0, transition: "all 0.2s",
-            border: g.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
-          }}>
-            {g.checked ? "\u2713" : ""}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, color: T.text, fontSize: "13px" }}>{g.name}</div>
-            <div style={{ fontSize: "11px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {g.org} · {g.role}
+      <div className="card-grid-2">
+        {filtered.map((g) => (
+          <div key={g.id} style={{
+            ...cardStyle, display: "flex", alignItems: "center", gap: "10px",
+            borderLeft: `3px solid ${g.table === 3 ? T.accent : "transparent"}`,
+            cursor: "pointer",
+          }} onClick={() => toggle(g.id)}>
+            <div style={{
+              width: "32px", height: "32px", borderRadius: "50%",
+              background: g.checked ? T.successBg : "rgba(255,255,255,0.05)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "14px", flexShrink: 0, transition: "all 0.2s",
+              border: g.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
+            }}>
+              {g.checked ? "\u2713" : ""}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, color: T.text, fontSize: "13px" }}>{g.name}</div>
+              <div style={{ fontSize: "11px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {g.org} · {g.role}
+              </div>
+            </div>
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <div style={{ fontSize: "10px", color: T.accentDark }}>T{g.table}-{g.seat}</div>
+              <span style={badgeStyle(
+                g.checked ? T.successBg : "rgba(255,255,255,0.05)",
+                g.checked ? T.success : T.textMuted,
+              )}>{g.checked ? "참석" : "대기"}</span>
             </div>
           </div>
-          <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <div style={{ fontSize: "10px", color: T.goldDark }}>T{g.table}-{g.seat}</div>
-            <span style={badgeStyle(
-              g.checked ? T.successBg : "rgba(255,255,255,0.05)",
-              g.checked ? T.success : T.textMuted,
-            )}>{g.checked ? "참석" : "대기"}</span>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -526,8 +531,8 @@ function AttendeesTab({ attendees, setAttendees }) {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
-        <StatCard icon={"\u{1F465}"} label="전체" value={stats.total} accent={T.gold} />
+      <div className="stat-grid">
+        <StatCard icon={"\u{1F465}"} label="전체" value={stats.total} accent={T.accent} />
         <StatCard icon={"\u{2705}"} label="참석" value={stats.checked} sub={`${Math.round((stats.checked / stats.total) * 100)}%`} accent={T.success} />
         <StatCard icon={"\u{23F3}"} label="미참석" value={stats.total - stats.checked} accent={T.textMuted} />
       </div>
@@ -547,31 +552,33 @@ function AttendeesTab({ attendees, setAttendees }) {
         {filtered.length}명 표시 중
       </div>
 
-      {filtered.slice(0, 50).map((a) => (
-        <div key={a.id} style={{
-          ...cardStyle, display: "flex", alignItems: "center", gap: "10px", cursor: "pointer",
-          padding: "10px 14px",
-        }} onClick={() => toggle(a.id)}>
-          <div style={{
-            width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
-            background: a.checked ? T.successBg : "rgba(255,255,255,0.05)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "12px", border: a.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
-            color: a.checked ? T.success : T.textMuted, transition: "all 0.2s",
-          }}>
-            {a.checked ? "\u2713" : ""}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, color: T.text, fontSize: "13px" }}>{a.name}</div>
-            <div style={{ fontSize: "11px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {a.org}
+      <div className="card-grid-2">
+        {filtered.slice(0, 50).map((a) => (
+          <div key={a.id} style={{
+            ...cardStyle, display: "flex", alignItems: "center", gap: "10px", cursor: "pointer",
+            padding: "12px 14px",
+          }} onClick={() => toggle(a.id)}>
+            <div style={{
+              width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
+              background: a.checked ? T.successBg : "rgba(255,255,255,0.05)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "12px", border: a.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
+              color: a.checked ? T.success : T.textMuted, transition: "all 0.2s",
+            }}>
+              {a.checked ? "\u2713" : ""}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, color: T.text, fontSize: "13px" }}>{a.name}</div>
+              <div style={{ fontSize: "11px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {a.org}
+              </div>
+            </div>
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <span style={badgeStyle(T.accentBg, T.accentDark)}>{a.zone}</span>
             </div>
           </div>
-          <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <span style={badgeStyle(T.goldBg, T.goldDark)}>{a.zone}</span>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
       {filtered.length > 50 && (
         <div style={{ textAlign: "center", padding: "12px", fontSize: "12px", color: T.textSec }}>
           + {filtered.length - 50}명 더 있음 (검색으로 찾아주세요)
@@ -603,7 +610,7 @@ function NoticesTab({ notices, setNotices }) {
   return (
     <div>
       <div style={cardStyle}>
-        <div style={{ fontSize: "12px", fontWeight: 700, color: T.gold, marginBottom: "8px" }}>새 공지 등록</div>
+        <div style={{ fontSize: "12px", fontWeight: 700, color: T.accent, marginBottom: "8px" }}>새 공지 등록</div>
         <textarea
           style={{ ...inputStyle, height: "60px", resize: "none", marginBottom: "8px" }}
           value={text} onChange={(e) => setText(e.target.value)}
@@ -618,7 +625,7 @@ function NoticesTab({ notices, setNotices }) {
             ]}
             value={priority} onChange={setPriority}
           />
-          <button style={goldBtnStyle} onClick={add}>등록</button>
+          <button style={accentBtnStyle} onClick={add}>등록</button>
         </div>
       </div>
 
@@ -697,7 +704,7 @@ function EmergencyTab({ emergencies, setEmergencies, staffTeams }) {
             ]}
             value={urgency} onChange={setUrgency}
           />
-          <button style={{ ...goldBtnStyle, background: `linear-gradient(135deg, ${T.danger} 0%, #991B1B 100%)`, color: "#fff" }} onClick={send}>
+          <button style={{ ...accentBtnStyle, background: `linear-gradient(135deg, ${T.danger} 0%, #991B1B 100%)`, color: "#fff" }} onClick={send}>
             SOS 발송
           </button>
         </div>
@@ -788,10 +795,10 @@ function ProgramTab({ program }) {
       {/* Current Program Hero */}
       <div style={{
         ...cardStyle, textAlign: "center", padding: "24px 16px",
-        background: `linear-gradient(180deg, rgba(200,164,78,0.12) 0%, ${T.bgCard} 100%)`,
-        borderTop: `2px solid ${T.gold}`,
+        background: `linear-gradient(180deg, rgba(145,201,192,0.1) 0%, ${T.bgCard} 100%)`,
+        borderTop: `2px solid ${T.accent}`,
       }}>
-        <div style={{ fontSize: "11px", color: T.goldDark, fontWeight: 600, marginBottom: "4px" }}>
+        <div style={{ fontSize: "11px", color: T.accentDark, fontWeight: 600, marginBottom: "4px" }}>
           {cp.part}부 · {cp.type === "award" ? "포상" : cp.type === "lecture" ? "특강" : "진행"}
         </div>
         <div style={{ fontSize: "16px", fontWeight: 800, color: T.text, marginBottom: "4px" }}>
@@ -799,13 +806,13 @@ function ProgramTab({ program }) {
         </div>
         {cp.speaker && <div style={{ fontSize: "12px", color: T.textSec, marginBottom: "12px" }}>{cp.speaker}</div>}
 
-        <div style={{ fontSize: "42px", fontWeight: 800, color: T.gold, letterSpacing: "2px", fontVariantNumeric: "tabular-nums" }}>
+        <div style={{ fontSize: "42px", fontWeight: 800, color: T.accent, letterSpacing: "2px", fontVariantNumeric: "tabular-nums" }}>
           {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
         </div>
         <div style={{ fontSize: "11px", color: T.textSec, marginBottom: "8px" }}>남은 시간</div>
 
         <div style={{ maxWidth: "280px", margin: "0 auto" }}>
-          <ProgressBar value={elapsed} max={totalDuration} color={T.gold} />
+          <ProgressBar value={elapsed} max={totalDuration} color={T.accent} />
         </div>
         <div style={{ fontSize: "10px", color: T.textMuted, marginTop: "4px" }}>
           {cp.time} ~ {cp.end}
@@ -828,20 +835,20 @@ function ProgramTab({ program }) {
         return (
           <div key={p.id} style={{
             ...cardStyle, display: "flex", gap: "10px", alignItems: "center",
-            borderLeft: `3px solid ${isCurrent ? T.gold : "transparent"}`,
-            background: isCurrent ? "rgba(200,164,78,0.06)" : T.bgCard,
+            borderLeft: `3px solid ${isCurrent ? T.accent : "transparent"}`,
+            background: isCurrent ? "rgba(145,201,192,0.06)" : T.bgCard,
           }}>
             <div style={{
               width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
-              background: isCurrent ? T.goldBg : "rgba(255,255,255,0.03)",
-              border: `1px solid ${isCurrent ? T.gold : T.border}`,
-              fontSize: "11px", fontWeight: 700, color: isCurrent ? T.gold : T.textMuted,
+              background: isCurrent ? T.accentBg : "rgba(255,255,255,0.03)",
+              border: `1px solid ${isCurrent ? T.accent : T.border}`,
+              fontSize: "11px", fontWeight: 700, color: isCurrent ? T.accent : T.textMuted,
             }}>
               {p.part}부
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: isCurrent ? T.gold : T.text }}>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: isCurrent ? T.accent : T.text }}>
                 {p.title}
               </div>
               <div style={{ fontSize: "11px", color: T.textSec }}>
@@ -876,8 +883,8 @@ function AwardsTab() {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
-        <StatCard icon={"\u{1F3C6}"} label="전체 수상자" value={totalRecipients} accent={T.gold} />
+      <div className="stat-grid">
+        <StatCard icon={"\u{1F3C6}"} label="전체 수상자" value={totalRecipients} accent={T.accent} />
         <StatCard icon={"\u{2705}"} label="호명 완료" value={totalCalled} accent={T.success} />
         <StatCard icon={"\u{23F3}"} label="대기" value={totalRecipients - totalCalled} accent={T.textMuted} />
       </div>
@@ -894,7 +901,7 @@ function AwardsTab() {
 
       {cat && (
         <div style={cardStyle}>
-          <div style={{ fontSize: "14px", fontWeight: 700, color: T.gold, marginBottom: "10px" }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "10px" }}>
             {cat.icon} {cat.name}
           </div>
           {cat.recipients.map((r, i) => (
@@ -907,8 +914,8 @@ function AwardsTab() {
                 width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: "14px", fontWeight: 800, color: T.bgCard,
-                background: r.called ? T.success : T.goldBg,
-                border: r.called ? `2px solid ${T.success}` : `2px solid ${T.goldBorder}`,
+                background: r.called ? T.success : T.accentBg,
+                border: r.called ? `2px solid ${T.success}` : `2px solid ${T.accentBorder}`,
               }}>
                 {r.called ? "\u2713" : i + 1}
               </div>
@@ -963,8 +970,8 @@ function SuppliesTab() {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
-        <StatCard icon={"\u{1F4E6}"} label="전체 항목" value={supplies.length} accent={T.gold} />
+      <div className="stat-grid">
+        <StatCard icon={"\u{1F4E6}"} label="전체 항목" value={supplies.length} accent={T.accent} />
         <StatCard icon={"\u{2705}"} label="준비 완료" value={totalDone} accent={T.success} />
         <StatCard icon={"\u{23F3}"} label="미완료" value={supplies.length - totalDone} accent={T.warn} />
       </div>
@@ -978,18 +985,18 @@ function SuppliesTab() {
         <div style={{ flex: 1, overflowX: "auto" }}>
           <FilterPills options={cats.map((c) => ({ value: c, label: c }))} value={filterCat} onChange={setFilterCat} />
         </div>
-        <button style={goldBtnStyle} onClick={() => setShowAdd(!showAdd)}>+ 추가</button>
+        <button style={accentBtnStyle} onClick={() => setShowAdd(!showAdd)}>+ 추가</button>
       </div>
 
       {showAdd && (
-        <div style={{ ...cardStyle, borderTop: `2px solid ${T.gold}` }}>
+        <div style={{ ...cardStyle, borderTop: `2px solid ${T.accent}` }}>
           <input style={{ ...inputStyle, marginBottom: "6px" }} value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="물품명" />
           <div style={{ display: "flex", gap: "6px" }}>
             <input style={{ ...inputStyle, width: "80px" }} type="number" value={newQty} onChange={(e) => setNewQty(Number(e.target.value))} min={1} />
             <select style={{ ...inputStyle, flex: 1 }} value={newCat} onChange={(e) => setNewCat(e.target.value)}>
               {["설치", "포상", "등록", "다과", "장비", "기타"].map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <button style={goldBtnStyle} onClick={addItem}>등록</button>
+            <button style={accentBtnStyle} onClick={addItem}>등록</button>
           </div>
         </div>
       )}
@@ -1071,14 +1078,14 @@ function StaffTab({ staffTeams, setStaffTeams }) {
     <div>
       <div style={{ ...cardStyle, display: "flex", gap: "6px" }}>
         <input style={{ ...inputStyle, flex: 1 }} value={newTeam} onChange={(e) => setNewTeam(e.target.value)} placeholder="새 팀 이름" />
-        <button style={goldBtnStyle} onClick={addTeam}>팀 추가</button>
+        <button style={accentBtnStyle} onClick={addTeam}>팀 추가</button>
       </div>
 
       {teams.map((team, ti) => (
-        <div key={ti} style={{ ...cardStyle, borderLeft: `3px solid ${T.gold}` }}>
+        <div key={ti} style={{ ...cardStyle, borderLeft: `3px solid ${T.accent}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <div style={{ fontSize: "14px", fontWeight: 700, color: T.gold }}>{team.name}</div>
-            <span style={badgeStyle(T.goldBg, T.goldDark)}>{team.members.length}명</span>
+            <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent }}>{team.name}</div>
+            <span style={badgeStyle(T.accentBg, T.accentDark)}>{team.members.length}명</span>
           </div>
 
           {team.members.map((m, mi) => (
@@ -1146,26 +1153,18 @@ export default function App() {
   }, [tab]);
 
   return (
-    <div style={{
-      fontFamily: T.font, background: T.bg, minHeight: "100vh",
-      color: T.text, maxWidth: "480px", margin: "0 auto",
-      display: "flex", flexDirection: "column", position: "relative",
-    }}>
+    <div className="app-shell" style={{ fontFamily: T.font, background: T.bg, color: T.text }}>
       {/* Header */}
-      <div style={{
-        background: `linear-gradient(135deg, #0F1117 0%, #1A1D27 100%)`,
-        padding: "14px 16px 10px", borderBottom: `1px solid ${T.goldBorder}`,
-        position: "sticky", top: 0, zIndex: 100,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      <header className="app-header">
+        <div className="app-header-inner">
           <div style={{
             width: "36px", height: "36px", borderRadius: "50%",
-            background: `linear-gradient(135deg, ${T.gold} 0%, ${T.goldDark} 100%)`,
+            background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accentDark} 100%)`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "14px", fontWeight: 800, color: "#0F1117",
+            fontSize: "14px", fontWeight: 800, color: "#0a1616", flexShrink: 0,
           }}>40</div>
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 800, color: T.gold, letterSpacing: "-0.3px" }}>
+            <div style={{ fontSize: "14px", fontWeight: 800, color: T.accent, letterSpacing: "-0.3px" }}>
               서울복지 4.0 Staff
             </div>
             <div style={{ fontSize: "10px", color: T.textSec }}>
@@ -1173,10 +1172,10 @@ export default function App() {
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Content */}
-      <div ref={contentRef} style={{ flex: 1, overflowY: "auto", padding: "12px 12px 80px" }}>
+      <div ref={contentRef} className="app-content">
         {tab === "dashboard" && <DashboardTab vipGuests={vipGuests} attendees={attendees} notices={notices} emergencies={emergencies} program={PROGRAM} />}
         {tab === "vip" && <VipTab guests={vipGuests} setGuests={setVipGuests} />}
         {tab === "attendees" && <AttendeesTab attendees={attendees} setAttendees={setAttendees} />}
@@ -1189,38 +1188,25 @@ export default function App() {
       </div>
 
       {/* Bottom Nav */}
-      <div style={{
-        position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-        width: "100%", maxWidth: "480px",
-        background: "rgba(15,17,23,0.95)", backdropFilter: "blur(12px)",
-        borderTop: `1px solid ${T.goldBorder}`,
-        display: "flex", justifyContent: "space-around", padding: "4px 0 6px",
-        zIndex: 100,
-      }}>
+      <nav className="app-bottom-nav">
         {TABS.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{
-            background: "none", border: "none", cursor: "pointer",
-            display: "flex", flexDirection: "column", alignItems: "center",
-            gap: "1px", padding: "4px 2px", fontFamily: T.font,
-            color: tab === t.id ? T.gold : T.textMuted,
-            transition: "color 0.2s",
-            minWidth: 0,
-          }}>
-            <span style={{ fontSize: "16px" }}>{t.icon}</span>
-            <span style={{ fontSize: "9px", fontWeight: tab === t.id ? 700 : 400 }}>{t.label}</span>
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            style={{
+              color: tab === t.id ? T.accent : T.textMuted,
+              fontFamily: T.font,
+            }}
+          >
+            <span className="nav-icon">{t.icon}</span>
+            <span className="nav-label" style={{ fontWeight: tab === t.id ? 700 : 400 }}>{t.label}</span>
           </button>
         ))}
-      </div>
+      </nav>
 
       <Toast msg={toast} />
 
-      <style>{`
-        @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 0; height: 0; }
-        input:focus, textarea:focus, select:focus { border-color: ${T.goldBorder} !important; }
-        button:active { transform: scale(0.97); }
-      `}</style>
+
     </div>
   );
 }
