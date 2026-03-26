@@ -47,6 +47,12 @@ const VIP_GUESTS = [
   { id: 32, name: "김일용", org: "즐거운사회복지궁리소", role: "선거관리위원회 위원장", table: 4, seat: 5, checked: false },
   { id: 33, name: "서동명", org: "동덕여자대학교", role: "교수", table: 5, seat: 1, checked: false },
   { id: 34, name: "서정화", org: "열린여성센터", role: "소장", table: 5, seat: 2, checked: false },
+  { id: 35, name: "김내빈", org: "초청내빈", role: "-", table: 2, seat: 8, checked: false },
+  { id: 36, name: "이내빈", org: "초청내빈", role: "-", table: 2, seat: 9, checked: false },
+  { id: 37, name: "박내빈", org: "초청내빈", role: "-", table: 2, seat: 10, checked: false },
+  { id: 38, name: "최내빈", org: "초청내빈", role: "-", table: 4, seat: 6, checked: false },
+  { id: 39, name: "정내빈", org: "초청내빈", role: "-", table: 4, seat: 7, checked: false },
+  { id: 40, name: "강내빈", org: "초청내빈", role: "-", table: 4, seat: 8, checked: false },
 ];
 
 const TABLE_CONFIG = {
@@ -65,7 +71,7 @@ const generateAttendees = () => {
   const orgs = ["종합사회복지관","노인복지관","장애인복지관","지역아동센터","건강가정지원센터","자활센터","정신건강복지센터","다문화가족지원센터","청소년상담복지센터","사회복지협의회"];
   const districts = ["강남","강동","강북","강서","관악","광진","구로","금천","노원","도봉","동대문","동작","마포","서대문","서초","성동","성북","송파","양천","영등포","용산","은평","종로","중구","중랑"];
   const arr = [];
-  for (let i = 1; i <= 300; i++) {
+  for (let i = 1; i <= 260; i++) {
     const ln = lastNames[Math.floor(Math.random() * lastNames.length)];
     const fn = firstNames[Math.floor(Math.random() * firstNames.length)];
     const dist = districts[Math.floor(Math.random() * districts.length)];
