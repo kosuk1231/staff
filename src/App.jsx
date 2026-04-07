@@ -63,7 +63,7 @@ const TABLE_CONFIG = {
   5: { seats: 10, label: "테이블 5", color: "#F59E0B" },
 };
 
-const ATTENDEE_TABLES = Array.from({ length: 26 }, (_, i) => ({
+const ATTENDEE_TABLES = Array.from({ length: 22 }, (_, i) => ({
   id: i + 6,
   label: `테이블 ${i + 6}`,
 }));
@@ -76,7 +76,7 @@ const generateAttendees = () => {
   const orgs = ["종합사회복지관","노인복지관","장애인복지관","지역아동센터","건강가정지원센터","자활센터","정신건강복지센터","다문화가족지원센터","청소년상담복지센터","사회복지협의회"];
   const districts = ["강남","강동","강북","강서","관악","광진","구로","금천","노원","도봉","동대문","동작","마포","서대문","서초","성동","성북","송파","양천","영등포","용산","은평","종로","중구","중랑"];
   const arr = [];
-  for (let i = 1; i <= 260; i++) {
+  for (let i = 1; i <= 220; i++) {
     const ln = lastNames[Math.floor(Math.random() * lastNames.length)];
     const fn = firstNames[Math.floor(Math.random() * firstNames.length)];
     const dist = districts[Math.floor(Math.random() * districts.length)];
@@ -96,11 +96,54 @@ const generateAttendees = () => {
 };
 
 const AWARD_CATEGORIES = [
-  { id: "a1", name: "미래인재상", icon: "\u{1F331}", recipients: ["김민지","이서연","박지우","최하은","정수빈"] },
-  { id: "a2", name: "미래리더상", icon: "\u{1F31F}", recipients: ["강지현","조예진","윤유진","장서영","임민서"] },
-  { id: "a3", name: "비전리더상", icon: "\u{1F4A1}", recipients: ["한도윤","오하준","서시우","신주원","권지호"] },
-  { id: "a4", name: "감사패", icon: "\u{1F91D}", recipients: ["사회복지공동모금회","월드비전","굿네이버스"] },
-  { id: "a5", name: "우수강사상", icon: "\u{1F3C6}", recipients: ["황예준","안건우","송현우"] },
+  { id: "a1", name: "미래인재상", icon: "\u{1F331}", recipients: [
+    { name: "권선영", org: "방배노인종합복지관" },
+    { name: "김상현", org: "충현복지관" },
+    { name: "김하나", org: "번오마을종합사회복지관" },
+    { name: "박수진", org: "시립꿈나무마을파란꿈터" },
+    { name: "신주환", org: "서울종로지역자활센터" },
+    { name: "이민규", org: "한국사회복지사협회" },
+    { name: "이창영", org: "구립오금동지역아동센터" },
+    { name: "조현정", org: "영보자애원" },
+    { name: "조혜진", org: "시립도봉노인종합복지관" },
+    { name: "한대희", org: "삼전종합사회복지관" },
+  ]},
+  { id: "a2", name: "미래리더상", icon: "\u{1F31F}", recipients: [
+    { name: "강민정", org: "창동종합사회복지관" },
+    { name: "권민지", org: "방화11종합사회복지관" },
+    { name: "권소현", org: "마포장애인종합복지관" },
+    { name: "김나라", org: "강남드림빌" },
+    { name: "김민경", org: "정립회관" },
+    { name: "김정민", org: "서울강서등촌지역자활센터" },
+    { name: "송지수", org: "솔로몬지역아동센터" },
+    { name: "양승현", org: "광진구9호점우리동네키움센터" },
+    { name: "유민경", org: "금천노인종합복지관" },
+    { name: "이상표", org: "시립고덕양로원" },
+    { name: "이선영", org: "한울지역정신건강센터" },
+    { name: "임명연", org: "마포아동복지관" },
+    { name: "천진석", org: "여의도복지관" },
+    { name: "한승훈", org: "마포노인데이케어센터" },
+  ]},
+  { id: "a3", name: "비전리더상", icon: "\u{1F4A1}", recipients: [
+    { name: "김진범", org: "동대문시각특화장애인복지관" },
+    { name: "김태경", org: "서대문시니어클럽" },
+    { name: "박경호", org: "시립미래형장애인직업재활시설 굿윌스토어" },
+    { name: "박선영", org: "SRC보듬터" },
+    { name: "신성희", org: "위더스틴즈지역아동센터" },
+    { name: "신영숙", org: "행복이주여성쉼터" },
+    { name: "원윤아", org: "신림종합사회복지관" },
+    { name: "이철우", org: "등촌7종합사회복지관" },
+    { name: "최인경", org: "하누리주간보호센터" },
+    { name: "한미영", org: "동대문구가족센터" },
+  ]},
+  { id: "a4", name: "감사패 전달", icon: "\u{1F91D}", recipients: [
+    { name: "서울사회복지공동모금회", org: "" },
+    { name: "배영미", org: "교수" },
+    { name: "세밧사", org: "" },
+    { name: "남인순", org: "국회의원" },
+    { name: "최성숙", org: "관장" },
+    { name: "정승아", org: "부장" },
+  ]},
 ];
 
 const INITIAL_SUPPLIES = [
@@ -885,7 +928,12 @@ function ProgramTab({ program }) {
     return () => clearInterval(interval);
   }, []);
 
-  const currentIdx = manualIdx !== null ? manualIdx : (() => {
+  const eventDate = new Date("2026-04-22T15:00:00");
+  const isEventDay = now.toDateString() === eventDate.toDateString();
+
+  // Find current program index (auto mode)
+  const autoIdx = (() => {
+    if (!isEventDay) return -1;
     for (let i = 0; i < program.length; i++) {
       const [h, m] = program[i].time.split(":").map(Number);
       const [eh, em] = program[i].end.split(":").map(Number);
@@ -893,22 +941,64 @@ function ProgramTab({ program }) {
       const end = new Date(now); end.setHours(eh, em, 0, 0);
       if (now >= start && now < end) return i;
     }
-    return 0;
+    // Check if before first program
+    const [fh, fm] = program[0].time.split(":").map(Number);
+    const firstStart = new Date(now); firstStart.setHours(fh, fm, 0, 0);
+    if (now < firstStart) return -2; // before event
+    return -3; // after event
   })();
 
+  const currentIdx = manualIdx !== null ? manualIdx : (autoIdx >= 0 ? autoIdx : 0);
   const cp = program[currentIdx];
-  const [eh, em] = cp.end.split(":").map(Number);
-  const endTime = new Date(now);
-  endTime.setHours(eh, em, 0, 0);
-  const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+
+  // Calculate timer values
+  const isManual = manualIdx !== null;
+  const isBeforeEvent = !isEventDay || autoIdx === -2;
+  const isAfterEvent = isEventDay && autoIdx === -3;
+
+  let remaining, totalDuration, elapsed, pct, timerLabel;
+
+  if (isManual) {
+    // Manual mode: show full program duration
+    const [sh, sm] = cp.time.split(":").map(Number);
+    const [eh, em] = cp.end.split(":").map(Number);
+    totalDuration = ((eh * 60 + em) - (sh * 60 + sm)) * 60;
+    remaining = totalDuration;
+    elapsed = 0;
+    pct = 0;
+    timerLabel = "프로그램 전체 시간";
+  } else if (isBeforeEvent) {
+    // Before event: D-Day countdown
+    const diff = Math.max(0, Math.floor((eventDate - now) / 1000));
+    const days = Math.floor(diff / 86400);
+    const hours = Math.floor((diff % 86400) / 3600);
+    const mins2 = Math.floor((diff % 3600) / 60);
+    remaining = diff;
+    totalDuration = diff;
+    elapsed = 0;
+    pct = 0;
+    timerLabel = `D-${days}일 ${hours}시간 ${mins2}분`;
+  } else if (isAfterEvent) {
+    remaining = 0;
+    totalDuration = 1;
+    elapsed = 1;
+    pct = 100;
+    timerLabel = "행사 종료";
+  } else {
+    // Normal: during event
+    const [eh, em] = cp.end.split(":").map(Number);
+    const endTime = new Date(now); endTime.setHours(eh, em, 0, 0);
+    remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+    const [sh, sm] = cp.time.split(":").map(Number);
+    const startTime = new Date(now); startTime.setHours(sh, sm, 0, 0);
+    totalDuration = Math.max(1, Math.floor((endTime - startTime) / 1000));
+    elapsed = totalDuration - remaining;
+    pct = Math.min(100, (elapsed / totalDuration) * 100);
+    timerLabel = "남은 시간";
+  }
+
   const mins = Math.floor(remaining / 60);
   const secs = remaining % 60;
-  const [sh, sm] = cp.time.split(":").map(Number);
-  const startTime = new Date(now);
-  startTime.setHours(sh, sm, 0, 0);
-  const totalDuration = Math.max(1, Math.floor((endTime - startTime) / 1000));
-  const elapsed = totalDuration - remaining;
-  const pct = Math.min(100, (elapsed / totalDuration) * 100);
 
   return (
     <div>
@@ -916,27 +1006,53 @@ function ProgramTab({ program }) {
       <div style={{
         ...cardStyle, textAlign: "center", padding: "24px 16px",
         background: `linear-gradient(180deg, rgba(145,201,192,0.1) 0%, ${T.bgCard} 100%)`,
-        borderTop: `2px solid ${T.accent}`,
+        borderTop: `2px solid ${isAfterEvent ? T.textMuted : T.accent}`,
       }}>
-        <div style={{ fontSize: "13px", color: T.accentDark, fontWeight: 600, marginBottom: "4px" }}>
-          {cp.part}부 · {cp.type === "award" ? "포상" : cp.type === "lecture" ? "특강" : "진행"}
-        </div>
-        <div style={{ fontSize: "18px", fontWeight: 800, color: T.text, marginBottom: "6px" }}>
-          {cp.title}
-        </div>
-        {cp.speaker && <div style={{ fontSize: "14px", color: T.textSec, marginBottom: "14px" }}>{cp.speaker}</div>}
+        {isBeforeEvent && !isManual ? (
+          <>
+            <div style={{ fontSize: "13px", color: T.accentDark, fontWeight: 600, marginBottom: "8px" }}>
+              행사 시작까지
+            </div>
+            <div style={{ fontSize: "36px", fontWeight: 800, color: T.accent, letterSpacing: "1px" }}>
+              {timerLabel}
+            </div>
+            <div style={{ fontSize: "14px", color: T.textSec, marginTop: "8px" }}>
+              2026. 4. 22 (수) 15:00 · 백범김구기념관
+            </div>
+          </>
+        ) : isAfterEvent && !isManual ? (
+          <>
+            <div style={{ fontSize: "36px", fontWeight: 800, color: T.textMuted }}>
+              행사 종료
+            </div>
+            <div style={{ fontSize: "14px", color: T.textSec, marginTop: "8px" }}>
+              모든 프로그램이 완료되었습니다
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: "13px", color: T.accentDark, fontWeight: 600, marginBottom: "4px" }}>
+              {isManual && <span style={badgeStyle(T.warnBg, T.warn)}>수동 모드</span>}
+              {" "}{cp.part}부 · {cp.type === "award" ? "포상" : cp.type === "lecture" ? "특강" : "진행"}
+            </div>
+            <div style={{ fontSize: "18px", fontWeight: 800, color: T.text, marginBottom: "6px" }}>
+              {cp.title}
+            </div>
+            {cp.speaker && <div style={{ fontSize: "14px", color: T.textSec, marginBottom: "14px" }}>{cp.speaker}</div>}
 
-        <div style={{ fontSize: "48px", fontWeight: 800, color: T.accent, letterSpacing: "2px", fontVariantNumeric: "tabular-nums" }}>
-          {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
-        </div>
-        <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "8px" }}>남은 시간</div>
+            <div style={{ fontSize: "48px", fontWeight: 800, color: T.accent, letterSpacing: "2px", fontVariantNumeric: "tabular-nums" }}>
+              {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+            </div>
+            <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "8px" }}>{timerLabel}</div>
 
-        <div style={{ maxWidth: "280px", margin: "0 auto" }}>
-          <ProgressBar value={elapsed} max={totalDuration} color={T.accent} />
-        </div>
-        <div style={{ fontSize: "12px", color: T.textMuted, marginTop: "4px" }}>
-          {cp.time} ~ {cp.end}
-        </div>
+            <div style={{ maxWidth: "280px", margin: "0 auto" }}>
+              <ProgressBar value={elapsed} max={totalDuration} color={T.accent} />
+            </div>
+            <div style={{ fontSize: "12px", color: T.textMuted, marginTop: "4px" }}>
+              {cp.time} ~ {cp.end}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Manual Override */}
@@ -987,7 +1103,7 @@ function ProgramTab({ program }) {
 // ============================================================
 function AwardsTab() {
   const [categories, setCategories] = useState(
-    AWARD_CATEGORIES.map((c) => ({ ...c, recipients: c.recipients.map((r, i) => ({ name: r, called: false, id: `${c.id}-${i}` })) }))
+    AWARD_CATEGORIES.map((c) => ({ ...c, recipients: c.recipients.map((r, i) => ({ ...r, called: false, id: `${c.id}-${i}` })) }))
   );
   const [activeCategory, setActiveCategory] = useState("a1");
 
@@ -1015,14 +1131,17 @@ function AwardsTab() {
       </div>
 
       <FilterPills
-        options={categories.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` }))}
+        options={categories.map((c) => ({ value: c.id, label: `${c.icon} ${c.name} (${c.recipients.length})` }))}
         value={activeCategory} onChange={setActiveCategory}
       />
 
       {cat && (
         <div style={cardStyle}>
-          <div style={{ fontSize: "16px", fontWeight: 700, color: T.accent, marginBottom: "12px" }}>
+          <div style={{ fontSize: "16px", fontWeight: 700, color: T.accent, marginBottom: "4px" }}>
             {cat.icon} {cat.name}
+          </div>
+          <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "12px" }}>
+            {cat.recipients.filter(r => r.called).length}/{cat.recipients.length}명 호명 완료
           </div>
           {cat.recipients.map((r, i) => (
             <div key={r.id} style={{
@@ -1039,10 +1158,15 @@ function AwardsTab() {
               }}>
                 {r.called ? "\u2713" : i + 1}
               </div>
-              <div style={{ flex: 1 }}>
-                <span style={{ fontSize: "15px", fontWeight: 700, color: r.called ? T.textSec : T.text, textDecoration: r.called ? "line-through" : "none" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "15px", fontWeight: 700, color: r.called ? T.textSec : T.text, textDecoration: r.called ? "line-through" : "none" }}>
                   {r.name}
-                </span>
+                </div>
+                {r.org && (
+                  <div style={{ fontSize: "12px", color: T.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {r.org}
+                  </div>
+                )}
               </div>
               <span style={badgeStyle(
                 r.called ? T.successBg : "rgba(255,255,255,0.05)",
@@ -1239,6 +1363,33 @@ function StaffTab({ staffTeams, setStaffTeams }) {
 }
 
 // ============================================================
+// GOOGLE SHEETS HELPER
+// ============================================================
+const SHEET_ID = "1xixpkKen7Ozky0carX6ZYhRSF6uRl5wpu10qrpM_o2s";
+const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+
+function parseCSV(text) {
+  const lines = text.split("\n").filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const results = [];
+  for (let i = 1; i < lines.length; i++) {
+    const row = [];
+    let inQuote = false, field = "";
+    for (let j = 0; j < lines[i].length; j++) {
+      const ch = lines[i][j];
+      if (ch === '"') { inQuote = !inQuote; continue; }
+      if (ch === ',' && !inQuote) { row.push(field.trim()); field = ""; continue; }
+      field += ch;
+    }
+    row.push(field.trim());
+    if (row.length >= 3 && row[1]) {
+      results.push({ name: row[1], org: row[2] || "" });
+    }
+  }
+  return results;
+}
+
+// ============================================================
 // MAIN APP
 // ============================================================
 const TABS = [
@@ -1261,6 +1412,9 @@ export default function App() {
   const [emergencies, setEmergencies] = useState([]);
   const [staffTeams, setStaffTeams] = useState(["등록팀", "안내팀", "무대팀", "포상팀", "다과팀"]);
   const [toast, setToast] = useState("");
+  const [clock, setClock] = useState(new Date());
+  const [sheetStatus, setSheetStatus] = useState("idle"); // idle, loading, loaded, error
+  const [sheetCount, setSheetCount] = useState(0);
   const contentRef = useRef(null);
 
   const showToast = useCallback((msg) => {
@@ -1268,9 +1422,54 @@ export default function App() {
     setTimeout(() => setToast(""), 2000);
   }, []);
 
+  // Real-time clock
+  useEffect(() => {
+    const interval = setInterval(() => setClock(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Google Sheets fetch
+  const fetchAttendees = useCallback(async () => {
+    setSheetStatus("loading");
+    try {
+      const res = await fetch(SHEET_CSV_URL);
+      if (!res.ok) throw new Error("Fetch failed");
+      const text = await res.text();
+      const parsed = parseCSV(text);
+      if (parsed.length > 0) {
+        const mapped = parsed.map((p, i) => ({
+          id: i + 1,
+          name: p.name,
+          org: p.org,
+          zone: ZONES[i % ZONES.length],
+          table: ATTENDEE_TABLES[Math.min(Math.floor(i / 10), ATTENDEE_TABLES.length - 1)]?.id || ATTENDEE_TABLES[0].id,
+          checked: false,
+        }));
+        setAttendees(mapped);
+        setSheetCount(parsed.length);
+        setSheetStatus("loaded");
+        showToast(`참석자 ${parsed.length}명 불러오기 완료`);
+      } else {
+        setSheetStatus("error");
+        showToast("스프레드시트 데이터가 비어 있습니다");
+      }
+    } catch (err) {
+      setSheetStatus("error");
+      showToast("스프레드시트 연결 실패 — 기본 데이터 사용");
+    }
+  }, [showToast]);
+
+  // Auto-fetch on mount
+  useEffect(() => { fetchAttendees(); }, []);
+
   useEffect(() => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [tab]);
+
+  // D-Day
+  const eventDate = new Date("2026-04-22T15:00:00");
+  const dDay = Math.ceil((eventDate - clock) / 86400000);
+  const clockStr = clock.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
 
   return (
     <div className="app-shell" style={{ fontFamily: T.font, background: T.bg, color: T.text }}>
@@ -1283,12 +1482,20 @@ export default function App() {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "14px", fontWeight: 800, color: "#0a1616", flexShrink: 0,
           }}>40</div>
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ fontSize: "16px", fontWeight: 800, color: T.accent, letterSpacing: "-0.3px" }}>
               서울복지 4.0 Staff
             </div>
             <div style={{ fontSize: "12px", color: T.textSec }}>
               2026. 4. 22 (수) 15:00 · 백범김구기념관
+            </div>
+          </div>
+          <div style={{ textAlign: "right", flexShrink: 0 }}>
+            <div style={{ fontSize: "16px", fontWeight: 700, color: T.accent, fontVariantNumeric: "tabular-nums" }}>
+              {clockStr}
+            </div>
+            <div style={{ fontSize: "11px", color: dDay > 0 ? T.warn : T.success, fontWeight: 600 }}>
+              {dDay > 0 ? `D-${dDay}` : dDay === 0 ? "D-DAY" : "행사 종료"}
             </div>
           </div>
         </div>
@@ -1298,7 +1505,30 @@ export default function App() {
       <div ref={contentRef} className="app-content">
         {tab === "dashboard" && <DashboardTab vipGuests={vipGuests} attendees={attendees} notices={notices} emergencies={emergencies} program={PROGRAM} />}
         {tab === "vip" && <VipTab guests={vipGuests} setGuests={setVipGuests} />}
-        {tab === "attendees" && <AttendeesTab attendees={attendees} setAttendees={setAttendees} />}
+        {tab === "attendees" && (
+          <div>
+            {/* Sheet status bar */}
+            <div style={{
+              ...cardStyle, display: "flex", alignItems: "center", gap: "8px",
+              borderLeft: `3px solid ${sheetStatus === "loaded" ? T.success : sheetStatus === "error" ? T.danger : T.accent}`,
+              padding: "10px 14px", marginBottom: "10px",
+            }}>
+              <span style={{ fontSize: "14px" }}>
+                {sheetStatus === "loading" ? "⏳" : sheetStatus === "loaded" ? "✅" : sheetStatus === "error" ? "⚠️" : "📋"}
+              </span>
+              <div style={{ flex: 1, fontSize: "13px", color: T.textSec }}>
+                {sheetStatus === "loading" && "스프레드시트 불러오는 중..."}
+                {sheetStatus === "loaded" && `Google Sheets 연동 완료 (${sheetCount}명)`}
+                {sheetStatus === "error" && "스프레드시트 연결 실패 — 기본 데이터 사용 중"}
+                {sheetStatus === "idle" && "스프레드시트 연결 대기 중"}
+              </div>
+              <button style={{ ...ghostBtnStyle, padding: "5px 12px", fontSize: "12px" }} onClick={fetchAttendees}>
+                새로고침
+              </button>
+            </div>
+            <AttendeesTab attendees={attendees} setAttendees={setAttendees} />
+          </div>
+        )}
         {tab === "notices" && <NoticesTab notices={notices} setNotices={setNotices} />}
         {tab === "emergency" && <EmergencyTab emergencies={emergencies} setEmergencies={setEmergencies} staffTeams={staffTeams} />}
         {tab === "program" && <ProgramTab program={PROGRAM} />}
@@ -1325,8 +1555,6 @@ export default function App() {
       </nav>
 
       <Toast msg={toast} />
-
-
     </div>
   );
 }
