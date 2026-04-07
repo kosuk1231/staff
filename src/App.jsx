@@ -1285,77 +1285,131 @@ function SuppliesTab() {
 // ============================================================
 // TAB: STAFF
 // ============================================================
-function StaffTab({ staffTeams, setStaffTeams }) {
-  const [teams, setTeams] = useState([
-    { name: "등록팀", members: [] },
-    { name: "안내팀", members: [] },
-    { name: "무대팀", members: [] },
-    { name: "포상팀", members: [] },
-    { name: "다과팀", members: [] },
-  ]);
-  const [newTeam, setNewTeam] = useState("");
-  const [addingMember, setAddingMember] = useState(null);
-  const [memberName, setMemberName] = useState("");
+const STAFF_ROLES = [
+  {
+    role: "총괄",
+    members: [
+      { name: "이지선", p1: ["전체 총괄"], p2: ["보조 사회"], p3: ["내빈 응대 및 관리", "보조 사회"] }
+    ]
+  },
+  {
+    role: "내빈 응대",
+    members: [
+      { name: "정승아", p1: ["내빈 총괄", "접수대 세팅"], p2: ["내빈 응대 및 관리"], p3: ["내빈 총괄", "내빈 응대 및 관리", "내빈 방명록 작성"] }
+    ]
+  },
+  {
+    role: "영상",
+    members: [
+      { name: "고석우", p1: ["영상, 음향 세팅", "녹화카메라 세팅"], p2: ["강연 자료 화면송출"], p3: ["식순, 수상자 화면송출"] },
+      { name: "최봄", p1: ["영상, 음향 세팅(보조)", "강연자 관리, 응대"], p2: ["강연자 응대", "강연자 관리(마이크, 강연준비 등)", "화면송출 보조"], p3: ["화면송출 보조"] }
+    ]
+  },
+  {
+    role: "시상",
+    members: [
+      { name: "이진선", p1: ["시상대 세팅 총괄", "시상 리허설(시상순서)"], p2: ["접수 및 내빈 응대"], p3: ["시상 총괄 : 시상 순서별 상장 패 준비", "시상 진행(시상대)"] },
+      { name: "신단비", p1: ["시상대 세팅", "시상 리허설(시상순서)"], p2: ["접수"], p3: ["시상 보조", "시상 트레이"] }
+    ]
+  },
+  {
+    role: "접수",
+    members: [
+      { name: "정소희", p1: ["접수대 총괄", "접수대 세팅"], p2: ["접수 및 내빈 응대"], p3: ["기념품 세팅"] },
+      { name: "최지혜", p1: ["접수대 세팅"], p2: ["접수"], p3: ["기념품 세팅"] },
+      { name: "손채은", p1: ["접수대 세팅"], p2: ["접수"], p3: ["기념품 세팅"] }
+    ]
+  },
+  {
+    role: "행사장",
+    members: [
+      { name: "권하영", p1: ["테이블 세팅(물, 안내지)", "내빈 테이블 세팅(명찰)"], p2: ["접수"], p3: ["기념품 세팅"] },
+      { name: "채유리", p1: ["테이블 세팅(물, 안내지)"], p2: ["접수"], p3: ["영상 촬영(축사 등)"] },
+      { name: "나한송", p1: ["테이블 세팅(물, 안내지)"], p2: ["접수"], p3: ["기념품 세팅"] }
+    ]
+  },
+  {
+    role: "무대/시상",
+    members: [
+      { name: "이해창", p1: ["현수막 및 판넬 설치", "시상 리허설(수상자)"], p2: ["무대 관리(마이크 등)"], p3: ["수상자 관리(집결 등)", "수상자 무대 위 정렬", "무대 관리(단상, 마이크)"] },
+      { name: "이재중", p1: ["현수막 및 판넬 설치"], p2: ["무대 관리(마이크 등)"], p3: ["무대 관리(단상, 마이크)", "시상 트레이"] }
+    ]
+  },
+  {
+    role: "포토존",
+    members: [
+      { name: "정지연", p1: ["포토존 세팅", "포토존 촬영"], p2: ["포토존 촬영"], p3: ["포토존 촬영/정리"] }
+    ]
+  },
+  {
+    role: "이벤트",
+    members: [
+      { name: "유예리", p1: ["이벤트 부스 총괄", "이벤트 부스 세팅"], p2: ["접수"], p3: ["이벤트 물품 정리"] },
+      { name: "신규직원", p1: ["이벤트 부스 세팅"], p2: ["접수"], p3: ["이벤트 물품 정리"] }
+    ]
+  },
+  {
+    role: "담당",
+    members: [
+      { name: "양종철", p1: ["사업계획 및 예산집행", "준비회의, 업무분장", "전체 세팅 총괄"], p2: ["행사장 진행 담당(총괄)"], p3: ["행사장 진행 담당(총괄)"] }
+    ]
+  }
+];
 
+function StaffTab({ setStaffTeams }) {
   useEffect(() => {
-    setStaffTeams(teams.map((t) => t.name));
-  }, [teams, setStaffTeams]);
-
-  const addTeam = () => {
-    if (!newTeam.trim()) return;
-    setTeams((prev) => [...prev, { name: newTeam.trim(), members: [] }]);
-    setNewTeam("");
-  };
-
-  const addMember = (teamIdx) => {
-    if (!memberName.trim()) return;
-    setTeams((prev) => prev.map((t, i) => i === teamIdx ? { ...t, members: [...t.members, memberName.trim()] } : t));
-    setMemberName("");
-    setAddingMember(null);
-  };
-
-  const removeMember = (teamIdx, memIdx) => {
-    setTeams((prev) => prev.map((t, i) => i === teamIdx ? { ...t, members: t.members.filter((_, j) => j !== memIdx) } : t));
-  };
+    setStaffTeams(STAFF_ROLES.map(r => r.role));
+  }, [setStaffTeams]);
 
   return (
     <div>
-      <div style={{ ...cardStyle, display: "flex", gap: "6px" }}>
-        <input style={{ ...inputStyle, flex: 1 }} value={newTeam} onChange={(e) => setNewTeam(e.target.value)} placeholder="새 팀 이름" />
-        <button style={accentBtnStyle} onClick={addTeam}>팀 추가</button>
+      <div className="stat-grid">
+        <StatCard icon={"\u{1F46A}"} label="총 역할 그룹" value={STAFF_ROLES.length} accent={T.accent} />
+        <StatCard icon={"\u{1F465}"} label="전체 스태프" value={STAFF_ROLES.reduce((acc, r) => acc + r.members.length, 0)} accent={T.accent} />
       </div>
 
-      {teams.map((team, ti) => (
-        <div key={ti} style={{ ...cardStyle, borderLeft: `3px solid ${T.accent}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <div style={{ fontSize: "15px", fontWeight: 700, color: T.accent }}>{team.name}</div>
-            <span style={badgeStyle(T.accentBg, T.accentDark)}>{team.members.length}명</span>
+      <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "12px" }}>
+        행사 업무 분장표
+      </div>
+
+      {STAFF_ROLES.map((group, gi) => (
+        <div key={gi} style={{ ...cardStyle, borderLeft: `3px solid ${T.accent}`, padding: "16px 14px" }}>
+          <div style={{ fontSize: "16px", fontWeight: 800, color: T.accent, marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+            {group.role} <span style={badgeStyle(T.accentBg, T.accentDark)}>{group.members.length}명</span>
           </div>
 
-          {team.members.map((m, mi) => (
-            <div key={mi} style={{
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              padding: "4px 0", borderBottom: `1px solid ${T.border}`,
-            }}>
-              <span style={{ fontSize: "14px", color: T.text }}>{m}</span>
-              <button style={{ ...ghostBtnStyle, padding: "3px 10px", fontSize: "12px", color: T.danger, borderColor: T.danger }}
-                onClick={() => removeMember(ti, mi)}>삭제</button>
-            </div>
-          ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {group.members.map((m, mi) => (
+              <div key={mi} style={{ background: "rgba(255,255,255,0.02)", borderRadius: T.radiusSm, padding: "12px" }}>
+                <div style={{ fontSize: "15px", fontWeight: 700, color: T.text, marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  {"\u{1F464}"} {m.name}
+                </div>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                    <span style={{ ...badgeStyle("rgba(255,255,255,0.05)", T.textSec), minWidth: "55px", justifyContent: "center" }}>준비</span>
+                    <div style={{ fontSize: "13px", color: T.text, lineHeight: 1.4, flex: 1 }}>
+                      {m.p1.map((task, i) => <div key={i}>• {task}</div>)}
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                    <span style={{ ...badgeStyle("rgba(255,255,255,0.05)", T.textSec), minWidth: "55px", justifyContent: "center" }}>1부</span>
+                    <div style={{ fontSize: "13px", color: T.text, lineHeight: 1.4, flex: 1 }}>
+                      {m.p2.map((task, i) => <div key={i}>• {task}</div>)}
+                    </div>
+                  </div>
 
-          {addingMember === ti ? (
-            <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}>
-              <input style={{ ...inputStyle, flex: 1 }} value={memberName}
-                onChange={(e) => setMemberName(e.target.value)} placeholder="이름"
-                onKeyDown={(e) => e.key === "Enter" && addMember(ti)} autoFocus />
-              <button style={ghostBtnStyle} onClick={() => addMember(ti)}>추가</button>
-            </div>
-          ) : (
-            <button style={{ ...ghostBtnStyle, marginTop: "6px", width: "100%" }}
-              onClick={() => { setAddingMember(ti); setMemberName(""); }}>
-              + 팀원 추가
-            </button>
-          )}
+                  <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                    <span style={{ ...badgeStyle("rgba(255,255,255,0.05)", T.textSec), minWidth: "55px", justifyContent: "center" }}>2부</span>
+                    <div style={{ fontSize: "13px", color: T.text, lineHeight: 1.4, flex: 1 }}>
+                      {m.p3.map((task, i) => <div key={i}>• {task}</div>)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ))}
     </div>
