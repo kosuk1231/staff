@@ -63,7 +63,7 @@ const TABLE_CONFIG = {
   5: { seats: 10, label: "테이블 5", color: "#F59E0B" },
 };
 
-const ATTENDEE_TABLES = Array.from({ length: 22 }, (_, i) => ({
+const ATTENDEE_TABLES = Array.from({ length: 25 }, (_, i) => ({
   id: i + 6,
   label: `테이블 ${i + 6}`,
 }));
@@ -76,19 +76,21 @@ const generateAttendees = () => {
   const orgs = ["종합사회복지관","노인복지관","장애인복지관","지역아동센터","건강가정지원센터","자활센터","정신건강복지센터","다문화가족지원센터","청소년상담복지센터","사회복지협의회"];
   const districts = ["강남","강동","강북","강서","관악","광진","구로","금천","노원","도봉","동대문","동작","마포","서대문","서초","성동","성북","송파","양천","영등포","용산","은평","종로","중구","중랑"];
   const arr = [];
-  for (let i = 1; i <= 220; i++) {
+  for (let i = 1; i <= 250; i++) {
     const ln = lastNames[Math.floor(Math.random() * lastNames.length)];
     const fn = firstNames[Math.floor(Math.random() * firstNames.length)];
     const dist = districts[Math.floor(Math.random() * districts.length)];
     const org = orgs[Math.floor(Math.random() * orgs.length)];
     const tableIdx = Math.floor((i - 1) / 10);
     const tableId = ATTENDEE_TABLES[tableIdx] ? ATTENDEE_TABLES[tableIdx].id : ATTENDEE_TABLES[ATTENDEE_TABLES.length - 1].id;
+    const seatId = ((i - 1) % 10) + 1;
     arr.push({
       id: i,
       name: ln + fn,
       org: `${dist}구 ${org}`,
       zone: ZONES[Math.floor(Math.random() * ZONES.length)],
       table: tableId,
+      seat: seatId,
       checked: false,
     });
   }
@@ -600,10 +602,15 @@ function AttendeesTab({ attendees, setAttendees }) {
   const [filterZone, setFilterZone] = useState("전체");
   const [filterTable, setFilterTable] = useState(0);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [viewMode, setViewMode] = useState("zone"); // "zone" | "table"
+  const [viewMode, setViewMode] = useState("table"); // "zone" | "table"
+  const [selectedTable, setSelectedTable] = useState(null);
 
   const toggle = (id) => {
     setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, checked: !a.checked } : a));
+  };
+
+  const updateSeat = (id, field, value) => {
+    setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, [field]: Number(value) } : a));
   };
 
   const toggleAllInGroup = (ids) => {
@@ -692,6 +699,63 @@ function AttendeesTab({ attendees, setAttendees }) {
         })}
       </div>
 
+      {/* Seat Map for Attendees */}
+      {viewMode === "table" && (
+        <div style={{ ...cardStyle, padding: "18px", overflow: "hidden" }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "12px", textAlign: "center" }}>
+            세부 좌석 배치도
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
+            {ATTENDEE_TABLES.map((t) => {
+              const tbGroup = tableStats.find(ts => ts.id === t.id) || { total: 0, checked: 0 };
+              const isSelected = selectedTable === t.id;
+              return (
+                <button key={t.id} onClick={() => setSelectedTable(isSelected ? null : t.id)} style={{
+                  width: "48px", height: "48px",
+                  borderRadius: "50%", border: `2px solid ${isSelected ? T.accent : T.border}`,
+                  background: isSelected ? "rgba(145,201,192,0.1)" : "rgba(255,255,255,0.03)",
+                  cursor: "pointer", display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center", fontFamily: T.font,
+                  transition: "all 0.2s",
+                }}>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: T.textSec }}>
+                    T{t.id}
+                  </span>
+                  <span style={{ fontSize: "12px", fontWeight: 800, color: T.text }}>
+                    {tbGroup.checked}/{tbGroup.total}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {selectedTable && (
+            <div style={{
+              background: "rgba(255,255,255,0.03)", borderRadius: T.radiusSm,
+              padding: "10px", marginTop: "8px",
+            }}>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "8px" }}>
+                테이블 {selectedTable} 좌석 현황
+              </div>
+              {attendees.filter((a) => a.table === selectedTable).map((a) => (
+                <div key={a.id} style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  padding: "4px 0", borderBottom: `1px solid ${T.border}`,
+                }}>
+                  <span style={{ fontSize: "13px", color: T.text }}>
+                    {a.seat}번 · {a.name} <span style={{ color: T.textSec }}>{a.org}</span>
+                  </span>
+                  <span style={badgeStyle(
+                    a.checked ? T.successBg : "rgba(255,255,255,0.05)",
+                    a.checked ? T.success : T.textMuted,
+                  )}>{a.checked ? "참석" : "대기"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <SearchBar value={search} onChange={setSearch} placeholder="참석자 검색 (이름, 소속)" />
 
       <FilterPills
@@ -716,28 +780,51 @@ function AttendeesTab({ attendees, setAttendees }) {
 
       <div className="card-grid-2">
         {filtered.slice(0, 50).map((a) => (
-          <div key={a.id} style={{
-            ...cardStyle, display: "flex", alignItems: "center", gap: "10px", cursor: "pointer",
-            padding: "12px 14px",
-          }} onClick={() => toggle(a.id)}>
-            <div style={{
-              width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
-              background: a.checked ? T.successBg : "rgba(255,255,255,0.05)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "12px", border: a.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
-              color: a.checked ? T.success : T.textMuted, transition: "all 0.2s",
-            }}>
-              {a.checked ? "\u2713" : ""}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, color: T.text, fontSize: "15px" }}>{a.name}</div>
-              <div style={{ fontSize: "13px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {a.org}
+          <div key={a.id} style={{ ...cardStyle }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", paddingBottom: "8px" }} onClick={() => toggle(a.id)}>
+              <div style={{
+                width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
+                background: a.checked ? T.successBg : "rgba(255,255,255,0.05)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "12px", border: a.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
+                color: a.checked ? T.success : T.textMuted, transition: "all 0.2s",
+              }}>
+                {a.checked ? "\u2713" : ""}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, color: T.text, fontSize: "15px" }}>{a.name}</div>
+                <div style={{ fontSize: "13px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {a.org}
+                </div>
+              </div>
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                <span style={badgeStyle(T.accentBg, T.accentDark)}>{a.zone}</span>
               </div>
             </div>
-            <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <span style={badgeStyle(T.accentBg, T.accentDark)}>{a.zone}</span>
-              <div style={{ fontSize: "11px", color: T.textMuted, marginTop: "2px" }}>T{a.table}</div>
+            
+            {/* Seat selection */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px", borderTop: `1px solid ${T.border}` }}>
+              <span style={{ fontSize: "13px", color: T.textSec, flexShrink: 0 }}>내역</span>
+              <select
+                value={a.table}
+                onChange={(e) => { e.stopPropagation(); updateSeat(a.id, "table", e.target.value); }}
+                onClick={(e) => e.stopPropagation()}
+                style={{ ...inputStyle, width: "auto", flex: 1, padding: "6px 8px", fontSize: "13px" }}
+              >
+                {ATTENDEE_TABLES.map((t) => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
+              </select>
+              <select
+                value={a.seat}
+                onChange={(e) => { e.stopPropagation(); updateSeat(a.id, "seat", e.target.value); }}
+                onClick={(e) => e.stopPropagation()}
+                style={{ ...inputStyle, width: "auto", flex: 1, padding: "6px 8px", fontSize: "13px" }}
+              >
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((s) => (
+                  <option key={s} value={s}>{s}번</option>
+                ))}
+              </select>
             </div>
           </div>
         ))}
