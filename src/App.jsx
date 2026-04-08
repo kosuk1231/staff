@@ -4,35 +4,47 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 // DATA
 // ============================================================
 const PROGRAM = [
-  { id: "p1", time: "15:00", end: "15:05", title: "개회 및 인사", part: 1, type: "opening" },
-  { id: "p2", time: "15:05", end: "15:20", title: "서울복지 40년, 전문성의 역사와 미래 비전", speaker: "김아래미 교수", part: 1, type: "lecture" },
-  { id: "p3", time: "15:23", end: "15:38", title: "디지털 전환 시대, 그럼에도 사람", speaker: "윤석원 대표", part: 1, type: "lecture" },
-  { id: "p4", time: "15:41", end: "15:56", title: "AI 시대, 사회복지의 기준을 다시 세우다", speaker: "황흥기 대표", part: 1, type: "lecture" },
-  { id: "p5", time: "15:59", end: "16:05", title: "서울복지 4.0, 다음 10년의 방향", speaker: "강현덕 위원장", part: 1, type: "summary" },
-  { id: "p6", time: "16:10", end: "17:00", title: "창립 40주년 기념 포상", speaker: "안진경 위원장", part: 2, type: "award" },
+  { id: "p0_1", time: "13:00", end: "14:00", title: "행사장 세팅", part: "준비", type: "setup" },
+  { id: "p0_2", time: "14:00", end: "14:30", title: "시상식 리허설", part: "준비", type: "rehearsal" },
+  { id: "p0_3", time: "14:00", end: "15:00", title: "참여자 접수 / 포토존 운영", part: "접수", type: "reception" },
+  { id: "p1_1", time: "15:00", end: "15:02", title: "1부 개회 및 안내", part: "1부", type: "opening" },
+  { id: "p1_2", time: "15:02", end: "15:04", title: "사회복지사 선서", part: "1부", type: "ceremony" },
+  { id: "p1_3", time: "15:04", end: "15:07", title: "창립 40주년 기념 영상", part: "1부", type: "video" },
+  { id: "p1_4", time: "15:07", end: "15:22", title: "특별강연 1", speaker: "김아래미 교수", part: "1부", type: "lecture" },
+  { id: "p1_5", time: "15:22", end: "15:37", title: "특별강연 2", speaker: "윤석원 대표", part: "1부", type: "lecture" },
+  { id: "p1_6", time: "15:37", end: "15:52", title: "특별강연 3", speaker: "황흥기 대표", part: "1부", type: "lecture" },
+  { id: "p1_7", time: "15:52", end: "15:59", title: "비전발표", speaker: "강현덕 수석부회장", part: "1부", type: "summary" },
+  { id: "p1_8", time: "15:59", end: "16:00", title: "1부 클로징 및 안내", part: "1부", type: "closing" },
+  { id: "p2_1", time: "16:00", end: "16:10", title: "내빈접수 및 응대", part: "2부", type: "reception" },
+  { id: "p2_2", time: "16:10", end: "16:11", title: "2부 개회 및 안내", part: "2부", type: "opening" },
+  { id: "p2_3", time: "16:11", end: "16:14", title: "내빈 소개", part: "2부", type: "intro" },
+  { id: "p2_4", time: "16:14", end: "16:19", title: "기념사", speaker: "곽경인 회장", part: "2부", type: "speech" },
+  { id: "p2_5", time: "16:19", end: "16:39", title: "내빈 축사", speaker: "주요내빈", part: "2부", type: "speech" },
+  { id: "p2_6", time: "16:39", end: "16:59", title: "시상 (특별상, 미래인재상 외)", part: "2부", type: "award" },
+  { id: "p2_7", time: "16:59", end: "17:00", title: "폐회 및 사진촬영", part: "2부", type: "closing" },
 ];
 
 const VIP_GUESTS = [
-  { id: 1, name: "오세훈", org: "서울특별시", role: "서울특별시장", table: 3, seat: 1, checked: false },
-  { id: 2, name: "박일규", org: "한국사회복지사협회", role: "회장", table: 3, seat: 2, checked: false },
-  { id: 3, name: "김성이", org: "한국사회복지협의회", role: "회장", table: 3, seat: 3, checked: false },
-  { id: 4, name: "조석영", org: "한국장애인복지관협회", role: "회장", table: 3, seat: 4, checked: false },
-  { id: 5, name: "김광훈", org: "한국소아당뇨인협회", role: "회장", table: 3, seat: 5, checked: false },
-  { id: 6, name: "김현훈", org: "서울시사회복지협의회", role: "회장", table: 3, seat: 6, checked: false },
-  { id: 7, name: "김영환", org: "서울시장애인직업재활시설협회", role: "회장", table: 3, seat: 7, checked: false },
-  { id: 8, name: "김은영", org: "서울시지역아동센터협의회", role: "회장", table: 3, seat: 8, checked: false },
-  { id: 9, name: "김한나", org: "서울시한부모가족복지시설협회", role: "회장", table: 3, seat: 9, checked: false },
-  { id: 10, name: "노장우", org: "서울시아동보호전문기관협회", role: "회장", table: 3, seat: 10, checked: false },
-  { id: 11, name: "박익현", org: "서울시50플러스센터협의회", role: "회장", table: 1, seat: 1, checked: false },
-  { id: 12, name: "백윤미", org: "서울시정신요양시설협회", role: "회장", table: 1, seat: 2, checked: false },
-  { id: 13, name: "신영숙", org: "여성폭력피해지원시설협의회", role: "회장", table: 1, seat: 3, checked: false },
-  { id: 14, name: "이소영", org: "서울시아동복지협회", role: "회장", table: 1, seat: 4, checked: false },
-  { id: 15, name: "이은주", org: "서울시노인종합복지관협회", role: "회장", table: 1, seat: 5, checked: false },
-  { id: 16, name: "임형균", org: "서울시장애인복지관협회", role: "회장", table: 1, seat: 6, checked: false },
-  { id: 17, name: "정보영", org: "서울정신재활시설협회", role: "회장", table: 1, seat: 7, checked: false },
-  { id: 18, name: "한철수", org: "서울시노인복지협회", role: "회장", table: 1, seat: 8, checked: false },
-  { id: 19, name: "허곤", org: "서울시장애인복지시설협회", role: "회장", table: 1, seat: 9, checked: false },
-  { id: 20, name: "정진모", org: "-", role: "전)제8대 회장", table: 1, seat: 10, checked: false },
+  { id: 1, name: "곽경인", org: "서울시사회복지사협회", role: "회장", table: 3, seat: 1, checked: false },
+  { id: 2, name: "오세훈", org: "서울특별시", role: "서울시장", table: 3, seat: 2, checked: false },
+  { id: 3, name: "내빈", org: "-", role: "회장단 후보자2", table: 3, seat: 3, checked: false },
+  { id: 4, name: "내빈", org: "-", role: "회장단 후보자3", table: 3, seat: 4, checked: false },
+  { id: 5, name: "내빈", org: "-", role: "회장단 후보자1", table: 3, seat: 5, checked: false },
+  { id: 6, name: "남인순", org: "국회의원", role: "의원", table: 3, seat: 6, checked: false },
+  { id: 7, name: "김연은", org: "연대회의", role: "상임대표", table: 3, seat: 7, checked: false },
+  { id: 8, name: "조석영", org: "한국장애인복지관협회", role: "회장", table: 3, seat: 8, checked: false },
+  { id: 9, name: "내빈", org: "-", role: "-", table: 3, seat: 9, checked: false },
+  { id: 10, name: "내빈", org: "-", role: "-", table: 3, seat: 10, checked: false },
+  { id: 11, name: "박익현", org: "서울시50플러스센터협의회", role: "회장", table: 4, seat: 9, checked: false },
+  { id: 12, name: "백윤미", org: "서울시정신요양시설협회", role: "회장", table: 4, seat: 10, checked: false },
+  { id: 13, name: "신영숙", org: "여성폭력피해지원시설협의회", role: "회장", table: 5, seat: 3, checked: false },
+  { id: 14, name: "이소영", org: "서울시아동복지협회", role: "회장", table: 5, seat: 4, checked: false },
+  { id: 15, name: "이은주", org: "서울시노인종합복지관협회", role: "회장", table: 5, seat: 5, checked: false },
+  { id: 16, name: "임형균", org: "서울시장애인복지관협회", role: "회장", table: 5, seat: 6, checked: false },
+  { id: 17, name: "정보영", org: "서울정신재활시설협회", role: "회장", table: 5, seat: 7, checked: false },
+  { id: 18, name: "한철수", org: "서울시노인복지협회", role: "회장", table: 5, seat: 8, checked: false },
+  { id: 19, name: "허곤", org: "서울시장애인복지시설협회", role: "회장", table: 5, seat: 9, checked: false },
+  { id: 20, name: "정진모", org: "-", role: "전)제8대 회장", table: 5, seat: 10, checked: false },
   { id: 21, name: "임성규", org: "-", role: "전)제10대 회장", table: 2, seat: 1, checked: false },
   { id: 22, name: "장재구", org: "중앙사회복지관", role: "전)제11대 회장", table: 2, seat: 2, checked: false },
   { id: 23, name: "심정원", org: "성산종합사회복지관", role: "현)제15대 회장", table: 2, seat: 3, checked: false },
@@ -56,17 +68,28 @@ const VIP_GUESTS = [
 ];
 
 const TABLE_CONFIG = {
-  1: { seats: 10, label: "테이블 1", color: "#3B82F6" },
-  2: { seats: 10, label: "테이블 2", color: "#8B5CF6" },
-  3: { seats: 10, label: "VIP", color: "#C8A44E" },
-  4: { seats: 10, label: "테이블 4", color: "#10B981" },
-  5: { seats: 10, label: "테이블 5", color: "#F59E0B" },
+  2: { seats: 10, label: "내빈석", color: "#8B5CF6" },
+  3: { seats: 10, label: "주요 내빈석", color: "#C8A44E" },
+  4: { seats: 10, label: "주요 내빈석", color: "#10B981" },
+  5: { seats: 10, label: "내빈석", color: "#F59E0B" },
 };
 
-const ATTENDEE_TABLES = Array.from({ length: 25 }, (_, i) => ({
-  id: i + 6,
-  label: `테이블 ${i + 6}`,
+const VIP_TABLE_IDS = [2, 3, 4, 5];
+const ALL_TABLE_IDS = Array.from({ length: 32 }, (_, i) => i + 1);
+
+const ATTENDEE_TABLES = ALL_TABLE_IDS.filter(id => !VIP_TABLE_IDS.includes(id)).map(id => ({
+  id,
+  label: `테이블 ${id}`,
 }));
+
+const MAP_ROWS = [
+  [1, 2, 3, 4, 5, 6],
+  [7, 8, 9, 10, 11],
+  [12, 13, 14, 15, 16, 17],
+  [18, 19, 20, 21, 22],
+  [23, 24, 25, 26, 27, 28],
+  [29, 30, 31, 32],
+];
 
 const ZONES = ["A구역", "B구역", "C구역", "D구역", "E구역"];
 
@@ -138,32 +161,36 @@ const AWARD_CATEGORIES = [
     { name: "최인경", org: "하누리주간보호센터" },
     { name: "한미영", org: "동대문구가족센터" },
   ]},
-  { id: "a4", name: "감사패 전달", icon: "\u{1F91D}", recipients: [
+  { id: "a4", name: "특별상", icon: "\u{1F3C5}", recipients: [
     { name: "서울사회복지공동모금회", org: "" },
-    { name: "배영미", org: "교수" },
-    { name: "세밧사", org: "" },
+    { name: "세상을 바꾸는 사회복지사", org: "" },
     { name: "남인순", org: "국회의원" },
-    { name: "최성숙", org: "관장" },
-    { name: "정승아", org: "부장" },
+    { name: "최성숙", org: "신림종합사회복지관 관장" },
+    { name: "배영미", org: "서울시립대 외래교수" },
+    { name: "정승아", org: "서울시사회복지사협회 부장" },
   ]},
 ];
 
 const INITIAL_SUPPLIES = [
-  { id: 1, name: "현수막 (메인)", qty: 1, assignee: "", done: false, category: "설치" },
-  { id: 2, name: "배너 스탠드", qty: 4, assignee: "", done: false, category: "설치" },
-  { id: 3, name: "포상 트로피", qty: 20, assignee: "", done: false, category: "포상" },
-  { id: 4, name: "포상 상장", qty: 20, assignee: "", done: false, category: "포상" },
-  { id: 5, name: "꽃다발", qty: 5, assignee: "", done: false, category: "포상" },
-  { id: 6, name: "참석자 명찰", qty: 350, assignee: "", done: false, category: "등록" },
-  { id: 7, name: "프로그램 리플렛", qty: 350, assignee: "", done: false, category: "등록" },
-  { id: 8, name: "기념품 (에코백)", qty: 350, assignee: "", done: false, category: "등록" },
-  { id: 9, name: "다과 세트", qty: 35, assignee: "", done: false, category: "다과" },
-  { id: 10, name: "생수", qty: 400, assignee: "", done: false, category: "다과" },
-  { id: 11, name: "무선 마이크", qty: 4, assignee: "", done: false, category: "장비" },
-  { id: 12, name: "빔프로젝터", qty: 1, assignee: "", done: false, category: "장비" },
-  { id: 13, name: "노트북 (발표용)", qty: 2, assignee: "", done: false, category: "장비" },
-  { id: 14, name: "촬영 카메라", qty: 2, assignee: "", done: false, category: "장비" },
-  { id: 15, name: "안내 데스크 세트", qty: 2, assignee: "", done: false, category: "설치" },
+  { id: 1, name: "명찰", qty: 90, assignee: "접수", done: false, category: "제작" },
+  { id: 2, name: "접수명단", qty: 1, assignee: "접수", done: false, category: "제작" },
+  { id: 3, name: "좌석배치표", qty: 5, assignee: "접수", done: false, category: "제작" },
+  { id: 4, name: "테이블번호", qty: 30, assignee: "접수", done: false, category: "제작" },
+  { id: 5, name: "내빈방명록", qty: 5, assignee: "접수", done: false, category: "제작" },
+  { id: 6, name: "수상자 PPT", qty: 40, assignee: "시상식", done: false, category: "제작" },
+  { id: 7, name: "사회비수령증(영수증)", qty: 1, assignee: "시상식", done: false, category: "제작" },
+  { id: 8, name: "보조인력수령증", qty: 5, assignee: "시상식", done: false, category: "제작" },
+  { id: 9, name: "사회자카드(1부,2부)", qty: 2, assignee: "시상식", done: false, category: "제작" },
+  { id: 10, name: "현수막, 배너 (디자인)", qty: 5, assignee: "디자인", done: false, category: "제작" },
+  { id: 11, name: "식전영상", qty: 1, assignee: "영상", done: false, category: "제작" },
+  { id: 12, name: "현수막, 포토존 출력", qty: 5, assignee: "EM실천", done: false, category: "행사장" },
+  { id: 13, name: "포토존 설치", qty: 1, assignee: "이벤트렌탈", done: false, category: "행사장" },
+  { id: 14, name: "메인현수막 설치", qty: 1, assignee: "", done: false, category: "행사장" },
+  { id: 15, name: "안내지 출력 (15x21cm)", qty: 300, assignee: "EM실천", done: false, category: "행사장" },
+  { id: 16, name: "단상 폼보드 출력", qty: 2, assignee: "EM실천", done: false, category: "행사장" },
+  { id: 17, name: "상품권 (10만원권)", qty: 36, assignee: "신세계백화점", done: false, category: "구입" },
+  { id: 18, name: "꽃다발", qty: 40, assignee: "에뿌즈플라워", done: false, category: "구입" },
+  { id: 19, name: "상패", qty: 6, assignee: "번동보호작업장", done: false, category: "구입" },
 ];
 
 // ============================================================
@@ -373,7 +400,7 @@ function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
             }}>
               <div style={{
                 width: "8px", height: "8px", borderRadius: "50%", marginTop: "4px", flexShrink: 0,
-                background: isCurrent ? T.accent : p.part === 2 ? T.warn : T.textMuted,
+                background: isCurrent ? T.accent : p.part === "2부" ? T.warn : T.textMuted,
                 boxShadow: isCurrent ? `0 0 8px ${T.accent}` : "none",
               }} />
               <div style={{ flex: 1 }}>
@@ -448,7 +475,7 @@ function VipTab({ guests, setGuests }) {
     const total = guests.length;
     const checked = guests.filter((g) => g.checked).length;
     const byTable = {};
-    for (let t = 1; t <= 5; t++) {
+    for (let t of [2, 3, 4, 5]) {
       const tg = guests.filter((g) => g.table === t);
       byTable[t] = { total: tg.length, checked: tg.filter((g) => g.checked).length };
     }
@@ -475,10 +502,10 @@ function VipTab({ guests, setGuests }) {
         }}>STAGE</div>
 
         <div style={{ display: "flex", justifyContent: "center", gap: "4px", flexWrap: "wrap", marginBottom: "8px" }}>
-          {[1, 2, 3, 4, 5].map((t) => {
+          {[2, 3, 4, 5].map((t) => {
             const cfg = TABLE_CONFIG[t];
             const tb = stats.byTable[t] || { total: 0, checked: 0 };
-            const isVIP = t === 3;
+            const isVIP = t === 3 || t === 4;
             const isSelected = selectedTable === t;
             return (
               <button key={t} onClick={() => setSelectedTable(isSelected ? null : t)} style={{
@@ -537,7 +564,7 @@ function VipTab({ guests, setGuests }) {
         {filtered.map((g) => (
           <div key={g.id} style={{
             ...cardStyle,
-            borderLeft: `3px solid ${g.table === 3 ? T.accent : "transparent"}`,
+            borderLeft: `3px solid ${(g.table === 3 || g.table === 4) ? T.accent : T.border}`,
           }}>
             {/* Top row: check + name + edit button */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }} onClick={() => toggle(g.id)}>
@@ -705,28 +732,53 @@ function AttendeesTab({ attendees, setAttendees }) {
           <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "12px", textAlign: "center" }}>
             세부 좌석 배치도
           </div>
-          <div style={{ display: "flex", justifyContent: "center", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
-            {ATTENDEE_TABLES.map((t) => {
-              const tbGroup = tableStats.find(ts => ts.id === t.id) || { total: 0, checked: 0 };
-              const isSelected = selectedTable === t.id;
-              return (
-                <button key={t.id} onClick={() => setSelectedTable(isSelected ? null : t.id)} style={{
-                  width: "48px", height: "48px",
-                  borderRadius: "50%", border: `2px solid ${isSelected ? T.accent : T.border}`,
-                  background: isSelected ? "rgba(145,201,192,0.1)" : "rgba(255,255,255,0.03)",
-                  cursor: "pointer", display: "flex", flexDirection: "column",
-                  alignItems: "center", justifyContent: "center", fontFamily: T.font,
-                  transition: "all 0.2s",
-                }}>
-                  <span style={{ fontSize: "10px", fontWeight: 700, color: T.textSec }}>
-                    T{t.id}
-                  </span>
-                  <span style={{ fontSize: "12px", fontWeight: 800, color: T.text }}>
-                    {tbGroup.checked}/{tbGroup.total}
-                  </span>
-                </button>
-              );
-            })}
+          <div style={{
+            textAlign: "center", padding: "6px 0", marginBottom: "16px",
+            background: "rgba(145,201,192,0.1)", borderRadius: "6px",
+            fontSize: "12px", fontWeight: 700, color: T.accent, letterSpacing: "3px",
+            border: `1px solid ${T.accentBorder}`
+          }}>STAGE (무대)</div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "100%", overflowX: "auto", paddingBottom: "10px" }}>
+            <div style={{ minWidth: "320px" }}>
+              {MAP_ROWS.map((row, ri) => (
+                <div key={ri} style={{ display: "flex", justifyContent: "center", gap: "10px", marginBottom: "8px" }}>
+                  {row.map((t) => {
+                    const isVipTable = VIP_TABLE_IDS.includes(t);
+                    const tbGroup = isVipTable 
+                      ? { total: 10, checked: 0 }
+                      : (tableStats.find(ts => ts.id === t) || { total: 0, checked: 0 });
+                    
+                    const isSelected = selectedTable === t;
+                    
+                    return (
+                      <button key={t} onClick={() => {
+                        if (isVipTable) return;
+                        setSelectedTable(isSelected ? null : t);
+                      }} style={{
+                        width: "44px", height: "44px",
+                        borderRadius: "50%", 
+                        border: `2px solid ${isVipTable ? TABLE_CONFIG[t].color : isSelected ? T.accent : T.border}`,
+                        background: isVipTable ? `${TABLE_CONFIG[t].color}1A` : isSelected ? "rgba(145,201,192,0.1)" : "rgba(255,255,255,0.03)",
+                        cursor: isVipTable ? "default" : "pointer", display: "flex", flexDirection: "column",
+                        alignItems: "center", justifyContent: "center", fontFamily: T.font,
+                        transition: "all 0.2s",
+                        opacity: isVipTable ? 0.9 : 1,
+                      }}>
+                        <span style={{ fontSize: "10px", fontWeight: 700, color: isVipTable ? TABLE_CONFIG[t].color : T.textSec }}>
+                          {isVipTable ? "내빈" : `T${t}`}
+                        </span>
+                        {!isVipTable && (
+                          <span style={{ fontSize: "11px", fontWeight: 800, color: T.text }}>
+                            {tbGroup.checked}/{tbGroup.total}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
 
           {selectedTable && (
@@ -1120,7 +1172,7 @@ function ProgramTab({ program }) {
           <>
             <div style={{ fontSize: "13px", color: T.accentDark, fontWeight: 600, marginBottom: "4px" }}>
               {isManual && <span style={badgeStyle(T.warnBg, T.warn)}>수동 모드</span>}
-              {" "}{cp.part}부 · {cp.type === "award" ? "포상" : cp.type === "lecture" ? "특강" : "진행"}
+              {" "}{cp.part} · {cp.type === "award" ? "포상" : cp.type === "lecture" ? "특강" : cp.type === "speech" ? "식사" : "진행"}
             </div>
             <div style={{ fontSize: "18px", fontWeight: 800, color: T.text, marginBottom: "6px" }}>
               {cp.title}
@@ -1168,7 +1220,7 @@ function ProgramTab({ program }) {
               border: `1px solid ${isCurrent ? T.accent : T.border}`,
               fontSize: "12px", fontWeight: 700, color: isCurrent ? T.accent : T.textMuted,
             }}>
-              {p.part}부
+              {p.part}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: "14px", fontWeight: 700, color: isCurrent ? T.accent : T.text }}>
@@ -1325,7 +1377,7 @@ function SuppliesTab() {
           <div style={{ display: "flex", gap: "6px" }}>
             <input style={{ ...inputStyle, width: "80px" }} type="number" value={newQty} onChange={(e) => setNewQty(Number(e.target.value))} min={1} />
             <select style={{ ...inputStyle, flex: 1 }} value={newCat} onChange={(e) => setNewCat(e.target.value)}>
-              {["설치", "포상", "등록", "다과", "장비", "기타"].map((c) => <option key={c} value={c}>{c}</option>)}
+              {["제작", "행사장", "구입", "설치", "포상", "등록", "다과", "장비", "기타"].map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
             <button style={accentBtnStyle} onClick={addItem}>등록</button>
           </div>
