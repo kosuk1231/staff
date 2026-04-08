@@ -75,7 +75,7 @@ const TABLE_CONFIG = {
 };
 
 const VIP_TABLE_IDS = [2, 3, 4, 5];
-const ALL_TABLE_IDS = Array.from({ length: 32 }, (_, i) => i + 1);
+const ALL_TABLE_IDS = Array.from({ length: 30 }, (_, i) => i + 1);
 
 const ATTENDEE_TABLES = ALL_TABLE_IDS.filter(id => !VIP_TABLE_IDS.includes(id)).map(id => ({
   id,
@@ -84,11 +84,10 @@ const ATTENDEE_TABLES = ALL_TABLE_IDS.filter(id => !VIP_TABLE_IDS.includes(id)).
 
 const MAP_ROWS = [
   [1, 2, 3, 4, 5, 6],
-  [7, 8, 9, 10, 11],
-  [12, 13, 14, 15, 16, 17],
-  [18, 19, 20, 21, 22],
-  [23, 24, 25, 26, 27, 28],
-  [29, 30, 31, 32],
+  [7, 8, 9, 10, 11, 12, 13],
+  [14, 15, 16, 17, 18, 19],
+  [20, 21, 22, 23, 24, 25, 26],
+  [27, 28, 29, 30],
 ];
 
 const ZONES = ["A구역", "B구역", "C구역", "D구역", "E구역"];
