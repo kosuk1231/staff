@@ -90,15 +90,13 @@ const MAP_ROWS = [
   [27, 28, 29, 30],
 ];
 
-const ZONES = ["A구역", "B구역", "C구역", "D구역", "E구역"];
-
 const generateAttendees = () => {
   const lastNames = ["김","이","박","최","정","강","조","윤","장","임","한","오","서","신","권","황","안","송","류","홍"];
   const firstNames = ["민지","서연","지우","하은","수빈","지현","예진","유진","서영","민서","도윤","하준","시우","주원","지호","예준","건우","현우","도현","준서"];
   const orgs = ["종합사회복지관","노인복지관","장애인복지관","지역아동센터","건강가정지원센터","자활센터","정신건강복지센터","다문화가족지원센터","청소년상담복지센터","사회복지협의회"];
   const districts = ["강남","강동","강북","강서","관악","광진","구로","금천","노원","도봉","동대문","동작","마포","서대문","서초","성동","성북","송파","양천","영등포","용산","은평","종로","중구","중랑"];
   const arr = [];
-  for (let i = 1; i <= 250; i++) {
+  for (let i = 1; i <= 260; i++) {
     const ln = lastNames[Math.floor(Math.random() * lastNames.length)];
     const fn = firstNames[Math.floor(Math.random() * firstNames.length)];
     const dist = districts[Math.floor(Math.random() * districts.length)];
@@ -110,7 +108,6 @@ const generateAttendees = () => {
       id: i,
       name: ln + fn,
       org: `${dist}구 ${org}`,
-      zone: ZONES[Math.floor(Math.random() * ZONES.length)],
       table: tableId,
       seat: seatId,
       checked: false,
@@ -424,23 +421,6 @@ function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
         </div>
       )}
 
-      {/* Zone Distribution */}
-      <div style={cardStyle}>
-        <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "10px" }}>구역별 참석 현황</div>
-        {ZONES.map((z) => {
-          const zoneAtt = attendees.filter((a) => a.zone === z);
-          const zoneChecked = zoneAtt.filter((a) => a.checked).length;
-          return (
-            <div key={z} style={{ marginBottom: "6px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "3px" }}>
-                <span style={{ color: T.textSec }}>{z}</span>
-                <span style={{ color: T.text, fontWeight: 600 }}>{zoneChecked}/{zoneAtt.length}</span>
-              </div>
-              <ProgressBar value={zoneChecked} max={zoneAtt.length} color={T.accent} />
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
@@ -625,10 +605,8 @@ function VipTab({ guests, setGuests }) {
 // ============================================================
 function AttendeesTab({ attendees, setAttendees }) {
   const [search, setSearch] = useState("");
-  const [filterZone, setFilterZone] = useState("전체");
   const [filterTable, setFilterTable] = useState(0);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [viewMode, setViewMode] = useState("table"); // "zone" | "table"
   const [selectedTable, setSelectedTable] = useState(null);
 
   const toggle = (id) => {
@@ -650,32 +628,22 @@ function AttendeesTab({ attendees, setAttendees }) {
   const filtered = useMemo(() => {
     return attendees.filter((a) => {
       if (search && !a.name.includes(search) && !a.org.includes(search)) return false;
-      if (filterZone !== "전체" && a.zone !== filterZone) return false;
       if (filterTable > 0 && a.table !== filterTable) return false;
       if (filterStatus === "checked" && !a.checked) return false;
       if (filterStatus === "unchecked" && a.checked) return false;
       return true;
     });
-  }, [attendees, search, filterZone, filterTable, filterStatus]);
+  }, [attendees, search, filterTable, filterStatus]);
 
   const stats = { total: attendees.length, checked: attendees.filter((a) => a.checked).length };
 
   // Group stats
-  const zoneStats = useMemo(() => {
-    return ZONES.map((z) => {
-      const items = attendees.filter((a) => a.zone === z);
-      return { name: z, total: items.length, checked: items.filter((a) => a.checked).length, ids: items.map((a) => a.id) };
-    });
-  }, [attendees]);
-
   const tableStats = useMemo(() => {
     return ATTENDEE_TABLES.map((t) => {
       const items = attendees.filter((a) => a.table === t.id);
       return { name: t.label, id: t.id, total: items.length, checked: items.filter((a) => a.checked).length, ids: items.map((a) => a.id) };
     }).filter((t) => t.total > 0);
   }, [attendees]);
-
-  const groupStats = viewMode === "zone" ? zoneStats : tableStats;
 
   return (
     <div>
@@ -689,14 +657,10 @@ function AttendeesTab({ attendees, setAttendees }) {
       <div style={cardStyle}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
           <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent }}>
-            {viewMode === "zone" ? "구역별" : "테이블별"} 참석 현황
-          </div>
-          <div style={{ display: "flex", gap: "4px" }}>
-            <button style={pillNav(viewMode === "zone")} onClick={() => setViewMode("zone")}>구역</button>
-            <button style={pillNav(viewMode === "table")} onClick={() => setViewMode("table")}>테이블</button>
+            테이블별 참석 현황
           </div>
         </div>
-        {groupStats.map((g) => {
+        {tableStats.map((g) => {
           const pct = g.total > 0 ? Math.round((g.checked / g.total) * 100) : 0;
           const allChecked = g.checked === g.total && g.total > 0;
           return (
@@ -726,8 +690,7 @@ function AttendeesTab({ attendees, setAttendees }) {
       </div>
 
       {/* Seat Map for Attendees */}
-      {viewMode === "table" && (
-        <div style={{ ...cardStyle, padding: "18px", overflow: "hidden" }}>
+      <div style={{ ...cardStyle, padding: "18px", overflow: "hidden" }}>
           <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "12px", textAlign: "center" }}>
             세부 좌석 배치도
           </div>
@@ -804,21 +767,16 @@ function AttendeesTab({ attendees, setAttendees }) {
               ))}
             </div>
           )}
-        </div>
-      )}
+      </div>
 
       <SearchBar value={search} onChange={setSearch} placeholder="참석자 검색 (이름, 소속)" />
 
       <FilterPills
-        options={[{ value: "전체", label: "전체" }, ...ZONES.map((z) => ({ value: z, label: z }))]}
-        value={filterZone} onChange={(v) => { setFilterZone(v); setFilterTable(0); }}
-      />
-      <FilterPills
         options={[
           { value: 0, label: "전체 테이블" },
-          ...ATTENDEE_TABLES.filter((t) => attendees.some((a) => a.table === t.id)).map((t) => ({ value: t.id, label: `T${t.id}` })),
+          ...ATTENDEE_TABLES.map((t) => ({ value: t.id, label: `T${t.id}` })),
         ]}
-        value={filterTable} onChange={(v) => { setFilterTable(v); setFilterZone("전체"); }}
+        value={filterTable} onChange={setFilterTable}
       />
       <FilterPills
         options={[{ value: "all", label: "전체" }, { value: "checked", label: "참석" }, { value: "unchecked", label: "미참석" }]}
@@ -847,9 +805,6 @@ function AttendeesTab({ attendees, setAttendees }) {
                 <div style={{ fontSize: "13px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {a.org}
                 </div>
-              </div>
-              <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <span style={badgeStyle(T.accentBg, T.accentDark)}>{a.zone}</span>
               </div>
             </div>
             
@@ -1633,7 +1588,6 @@ export default function App() {
           id: i + 1,
           name: p.name,
           org: p.org,
-          zone: ZONES[i % ZONES.length],
           table: ATTENDEE_TABLES[Math.min(Math.floor(i / 10), ATTENDEE_TABLES.length - 1)]?.id || ATTENDEE_TABLES[0].id,
           checked: false,
         }));
