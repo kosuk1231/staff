@@ -642,7 +642,7 @@ function AttendeesTab({ attendees, setAttendees }) {
     return ATTENDEE_TABLES.map((t) => {
       const items = attendees.filter((a) => a.table === t.id);
       return { name: t.label, id: t.id, total: items.length, checked: items.filter((a) => a.checked).length, ids: items.map((a) => a.id) };
-    }).filter((t) => t.total > 0);
+    });
   }, [attendees]);
 
   return (
