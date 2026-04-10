@@ -463,6 +463,46 @@ function VipTab() {
 }
 
 // ============================================================
+// TAB: GUESTBOOK
+// ============================================================
+function GuestbookTab() {
+  const [view, setView] = useState("board");
+  return (
+    <div style={{ height: "calc(100vh - 125px)", margin: "-12px", display: "flex", flexDirection: "column", background: "#0f172a" }}>
+      <div style={{ padding: "10px", background: "#1e293b", borderBottom: "1px solid #334155", display: "flex", gap: "10px", justifyContent: "center" }}>
+        <button 
+          onClick={() => setView("board")}
+          style={{ 
+            padding: "8px 20px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.1)", 
+            background: view === "board" ? "linear-gradient(135deg, #3b82f6, #8b5cf6)" : "transparent", 
+            color: view === "board" ? "#fff" : "rgba(255,255,255,0.5)", 
+            fontWeight: "bold", cursor: "pointer", transition: "all 0.2s" 
+          }}
+        >
+          🖥️ 전광판 보기
+        </button>
+        <button 
+          onClick={() => setView("wall")}
+          style={{ 
+            padding: "8px 20px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.1)", 
+            background: view === "wall" ? "linear-gradient(135deg, #3b82f6, #8b5cf6)" : "transparent", 
+            color: view === "wall" ? "#fff" : "rgba(255,255,255,0.5)", 
+            fontWeight: "bold", cursor: "pointer", transition: "all 0.2s" 
+          }}
+        >
+          ✍️ 작성 폼
+        </button>
+      </div>
+      <iframe 
+        src={view === "board" ? "/board.html" : "/wall.html"} 
+        style={{ width: "100%", flex: 1, border: "none", display: "block" }} 
+        title="방명록 시스템"
+      />
+    </div>
+  );
+}
+
+// ============================================================
 // TAB: ATTENDEES (260)
 // ============================================================
 function AttendeesTab({ attendees, setAttendees }) {
@@ -1404,6 +1444,7 @@ function parseCSV(text) {
 const TABS = [
   { id: "dashboard", label: "홈", icon: "\u{1F3E0}" },
   { id: "vip", label: "내빈", icon: "\u{2B50}" },
+  { id: "guestbook", label: "방명록", icon: "📝" },
   { id: "attendees", label: "참석자", icon: "\u{1F465}" },
   { id: "notices", label: "공지", icon: "\u{1F4E2}" },
   { id: "emergency", label: "긴급", icon: "\u{1F6A8}" },
@@ -1513,6 +1554,7 @@ export default function App() {
       <div ref={contentRef} className="app-content">
         {tab === "dashboard" && <DashboardTab vipGuests={vipGuests} attendees={attendees} notices={notices} emergencies={emergencies} program={PROGRAM} />}
         {tab === "vip" && <VipTab guests={vipGuests} setGuests={setVipGuests} />}
+        {tab === "guestbook" && <GuestbookTab />}
         {tab === "attendees" && (
           <div>
             {/* Sheet status bar */}
