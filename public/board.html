@@ -478,9 +478,9 @@ var REFRESH_SEC    = 15;
 var MAX_NOTES      = 30;
 var NOTE_W         = 200;
 var POPUP_W_PCT    = 45;
-var POPUP_INTERVAL = 30;
-var POPUP_SHOW     = 8;
-var NEW_POPUP_SHOW = 4;
+var POPUP_INTERVAL = 15; // reduced from 30
+var POPUP_SHOW     = 4;  // reduced from 8
+var NEW_POPUP_SHOW = 2;  // reduced from 4
 
 var allMessages    = [];
 var notes          = [];
@@ -658,12 +658,12 @@ function closeNewPopup() {
   clearTimeout(newPopupBarTimer);
   var overlay = document.getElementById('new-popup-overlay');
   overlay.classList.remove('ready');
-  setTimeout(function(){ overlay.classList.remove('show'); newPopupBusy = false; processNewPopupQueue(); }, 320);
+  setTimeout(function(){ overlay.classList.remove('show'); newPopupBusy = false; processNewPopupQueue(); }, 200);
 }
 function closeNewPopupAndAddNote(msg, pick) {
   var overlay = document.getElementById('new-popup-overlay');
   overlay.classList.remove('ready');
-  setTimeout(function(){ overlay.classList.remove('show'); addNote(msg, pick); setTimeout(function(){ newPopupBusy = false; processNewPopupQueue(); }, 900); }, 320);
+  setTimeout(function(){ overlay.classList.remove('show'); addNote(msg, pick); setTimeout(function(){ newPopupBusy = false; processNewPopupQueue(); }, 300); }, 200);
 }
 
 // ══════════════════════════════════════
@@ -846,12 +846,25 @@ function loadMessages() {
       if (!newMsgs.length && !notes.length) { document.getElementById('empty-msg').classList.add('show'); }
       if (!newMsgs.length) return;
 
-      newMsgs.forEach(function(m) {
-        if (!m.fileId) return;
+      // 비동기 병렬 처리로 모든 이미지를 동시에 로드하여 딜레이 제거
+      var promises = newMsgs.map(function(m) {
+        if (!m.fileId) return Promise.resolve();
         knownIds.add(m.id);
-        m.imageData = 'https://drive.google.com/uc?export=view&id=' + m.fileId;
         allMessages.push(m);
-        enqueueNewPopup(m);
+        return apiGet('getImageBase64', { fileId: m.fileId })
+          .then(function(dataUrl) {
+            if (!dataUrl) { knownIds.delete(m.id); allMessages = allMessages.filter(function(x){ return x.id !== m.id; }); return; }
+            m.imageData = dataUrl;
+            enqueueNewPopup(m);
+          })
+          .catch(function(e) {
+            console.error('Image load error', e);
+            knownIds.delete(m.id); allMessages = allMessages.filter(function(x){ return x.id !== m.id; });
+          });
+      });
+      
+      Promise.all(promises).then(function() {
+        // 모든 신규 메시지 로드 완료
       });
     })
     .catch(function(err) { hideLoading(); console.error(err); });
