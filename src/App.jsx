@@ -384,30 +384,52 @@ function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
       </div>
 
       {/* Program Timeline Mini */}
-      <div style={cardStyle}>
-        <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "10px" }}>프로그램 타임라인</div>
-        {program.map((p, i) => {
-          const isCurrent = currentProg && currentProg.id === p.id;
-          const isPast = false;
-          return (
-            <div key={p.id} style={{
-              display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: "6px",
-              opacity: isPast ? 0.4 : 1,
-            }}>
-              <div style={{
-                width: "8px", height: "8px", borderRadius: "50%", marginTop: "4px", flexShrink: 0,
-                background: isCurrent ? T.accent : p.part === "2부" ? T.warn : T.textMuted,
-                boxShadow: isCurrent ? `0 0 8px ${T.accent}` : "none",
-              }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "14px", fontWeight: 600, color: isCurrent ? T.accent : T.text }}>
-                  {p.time} {p.title}
+      <div style={{ ...cardStyle, padding: "20px" }}>
+        <div style={{ fontSize: "15px", fontWeight: 700, color: T.accent, marginBottom: "20px", display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{ fontSize: "18px" }}>⏱</span> 프로그램 타임라인
+        </div>
+        <div style={{ position: "relative", paddingLeft: "16px" }}>
+          {/* Vertical Line */}
+          <div style={{
+            position: "absolute", top: "8px", bottom: "16px", left: "3px", width: "2px",
+            background: `linear-gradient(to bottom, rgba(145,201,192,0.5) 0%, rgba(255,255,255,0.05) 100%)`
+          }} />
+
+          {program.map((p, i) => {
+            const isCurrent = currentProg && currentProg.id === p.id;
+            const [eh, em] = p.end.split(":").map(Number);
+            const endTime = new Date(now); endTime.setHours(eh, em, 0);
+            const isPast = now > endTime;
+            
+            return (
+              <div key={p.id} style={{
+                position: "relative", marginBottom: i === program.length - 1 ? 0 : "22px",
+                opacity: isPast ? 0.35 : 1, transition: "all 0.3s"
+              }}>
+                {/* Dot */}
+                <div style={{
+                  position: "absolute", left: "-16.5px", top: isCurrent ? "8px" : "3px",
+                  width: isCurrent ? "11px" : "9px", height: isCurrent ? "11px" : "9px", borderRadius: "50%",
+                  background: isCurrent ? T.accent : p.part === "2부" ? "#8B5CF6" : T.textMuted,
+                  boxShadow: isCurrent ? `0 0 12px ${T.accent}` : "none",
+                  border: `2px solid ${isCurrent ? "rgba(145,201,192,0.2)" : T.bg}`, zIndex: 2
+                }} />
+                
+                {/* Content Box */}
+                <div style={{ display: "flex", gap: "14px", background: isCurrent ? "rgba(145,201,192,0.08)" : "transparent", padding: isCurrent ? "10px 14px" : "0 4px", borderRadius: T.radiusMd, border: isCurrent ? `1px solid rgba(145,201,192,0.2)` : "1px solid transparent", marginLeft: isCurrent ? "-10px" : "0", transition: "all 0.2s" }}>
+                  <div style={{ width: "38px", flexShrink: 0, fontSize: "14px", color: isCurrent ? T.accent : T.textSec, fontWeight: 800, paddingTop: isCurrent ? "0px" : "1px" }}>{p.time}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "15px", fontWeight: isCurrent ? 800 : 500, color: isCurrent ? T.accent : T.text, display: "flex", alignItems: "center", gap: "8px", lineHeight: 1.3 }}>
+                      <span>{p.title}</span>
+                      {isCurrent && <span style={{ fontSize: "10px", padding: "2px 6px", background: T.accent, color: T.bg, borderRadius: "12px", fontWeight: 800, letterSpacing: "-0.3px" }}>LIVE</span>}
+                    </div>
+                    {p.speaker && <div style={{ fontSize: "13px", color: T.textMuted, marginTop: "4px" }}>{p.speaker}</div>}
+                  </div>
                 </div>
-                {p.speaker && <div style={{ fontSize: "13px", color: T.textSec }}>{p.speaker}</div>}
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* Recent Notice */}
