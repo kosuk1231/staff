@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>서울복지 4.0 — 전광판</title>
+<meta name="description" content="서울사회복지사협회 창립 40주년 기념행사 전자방명록 전광판">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans KR','Apple SD Gothic Neo',sans-serif;
+  min-height: 100vh; overflow: hidden;
+  display: flex; flex-direction: column; position: relative;
+}
+
+/* ── 배경 ── */
+#bg-layer {
+  position: fixed; inset: 0; z-index: 0;
+  background: #0f172a; background-size: cover;
+  background-position: center; background-repeat: no-repeat;
+}
+#bg-layer::after { content:''; position:absolute; inset:0; background:rgba(0,0,0,0.55); }
+#header,#board,#footer { position:relative; z-index:1; }
+
+/* ── 헤더 ── */
+#header { text-align:center; padding:12px 20px 0; flex-shrink:0; }
+#header h1 { font-size:1.35rem; font-weight:700; color:#fff; text-shadow:0 2px 18px rgba(0,0,0,0.8); }
+#header p  { font-size:0.7rem; color:rgba(255,255,255,0.45); margin-top:3px; }
+#msg-count {
+  display:inline-block; background:rgba(99,102,241,0.3); color:#a5b4fc;
+  border:1px solid rgba(99,102,241,0.4); border-radius:999px;
+  font-size:0.66rem; padding:1px 9px; margin-left:7px; vertical-align:middle;
+}
+
+/* ── 보드 ── */
+#board { position:relative; flex:1; width:100%; overflow:hidden; }
+
+/* ── 포스트잇 ── */
+.note {
+  position:absolute;
+  width:var(--note-w, 200px);
+  border-radius:3px 14px 14px 14px;
+  box-shadow:3px 5px 22px rgba(0,0,0,0.55), inset -1px -1px 0 rgba(255,255,255,0.12);
+  cursor:grab; user-select:none; -webkit-user-select:none;
+  transition:box-shadow 0.3s, opacity 0.3s;
+  will-change:transform;
+  overflow:hidden;
+}
+.note:hover { box-shadow:5px 10px 36px rgba(0,0,0,0.7); z-index:100 !important; }
+.note.dragging { cursor:grabbing; transform:rotate(1deg) scale(1.04) !important; box-shadow:8px 14px 40px rgba(0,0,0,0.75) !important; z-index:200 !important; transition:box-shadow 0.1s; }
+.note.hidden   { opacity:0 !important; pointer-events:none; }
+
+.note::before {
+  content:''; display:block; height:8px;
+  background:rgba(0,0,0,0.14); border-radius:2px 2px 0 0;
+}
+.note .note-img {
+  pointer-events:none;
+  display:block; width:100%;
+  aspect-ratio:16/9; object-fit:contain;
+  background:rgba(255,255,255,0.05);
+}
+.note .note-nick {
+  pointer-events:none;
+  font-size:0.62rem; opacity:0.55; text-align:right; font-weight:700;
+  padding:4px 10px 6px; font-family:inherit;
+}
+.note .note-nick::before { content:'— '; }
+
+.note.mode-b, .note.mode-c {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.note.mode-b::before, .note.mode-c::before { display:none; }
+.note.mode-b .note-nick { color: rgba(255,255,255,0.7); }
+.note.mode-b .note-img  { background: transparent; }
+.note.mode-c .note-nick { opacity: 0.8; }
+
+/* ── 등장 애니메이션 ── */
+@keyframes noteEnter {
+  0%   { transform:translate(-50%,-50%) scale(0.05); opacity:0; }
+  60%  { transform:translate(-50%,-50%) scale(1.1) rotate(-1.5deg); opacity:1; }
+  80%  { transform:translate(-50%,-50%) scale(0.97) rotate(0.5deg); }
+  100% { transform:translate(var(--tx),var(--ty)) rotate(var(--rot)); opacity:1; }
+}
+.note.entering {
+  left:50%; top:50%;
+  animation:noteEnter 0.8s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+  z-index:50;
+}
+
+/* ── 신규 메시지 중앙 팝업 ── */
+#new-popup-overlay {
+  display:none; position:fixed; inset:0; z-index:450;
+  align-items:center; justify-content:center;
+  background:rgba(0,0,0,0); backdrop-filter:blur(0px);
+  transition:background 0.3s, backdrop-filter 0.3s;
+}
+#new-popup-overlay.show { display:flex; }
+#new-popup-overlay.show.ready { background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); }
+#new-popup-card {
+  position:relative;
+  width:var(--popup-w, 45vw);
+  max-width:90vw;
+  border-radius:6px 22px 22px 22px;
+  box-shadow:0 24px 80px rgba(0,0,0,0.8);
+  overflow:hidden;
+  transform:scale(0.3); opacity:0;
+  transition:transform 0.45s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.3s ease;
+}
+#new-popup-overlay.show.ready #new-popup-card { transform:scale(1); opacity:1; }
+#new-popup-card::before {
+  content:''; display:block; height:10px;
+  background:rgba(0,0,0,0.14);
+}
+#new-popup-card .np-badge {
+  font-size:0.7rem; font-weight:700; letter-spacing:0.06em;
+  opacity:0.55; padding:8px 16px 4px; display:block;
+}
+#new-popup-card .np-img {
+  display:block; width:100%; max-height:75vh; object-fit:contain;
+  background:rgba(255,255,255,0.05);
+}
+#new-popup-card .np-nick {
+  font-size:0.78rem; opacity:0.55; text-align:right; font-weight:700;
+  padding:6px 16px 12px;
+}
+#new-popup-card .np-nick::before { content:'— '; }
+#new-popup-bar {
+  position:absolute; bottom:0; left:0; height:4px;
+  background:rgba(0,0,0,0.25); border-radius:0;
+  transition:width linear;
+}
+
+/* ── 자동 팝업 ── */
+#popup-overlay {
+  display:none; position:fixed; inset:0; z-index:400;
+  align-items:center; justify-content:center;
+  background:rgba(0,0,0,0); backdrop-filter:blur(0px);
+  transition:background 0.3s, backdrop-filter 0.3s;
+}
+#popup-overlay.show { display:flex; }
+#popup-overlay.show.ready { background:rgba(0,0,0,0.55); backdrop-filter:blur(5px); }
+#popup-card {
+  position:fixed;
+  width:var(--popup-w, 45vw);
+  max-width:90vw;
+  border-radius:6px 24px 24px 24px;
+  box-shadow:0 24px 80px rgba(0,0,0,0.8), inset -2px -2px 0 rgba(255,255,255,0.15);
+  overflow:hidden;
+  max-height:95vh;
+  transform-origin:top left;
+  transition:left 0.42s cubic-bezier(0.175,0.885,0.32,1.275),
+             top  0.42s cubic-bezier(0.175,0.885,0.32,1.275),
+             width 0.42s cubic-bezier(0.175,0.885,0.32,1.275),
+             opacity 0.25s ease;
+}
+#popup-card::before {
+  content:''; display:block; height:10px;
+  background:rgba(0,0,0,0.14);
+}
+#popup-card .pc-img {
+  display:block; width:100%; max-height:80vh; object-fit:contain;
+  background:rgba(255,255,255,0.05);
+}
+#popup-card .pc-nick {
+  font-size:0.85rem; opacity:0.55; text-align:right; font-weight:700;
+  padding:8px 18px 14px;
+}
+#popup-card .pc-nick::before { content:'— '; }
+#popup-bar { position:absolute; bottom:0; left:0; height:4px; opacity:0.3; transition:width linear; }
+.popup-close {
+  position:absolute; top:16px; right:16px;
+  width:28px; height:28px; border:none; border-radius:50%;
+  background:rgba(0,0,0,0.18); color:inherit; font-size:14px;
+  cursor:pointer; opacity:0.6; transition:opacity 0.15s;
+  display:flex; align-items:center; justify-content:center;
+}
+.popup-close:hover { opacity:1; }
+#popup-resize {
+  position:absolute; bottom:0; right:0; width:20px; height:20px;
+  cursor:se-resize; display:flex; align-items:flex-end; justify-content:flex-end;
+  padding:4px; opacity:0.35;
+}
+#popup-resize svg { width:12px; height:12px; }
+
+/* ── 더블클릭 확대 ── */
+#zoom-overlay {
+  display:none; position:fixed; inset:0; z-index:500;
+  background:rgba(0,0,0,0); backdrop-filter:blur(0px);
+  align-items:center; justify-content:center;
+  transition:background 0.3s, backdrop-filter 0.3s;
+  pointer-events:none;
+}
+#zoom-overlay.show { display:flex; pointer-events:auto; }
+#zoom-overlay.show.ready { background:rgba(0,0,0,0.72); backdrop-filter:blur(6px); }
+#zoom-card {
+  opacity:0; left:-9999px; top:-9999px;
+  position:fixed;
+  width:var(--popup-w, 45vw);
+  max-width:90vw;
+  border-radius:6px 24px 24px 24px;
+  box-shadow:0 20px 80px rgba(0,0,0,0.8), inset -2px -2px 0 rgba(255,255,255,0.15);
+  overflow:hidden;
+  max-height:95vh;
+}
+#zoom-card::before { content:''; display:block; height:10px; background:rgba(0,0,0,0.14); }
+#zoom-card .zc-img { display:block; width:100%; max-height:80vh; object-fit:contain; background:rgba(255,255,255,0.05); }
+#zoom-card .zc-nick { font-size:0.85rem; opacity:0.55; text-align:right; font-weight:700; padding:8px 18px 10px; }
+#zoom-card .zc-nick::before { content:'— '; }
+#zoom-controls {
+  display:flex; align-items:center; justify-content:flex-end; gap:6px;
+  padding:8px 14px; border-top:1px solid rgba(0,0,0,0.12);
+}
+#zoom-close {
+  position:absolute; top:16px; right:16px; width:30px; height:30px;
+  border:none; border-radius:50%; background:rgba(0,0,0,0.2); color:inherit;
+  font-size:16px; cursor:pointer; opacity:0.6; transition:opacity 0.15s;
+  display:flex; align-items:center; justify-content:center;
+}
+#zoom-close:hover { opacity:1; }
+#zoom-resize { position:absolute; bottom:0; right:0; width:20px; height:20px; cursor:se-resize; display:flex; align-items:flex-end; justify-content:flex-end; padding:4px; opacity:0.35; }
+#zoom-resize svg { width:12px; height:12px; }
+
+/* ── 하단 ── */
+#footer { text-align:center; padding:5px 8px; font-size:0.63rem; color:rgba(255,255,255,0.28); flex-shrink:0; position:relative; z-index:1; }
+#refresh-bar { display:inline-block; width:80px; height:2px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; vertical-align:middle; margin:0 5px; }
+#refresh-fill { height:100%; width:0%; background:rgba(99,102,241,0.7); border-radius:2px; transition:width linear; }
+
+/* ── 로딩 ── */
+#loading { position:fixed; inset:0; background:#0f172a; display:flex; align-items:center; justify-content:center; z-index:600; transition:opacity 0.6s; }
+#loading.fade-out { opacity:0; pointer-events:none; }
+#loading p { color:#a5b4fc; font-size:1rem; animation:pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+/* ── 빈 상태 ── */
+#empty-msg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column; gap:10px; color:rgba(255,255,255,0.28); font-size:0.9rem; pointer-events:none; }
+#empty-msg.show { display:flex; }
+#empty-msg .big { font-size:2.4rem; }
+
+/* ── 설정 패널 ── */
+#settings-wrap { position:fixed; bottom:36px; right:20px; z-index:300; display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+#settings-toggle { width:38px; height:38px; background:rgba(0,0,0,0.5); border:1.5px solid rgba(255,255,255,0.2); border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; backdrop-filter:blur(4px); transition:background 0.2s,transform 0.3s; user-select:none; }
+#settings-toggle:hover { background:rgba(0,0,0,0.7); }
+#settings-wrap.open #settings-toggle { transform:rotate(60deg); }
+#settings-panel {
+  background:rgba(10,10,30,0.9); border:1px solid rgba(255,255,255,0.15);
+  border-radius:14px; padding:16px 18px; width:270px;
+  backdrop-filter:blur(12px); display:none; flex-direction:column; gap:14px;
+  max-height:80vh; overflow-y:auto;
+}
+#settings-wrap.open #settings-panel { display:flex; }
+.setting-row { display:flex; flex-direction:column; gap:5px; }
+.setting-label { font-size:0.72rem; font-weight:700; color:rgba(255,255,255,0.6); letter-spacing:0.05em; }
+.setting-label span { float:right; color:#a5b4fc; font-weight:700; }
+.setting-divider { border:none; border-top:1px solid rgba(255,255,255,0.1); margin:2px 0; }
+.range-hints { display:flex; justify-content:space-between; font-size:0.6rem; color:rgba(255,255,255,0.3); margin-top:2px; }
+input[type=range] { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:rgba(255,255,255,0.15); outline:none; cursor:pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#6366f1; cursor:pointer; }
+.bg-input-row { display:flex; gap:6px; }
+.bg-input-row input { flex:1; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:7px 10px; color:#fff; font-size:0.75rem; font-family:inherit; outline:none; }
+.bg-input-row input::placeholder { color:rgba(255,255,255,0.3); }
+.bg-input-row input:focus { border-color:#6366f1; }
+.apply-btn { background:#6366f1; border:none; border-radius:8px; color:#fff; font-size:0.75rem; font-weight:700; padding:7px 12px; cursor:pointer; font-family:inherit; white-space:nowrap; transition:opacity 0.18s; }
+.apply-btn:hover { opacity:0.85; }
+.ghost-btn { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:rgba(255,255,255,0.6); font-size:0.75rem; font-weight:700; padding:7px 12px; cursor:pointer; font-family:inherit; transition:all 0.18s; white-space:nowrap; }
+.ghost-btn:hover { background:rgba(255,255,255,0.18); color:#fff; }
+.setting-hint { font-size:0.63rem; color:rgba(255,255,255,0.35); line-height:1.5; }
+.toggle-row { display:flex; align-items:center; justify-content:space-between; }
+.toggle-switch { position:relative; width:36px; height:20px; cursor:pointer; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; inset:0; background:rgba(255,255,255,0.15); border-radius:10px; transition:background 0.2s; }
+.toggle-slider::before { content:''; position:absolute; width:14px; height:14px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform 0.2s; }
+.toggle-switch input:checked + .toggle-slider { background:#6366f1; }
+.toggle-switch input:checked + .toggle-slider::before { transform:translateX(16px); }
+.mode-group { display:flex; flex-direction:column; gap:5px; }
+.mode-item { display:flex; align-items:center; gap:7px; cursor:pointer; font-size:0.73rem; color:rgba(255,255,255,0.6); }
+.mode-item input[type=radio] { accent-color:#6366f1; width:14px; height:14px; cursor:pointer; }
+.color-swatch-row { display:flex; gap:6px; flex-wrap:wrap; }
+.color-swatch { width:24px; height:24px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:transform 0.12s, border-color 0.12s; }
+.color-swatch.active { border-color:#fff; transform:scale(1.2); }
+
+/* ── API 설정 오버레이 ── */
+.config-overlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);align-items:center;justify-content:center}.config-overlay.show{display:flex}
+.config-dialog{background:#1e293b;border:1px solid rgba(139,92,246,0.3);border-radius:16px;padding:32px;max-width:480px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.config-dialog h3{font-size:18px;font-weight:700;color:#a78bfa;margin-bottom:8px}.config-dialog p{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6}
+.config-dialog input{width:100%;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;font-family:inherit;outline:none;margin-bottom:16px}
+.config-dialog input:focus{border-color:#8b5cf6}
+.config-dialog .config-btns{display:flex;gap:10px;justify-content:flex-end}
+.config-dialog .config-btns button{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;border:none}
+.cfg-cancel{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6)}
+.cfg-save{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<div id="bg-layer"></div>
+<div id="loading"><p>✨ 방명록을 불러오는 중...</p></div>
+
+<!-- API 설정 오버레이 -->
+<div class="config-overlay" id="configOverlay">
+  <div class="config-dialog">
+    <h3>⚙️ API 연결 설정</h3>
+    <p>Google Apps Script 웹앱 URL을 입력해주세요.<br>배포 → 새 배포 → 웹 앱으로 배포 후 URL을 입력합니다.</p>
+    <input id="apiUrlInput" placeholder="https://script.google.com/macros/s/.../exec" value="">
+    <div class="config-btns">
+      <button class="cfg-cancel" onclick="closeConfig()">취소</button>
+      <button class="cfg-save" onclick="saveConfig()">저장 후 새로고침</button>
+    </div>
+  </div>
+</div>
+
+<div id="header">
+  <h1>🎉 서울복지 4.0 — 축하 방명록 <span id="msg-count">0개</span></h1>
+  <p>전자방명록이 실시간으로 쌓입니다</p>
+</div>
+
+<div id="board">
+  <div id="empty-msg"><span class="big">📭</span><span>아직 등록된 방명록이 없습니다</span></div>
+</div>
+
+<div id="footer">
+  다음 새로고침
+  <span id="refresh-bar"><span id="refresh-fill"></span></span>
+  <span id="countdown">15</span>초 후
+</div>
+
+<!-- 신규 메시지 중앙 팝업 -->
+<div id="new-popup-overlay" onclick="closeNewPopup()">
+  <div id="new-popup-card" onclick="event.stopPropagation()">
+    <span class="np-badge" id="np-badge">🎉 새 방명록</span>
+    <img class="np-img" id="np-img" src="" alt=""/>
+    <div class="np-nick" id="np-nick"></div>
+    <div id="new-popup-bar" style="width:100%"></div>
+  </div>
+</div>
+
+<!-- 자동 팝업 -->
+<div id="popup-overlay" onclick="closePopup()">
+  <div id="popup-card" onclick="event.stopPropagation()">
+    <button class="popup-close" onclick="closePopup()">✕</button>
+    <img class="pc-img" id="pc-img" src="" alt=""/>
+    <div class="pc-nick" id="pc-nick"></div>
+    <div id="popup-bar"></div>
+    <div id="popup-resize">
+      <svg viewBox="0 0 10 10" fill="currentColor"><path d="M0 10L10 0M4 10L10 4M8 10L10 8"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- 더블클릭 확대 -->
+<div id="zoom-overlay" onclick="closeZoom()">
+  <div id="zoom-card" onclick="event.stopPropagation()">
+    <button id="zoom-close" onclick="closeZoom()">✕</button>
+    <img class="zc-img" id="zc-img" src="" alt=""/>
+    <div class="zc-nick" id="zc-nick"></div>
+    <div id="zoom-controls">
+      <button id="zoom-resize" style="background:none;border:none;padding:0;cursor:se-resize;opacity:0.35;">
+        <svg viewBox="0 0 10 10" width="14" height="14" fill="currentColor"><path d="M0 10L10 0M4 10L10 4M8 10L10 8"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 설정 패널 -->
+<div id="settings-wrap">
+  <div id="settings-panel">
+    <div class="setting-row">
+      <div class="setting-label">포스트잇 크기 <span id="note-size-val">200px</span></div>
+      <input type="range" id="note-size-slider" min="120" max="500" step="5" value="200" oninput="updateNoteSize(this.value)"/>
+      <div class="range-hints"><span>120px</span><span>500px</span></div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label">팝업 크기 <span id="popup-w-val">45%</span></div>
+      <input type="range" id="popup-w-slider" min="25" max="85" step="5" value="45" oninput="updatePopupW(this.value)"/>
+      <div class="range-hints"><span>25%</span><span>85%</span></div>
+    </div>
+    <hr class="setting-divider"/>
+    <div class="setting-row">
+      <div class="toggle-row">
+        <div class="setting-label" style="float:none">🎲 자동 팝업</div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="popup-toggle" onchange="togglePopupAuto(this.checked)"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    <div id="popup-settings" style="display:none;flex-direction:column;gap:10px;">
+      <div class="setting-row">
+        <div class="setting-label">팝업 간격 <span id="popup-interval-val">30초</span></div>
+        <input type="range" id="popup-interval" min="5" max="120" step="5" value="30" oninput="updatePopupInterval(this.value)"/>
+        <div class="range-hints"><span>5초</span><span>120초</span></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">표시 시간 <span id="popup-show-val">8초</span></div>
+        <input type="range" id="popup-show" min="2" max="30" step="1" value="8" oninput="updatePopupShow(this.value)"/>
+        <div class="range-hints"><span>2초</span><span>30초</span></div>
+      </div>
+      <button class="ghost-btn" onclick="showNextPopup()" style="width:100%">▶ 지금 바로 보기</button>
+    </div>
+    <hr class="setting-divider"/>
+    <div class="setting-row">
+      <div class="setting-label" style="margin-bottom:6px">포스트잇 표시 모드</div>
+      <div class="mode-group">
+        <label class="mode-item"><input type="radio" name="display-mode" value="A" checked onchange="setDisplayMode('A')"/> 🗒 포스트잇 (배경 있음)</label>
+        <label class="mode-item"><input type="radio" name="display-mode" value="B"        onchange="setDisplayMode('B')"/> ✨ 글씨만 (흰색)</label>
+        <label class="mode-item"><input type="radio" name="display-mode" value="C"        onchange="setDisplayMode('C')"/> 🎨 글씨만 (컬러)</label>
+      </div>
+    </div>
+    <div class="setting-row" id="color-palette-row">
+      <div class="setting-label" style="margin-bottom:6px">포스트잇 배경색</div>
+      <div class="color-swatch-row" id="color-swatches"></div>
+      <div class="setting-hint" style="margin-top:5px">클릭으로 추가/제거. 여러 개 선택 시 랜덤</div>
+    </div>
+    <hr class="setting-divider"/>
+    <div class="setting-row">
+      <div class="setting-label">새로고침 간격 <span id="interval-val">15초</span></div>
+      <input type="range" id="interval-slider" min="5" max="60" step="1" value="15" oninput="updateInterval(this.value)"/>
+      <div class="range-hints"><span>5초</span><span>60초</span></div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label">최대 포스트잇 수 <span id="max-notes-val">30개</span></div>
+      <input type="range" id="max-notes-slider" min="5" max="80" step="5" value="30" oninput="updateMaxNotes(this.value)"/>
+      <div class="range-hints"><span>5개</span><span>80개</span></div>
+    </div>
+    <hr class="setting-divider"/>
+    <div class="setting-row">
+      <div class="setting-label">배경 이미지 URL</div>
+      <div class="bg-input-row">
+        <input type="text" id="bg-url-input" placeholder="drive.google.com/file/d/.../view"/>
+        <button class="apply-btn" onclick="applyBg()">적용</button>
+      </div>
+      <div class="setting-hint">구글 드라이브 공유 링크</div>
+      <button class="ghost-btn" onclick="clearBg()" style="margin-top:4px">배경 제거</button>
+    </div>
+    <hr class="setting-divider"/>
+    <div class="setting-row">
+      <div class="setting-label">API 설정</div>
+      <button class="ghost-btn" onclick="openConfig()" style="width:100%">⚙️ API URL 변경</button>
+    </div>
+  </div>
+  <div id="settings-toggle" onclick="toggleSettings()">⚙️</div>
+</div>
+
+<script>
+// ── API 설정 ─────────────────────────────────────────────
+var API_URL = localStorage.getItem('wall_api_url') || '';
+
+function openConfig() {
+  document.getElementById('apiUrlInput').value = API_URL;
+  document.getElementById('configOverlay').classList.add('show');
+}
+function closeConfig() { document.getElementById('configOverlay').classList.remove('show'); }
+function saveConfig() {
+  var url = document.getElementById('apiUrlInput').value.trim();
+  if (!url) return;
+  API_URL = url;
+  localStorage.setItem('wall_api_url', url);
+  closeConfig();
+  location.reload();
+}
+
+function apiGet(action, params) {
+  if (!API_URL) return Promise.reject(new Error('API URL 미설정'));
+  var url = API_URL + '?action=' + action;
+  if (params) Object.keys(params).forEach(function(k) { url += '&' + k + '=' + encodeURIComponent(params[k]); });
+  return fetch(url).then(function(r) { return r.json(); }).then(function(r) {
+    if (!r.success) throw new Error(r.message || '서버 오류');
+    return r.data;
+  });
+}
+
+// ══════════════════════════════════════
+// 전역 상태
+// ══════════════════════════════════════
+var REFRESH_SEC    = 15;
+var MAX_NOTES      = 30;
+var NOTE_W         = 200;
+var POPUP_W_PCT    = 45;
+var POPUP_INTERVAL = 30;
+var POPUP_SHOW     = 8;
+var NEW_POPUP_SHOW = 4;
+
+var allMessages    = [];
+var notes          = [];
+var knownIds       = new Set();
+var refreshTimer, countdownTimer;
+var popupAutoOn    = false;
+var popupCursor    = 0;
+var popupTimer, popupBarTimer;
+var displayMode    = 'A';
+var newPopupQueue  = [];
+var newPopupBusy   = false;
+var newPopupBarTimer;
+var _popupSourceEl = null;
+var _zoomSourceEl  = null;
+var colorCursor    = 0;
+
+var ALL_COLORS = [
+  {bg:'#fef08a',text:'#713f12'},
+  {bg:'#93c5fd',text:'#1e3a5f'},
+  {bg:'#c4b5fd',text:'#3b0764'},
+  {bg:'#6ee7b7',text:'#064e3b'},
+  {bg:'#fca5a5',text:'#7f1d1d'},
+  {bg:'#fdba74',text:'#7c2d12'},
+  {bg:'#f0abfc',text:'#701a75'},
+  {bg:'#a5f3fc',text:'#164e63'},
+];
+var selectedColors = [0,1,2,3,4];
+
+// ══════════════════════════════════════
+// 설정
+// ══════════════════════════════════════
+function toggleSettings() { document.getElementById('settings-wrap').classList.toggle('open'); }
+
+function updateNoteSize(val) {
+  NOTE_W = parseInt(val);
+  document.getElementById('note-size-val').textContent = val + 'px';
+  document.documentElement.style.setProperty('--note-w', NOTE_W + 'px');
+  notes.forEach(function(n){ n.el.style.width = NOTE_W + 'px'; });
+  try { localStorage.setItem('noteW', val); } catch(e){}
+}
+function updatePopupW(val) {
+  POPUP_W_PCT = parseInt(val);
+  document.getElementById('popup-w-val').textContent = val + '%';
+  document.documentElement.style.setProperty('--popup-w', val + 'vw');
+}
+function updatePopupInterval(val) { POPUP_INTERVAL = parseInt(val); document.getElementById('popup-interval-val').textContent = val + '초'; }
+function updatePopupShow(val)     { POPUP_SHOW     = parseInt(val); document.getElementById('popup-show-val').textContent     = val + '초'; }
+
+function updateInterval(val) {
+  REFRESH_SEC = parseInt(val);
+  document.getElementById('interval-val').textContent = val + '초';
+  clearInterval(countdownTimer); clearTimeout(refreshTimer);
+  startRefreshCycle();
+}
+function updateMaxNotes(val) {
+  MAX_NOTES = parseInt(val);
+  document.getElementById('max-notes-val').textContent = val + '개';
+}
+
+function setDisplayMode(mode) {
+  displayMode = mode;
+  document.getElementById('color-palette-row').style.display = mode === 'A' ? 'flex' : 'none';
+  notes.forEach(function(n){ applyNoteMode(n.el, n); });
+  try { localStorage.setItem('displayMode', mode); } catch(e){}
+}
+
+function applyNoteMode(el, noteData) {
+  el.classList.remove('mode-b', 'mode-c');
+  if (displayMode === 'B') {
+    el.style.background = 'transparent'; el.style.color = 'rgba(255,255,255,0.9)'; el.classList.add('mode-b');
+  } else if (displayMode === 'C') {
+    el.style.background = 'transparent'; el.style.color = noteData.origBg || '#fef08a'; el.classList.add('mode-c');
+  } else {
+    el.style.background = noteData.origBg   || '#fef08a';
+    el.style.color      = noteData.origText || '#713f12';
+  }
+}
+
+function buildColorSwatches() {
+  var row = document.getElementById('color-swatches');
+  row.innerHTML = '';
+  ALL_COLORS.forEach(function(c, i) {
+    var sw = document.createElement('button');
+    sw.className = 'color-swatch' + (selectedColors.indexOf(i) >= 0 ? ' active' : '');
+    sw.style.background = c.bg; sw.title = c.bg;
+    sw.onclick = function() { toggleColorSwatch(i, sw); };
+    row.appendChild(sw);
+  });
+}
+
+function toggleColorSwatch(i, el) {
+  var idx = selectedColors.indexOf(i);
+  if (idx >= 0) { if (selectedColors.length <= 1) return; selectedColors.splice(idx, 1); el.classList.remove('active'); }
+  else { selectedColors.push(i); el.classList.add('active'); }
+  colorCursor = 0;
+}
+
+function pickColor() {
+  var colors = selectedColors.map(function(i){ return ALL_COLORS[i]; });
+  var pick   = colors[colorCursor % colors.length];
+  colorCursor++;
+  return pick;
+}
+
+function applyBg() {
+  var raw = document.getElementById('bg-url-input').value.trim();
+  if (!raw) return;
+  var url = raw;
+  var m = raw.match(/\/file\/d\/([^\/\?]+)/);
+  if (m) url = 'https://lh3.googleusercontent.com/d/' + m[1];
+  document.getElementById('bg-layer').style.backgroundImage = 'url("' + url + '")';
+  try { localStorage.setItem('boardBgUrl', url); } catch(e){}
+}
+function clearBg() {
+  document.getElementById('bg-layer').style.backgroundImage = 'none';
+  document.getElementById('bg-url-input').value = '';
+  try { localStorage.removeItem('boardBgUrl'); } catch(e){}
+}
+
+function restoreSettings() {
+  try {
+    var bg = localStorage.getItem('boardBgUrl');
+    if (bg) { document.getElementById('bg-layer').style.backgroundImage='url("'+bg+'")'; document.getElementById('bg-url-input').value=bg; }
+    var nw = localStorage.getItem('noteW');
+    if (nw) { document.getElementById('note-size-slider').value=nw; updateNoteSize(nw); }
+    var dm = localStorage.getItem('displayMode');
+    if (dm) {
+      displayMode = dm;
+      document.querySelector('input[name=display-mode][value="'+dm+'"]').checked = true;
+      setDisplayMode(dm);
+    }
+  } catch(e){}
+}
+
+// ══════════════════════════════════════
+// 자동 팝업 스케줄
+// ══════════════════════════════════════
+function togglePopupAuto(on) {
+  popupAutoOn = on;
+  document.getElementById('popup-settings').style.display = on ? 'flex' : 'none';
+  if (on) schedulePopup(); else clearTimeout(popupTimer);
+}
+function schedulePopup() { clearTimeout(popupTimer); if (!popupAutoOn || !notes.length) return; popupTimer = setTimeout(showNextPopup, POPUP_INTERVAL * 1000); }
+function showNextPopup() {
+  if (!notes.length) return;
+  var pick = notes[popupCursor % notes.length]; popupCursor++;
+  openPopup(pick);
+  if (popupAutoOn) schedulePopup();
+}
+
+// ══════════════════════════════════════
+// 신규 메시지 팝업 큐
+// ══════════════════════════════════════
+function enqueueNewPopup(msg) { newPopupQueue.push(msg); if (!newPopupBusy) processNewPopupQueue(); }
+function processNewPopupQueue() { if (!newPopupQueue.length) { newPopupBusy = false; return; } newPopupBusy = true; showNewPopup(newPopupQueue.shift()); }
+
+function showNewPopup(msg) {
+  var overlay = document.getElementById('new-popup-overlay');
+  var card    = document.getElementById('new-popup-card');
+  var pick    = pickColor();
+  card.style.background = pick.bg; card.style.color = pick.text;
+  document.getElementById('np-img').src = msg.imageData || '';
+  document.getElementById('np-nick').textContent = msg.nickname || '익명';
+  var bar = document.getElementById('new-popup-bar');
+  bar.style.transition = 'none'; bar.style.width = '100%'; bar.style.background = 'rgba(0,0,0,0.2)';
+  overlay.classList.add('show');
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    overlay.classList.add('ready');
+    setTimeout(function(){ bar.style.transition = 'width ' + NEW_POPUP_SHOW + 's linear'; bar.style.width = '0%'; }, 100);
+  }); });
+  newPopupBarTimer = setTimeout(function(){ closeNewPopupAndAddNote(msg, pick); }, (NEW_POPUP_SHOW * 1000) + 100);
+}
+
+function closeNewPopup() {
+  clearTimeout(newPopupBarTimer);
+  var overlay = document.getElementById('new-popup-overlay');
+  overlay.classList.remove('ready');
+  setTimeout(function(){ overlay.classList.remove('show'); newPopupBusy = false; processNewPopupQueue(); }, 320);
+}
+function closeNewPopupAndAddNote(msg, pick) {
+  var overlay = document.getElementById('new-popup-overlay');
+  overlay.classList.remove('ready');
+  setTimeout(function(){ overlay.classList.remove('show'); addNote(msg, pick); setTimeout(function(){ newPopupBusy = false; processNewPopupQueue(); }, 900); }, 320);
+}
+
+// ══════════════════════════════════════
+// 포스트잇 팝업 (단일클릭)
+// ══════════════════════════════════════
+function openPopup(noteData) {
+  var card = document.getElementById('popup-card'), overlay = document.getElementById('popup-overlay');
+  card.style.background = noteData.origBg || '#fef08a'; card.style.color = noteData.origText || '#713f12';
+  document.getElementById('pc-img').src = noteData.imageData || '';
+  document.getElementById('pc-nick').textContent = noteData.nickname || '익명';
+  var bar = document.getElementById('popup-bar');
+  bar.style.transition = 'none'; bar.style.width = '100%'; bar.style.background = noteData.origText || '#713f12';
+  var targetW = window.innerWidth * POPUP_W_PCT / 100;
+  var targetL = (window.innerWidth - targetW) / 2;
+  var targetT = window.innerHeight * 0.04;
+  _popupSourceEl = noteData.el;
+  card.style.transition = 'none'; overlay.classList.remove('ready'); overlay.classList.add('show');
+  var sr = noteData.el.getBoundingClientRect();
+  card.style.left = sr.left + 'px'; card.style.top = sr.top + 'px'; card.style.width = sr.width + 'px'; card.style.opacity = '0.85';
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    card.style.transition = 'left 0.42s cubic-bezier(0.175,0.885,0.32,1.275), top 0.42s cubic-bezier(0.175,0.885,0.32,1.275), width 0.42s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.3s ease';
+    card.style.left = targetL + 'px'; card.style.top = targetT + 'px'; card.style.width = targetW + 'px'; card.style.opacity = '1';
+    overlay.classList.add('ready'); noteData.el.style.opacity = '0.25';
+  }); });
+  document.addEventListener('keydown', onPopupKey);
+  clearTimeout(popupBarTimer);
+  setTimeout(function(){ bar.style.transition = 'width ' + POPUP_SHOW + 's linear'; bar.style.width = '0%'; popupBarTimer = setTimeout(closePopup, POPUP_SHOW * 1000); }, 460);
+  initResize('popup-resize', 'popup-card');
+}
+
+function closePopup() {
+  clearTimeout(popupBarTimer); document.removeEventListener('keydown', onPopupKey);
+  var card = document.getElementById('popup-card'), overlay = document.getElementById('popup-overlay');
+  overlay.classList.remove('ready');
+  if (_popupSourceEl) {
+    var sr = _popupSourceEl.getBoundingClientRect();
+    card.style.transition = 'left 0.35s cubic-bezier(0.55,0,1,0.45), top 0.35s cubic-bezier(0.55,0,1,0.45), width 0.35s cubic-bezier(0.55,0,1,0.45), opacity 0.25s ease';
+    card.style.left = sr.left + 'px'; card.style.top = sr.top + 'px'; card.style.width = sr.width + 'px'; card.style.opacity = '0';
+    _popupSourceEl.style.opacity = '';
+    setTimeout(function(){ overlay.classList.remove('show'); _popupSourceEl = null; }, 360);
+  } else { card.style.transition = 'opacity 0.2s ease'; card.style.opacity = '0'; setTimeout(function(){ overlay.classList.remove('show'); }, 220); }
+}
+function onPopupKey(e) { if(e.key==='Escape') closePopup(); }
+
+// ══════════════════════════════════════
+// 더블클릭 확대
+// ══════════════════════════════════════
+function openZoom(noteData) {
+  var card = document.getElementById('zoom-card'), overlay = document.getElementById('zoom-overlay');
+  _zoomSourceEl = noteData.el;
+  card.style.background = noteData.origBg || '#fef08a'; card.style.color = noteData.origText || '#713f12';
+  document.getElementById('zc-img').src = noteData.imageData || '';
+  document.getElementById('zc-nick').textContent = noteData.nickname || '익명';
+  var targetW = window.innerWidth * POPUP_W_PCT / 100;
+  var targetL = (window.innerWidth - targetW) / 2;
+  var targetT = window.innerHeight * 0.04;
+  card.style.transition = 'none'; overlay.classList.remove('ready'); overlay.classList.add('show');
+  var sr = noteData.el.getBoundingClientRect();
+  card.style.left = sr.left + 'px'; card.style.top = sr.top + 'px'; card.style.width = sr.width + 'px'; card.style.opacity = '0.85';
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    card.style.transition = 'left 0.38s cubic-bezier(0.175,0.885,0.32,1.275), top 0.38s cubic-bezier(0.175,0.885,0.32,1.275), width 0.38s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.28s ease';
+    card.style.left = targetL + 'px'; card.style.top = targetT + 'px'; card.style.width = targetW + 'px'; card.style.opacity = '1';
+    overlay.classList.add('ready'); noteData.el.style.opacity = '0.25';
+  }); });
+  document.addEventListener('keydown', onZoomKey);
+  initResize('zoom-resize', 'zoom-card');
+}
+function closeZoom() {
+  document.removeEventListener('keydown', onZoomKey);
+  var card = document.getElementById('zoom-card'), overlay = document.getElementById('zoom-overlay');
+  overlay.classList.remove('ready');
+  if (_zoomSourceEl) {
+    var sr = _zoomSourceEl.getBoundingClientRect();
+    card.style.transition = 'left 0.32s cubic-bezier(0.55,0,1,0.45), top 0.32s cubic-bezier(0.55,0,1,0.45), width 0.32s cubic-bezier(0.55,0,1,0.45), opacity 0.22s ease';
+    card.style.left = sr.left + 'px'; card.style.top = sr.top + 'px'; card.style.width = sr.width + 'px'; card.style.opacity = '0';
+    _zoomSourceEl.style.opacity = '';
+    setTimeout(function(){ overlay.classList.remove('show'); _zoomSourceEl = null; }, 340);
+  } else { card.style.transition = 'opacity 0.2s ease'; card.style.opacity = '0'; setTimeout(function(){ overlay.classList.remove('show'); }, 220); }
+}
+function onZoomKey(e) { if(e.key==='Escape') closeZoom(); }
+
+function initResize(handleId, cardId) {
+  var handle = document.getElementById(handleId); if (!handle) return;
+  var card = document.getElementById(cardId);
+  var sx, sw, on = false;
+  handle.onmousedown = function(e) { on = true; sx = e.clientX; sw = parseInt(getComputedStyle(card).width); e.preventDefault(); e.stopPropagation(); };
+  window.onmousemove = function(e) { if (!on) return; var nw = Math.max(260, Math.min(window.innerWidth * 0.92, sw + (e.clientX - sx))); card.style.width = nw + 'px'; };
+  window.onmouseup = function(){ on = false; };
+}
+
+// ══════════════════════════════════════
+// 포스트잇 생성
+// ══════════════════════════════════════
+function boardSize() { var b=document.getElementById('board'); return {w:b.clientWidth, h:b.clientHeight}; }
+function randomRot() { return ((Math.random()*8)-4).toFixed(2); }
+
+function findEmptyPos(bw, bh) {
+  var m=24, tries=50;
+  for (var t=0; t<tries; t++) {
+    var x = m + Math.random()*(bw - NOTE_W - m*2);
+    var y = m + Math.random()*(bh - NOTE_W*0.8 - m*2);
+    var overlap = false;
+    for (var i=0; i<notes.length; i++) { if (Math.abs(notes[i].x-x) < NOTE_W*0.65 && Math.abs(notes[i].y-y) < NOTE_W*0.65) { overlap=true; break; } }
+    if (!overlap) return {x:x, y:y};
+  }
+  return {x: m+Math.random()*(bw-NOTE_W-m*2), y: m+Math.random()*(bh-NOTE_W*0.8-m*2)};
+}
+
+function addNote(msg, colorPick) {
+  var board = document.getElementById('board');
+  var bs = boardSize(), pos = findEmptyPos(bs.w, bs.h), rot = randomRot();
+  var pick = colorPick || pickColor();
+  var el = document.createElement('div');
+  el.className = 'note entering'; el.dataset.id = msg.id; el.style.width = NOTE_W + 'px';
+  var noteData = { id: msg.id, el: el, x: pos.x, y: pos.y, imageData: msg.imageData, nickname: msg.nickname || '익명', origBg: pick.bg, origText: pick.text };
+  applyNoteMode(el, noteData);
+  el.innerHTML = '<img class="note-img" src="'+(msg.imageData||'')+'" alt="" loading="eager" draggable="false" onerror="this.style.opacity=0.15"/>' +
+    '<div class="note-nick">'+escHtml(msg.nickname||'익명')+'</div>';
+  makeDraggable(el, noteData);
+  el.style.setProperty('--tx', (pos.x - bs.w/2 + NOTE_W/2) + 'px');
+  el.style.setProperty('--ty', (pos.y - bs.h/2 + NOTE_W*0.4) + 'px');
+  el.style.setProperty('--rot', rot + 'deg');
+  board.appendChild(el);
+  el.addEventListener('animationend', function(){ el.classList.remove('entering'); el.style.left = pos.x + 'px'; el.style.top = pos.y + 'px'; el.style.transform = 'rotate('+rot+'deg)'; }, {once:true});
+  notes.push(noteData);
+  document.getElementById('empty-msg').classList.remove('show');
+  if (notes.length > MAX_NOTES) {
+    var old = notes.shift(); old.el.style.transition = 'opacity 0.5s'; old.el.style.opacity = '0';
+    setTimeout(function(){ old.el.remove(); }, 500);
+    knownIds.delete(old.id);
+    allMessages = allMessages.filter(function(m){ return m.id !== old.id; });
+  }
+  updateCount();
+}
+
+// ══════════════════════════════════════
+// 드래그 + 클릭 + 더블클릭
+// ══════════════════════════════════════
+function makeDraggable(el, noteData) {
+  var sx,sy,sl,st, moved=false, dragging=false, lastTap=0;
+  var clickTimer = null;
+  function onDown(e) {
+    if (e.target.closest && e.target.closest('#settings-wrap')) return;
+    moved=false; dragging=true; el.classList.add('dragging'); el.style.transition='none';
+    var t=e.touches?e.touches[0]:e; sx=t.clientX; sy=t.clientY;
+    sl=parseInt(el.style.left)||0; st=parseInt(el.style.top)||0; el.style.zIndex=200;
+    if (e.touches) { var now=Date.now(); if (now-lastTap<300) { clearTimeout(clickTimer); openZoom(noteData); dragging=false; el.classList.remove('dragging'); return; } lastTap=now; }
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!dragging) return; var t=e.touches?e.touches[0]:e;
+    var dx=t.clientX-sx, dy=t.clientY-sy; if (Math.abs(dx)>5||Math.abs(dy)>5) moved=true;
+    var board=document.getElementById('board');
+    var nx=Math.max(10, Math.min(board.clientWidth-NOTE_W-10, sl+dx));
+    var ny=Math.max(10, Math.min(board.clientHeight-100-10, st+dy));
+    el.style.left=nx+'px'; el.style.top=ny+'px'; noteData.x=nx; noteData.y=ny; e.preventDefault();
+  }
+  function onUp() { if (!dragging) return; dragging=false; el.classList.remove('dragging'); el.style.transition=''; el.style.zIndex=''; }
+  el.addEventListener('click', function(e) { if (moved) return; clearTimeout(clickTimer); clickTimer = setTimeout(function() { openPopup(noteData); }, 250); });
+  el.addEventListener('dblclick', function(e) { clearTimeout(clickTimer); if (!moved) openZoom(noteData); e.stopPropagation(); });
+  el.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  el.addEventListener('touchstart', onDown, {passive:false});
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('touchend', onUp);
+}
+
+// ══════════════════════════════════════
+// 데이터 로드 (REST API)
+// ══════════════════════════════════════
+function loadMessages() {
+  if (!API_URL) { hideLoading(); document.getElementById('empty-msg').classList.add('show'); return; }
+
+  apiGet('getMessages')
+    .then(function(msgs) {
+      hideLoading();
+      if (!msgs || !Array.isArray(msgs)) return;
+      var newMsgs = msgs.filter(function(m){ return !knownIds.has(m.id); }).reverse();
+      if (!newMsgs.length && !notes.length) { document.getElementById('empty-msg').classList.add('show'); }
+      if (!newMsgs.length) return;
+
+      var idx = 0;
+      function loadNext() {
+        if (idx >= newMsgs.length) return;
+        var m = newMsgs[idx++];
+        if (knownIds.has(m.id) || !m.fileId) { loadNext(); return; }
+        knownIds.add(m.id);
+        allMessages.push(m);
+
+        apiGet('getImageBase64', { fileId: m.fileId })
+          .then(function(dataUrl) {
+            if (!dataUrl) { knownIds.delete(m.id); allMessages = allMessages.filter(function(x){ return x.id !== m.id; }); loadNext(); return; }
+            m.imageData = dataUrl;
+            enqueueNewPopup(m);
+            loadNext();
+          })
+          .catch(function() { knownIds.delete(m.id); allMessages = allMessages.filter(function(x){ return x.id !== m.id; }); loadNext(); });
+      }
+      loadNext();
+    })
+    .catch(function(err) { hideLoading(); console.error(err); });
+}
+
+function hideLoading() {
+  var l = document.getElementById('loading'); if (!l) return;
+  l.classList.add('fade-out'); setTimeout(function(){ if(l.parentNode) l.remove(); }, 700);
+}
+
+function updateCount() { document.getElementById('msg-count').textContent = notes.length + '개'; }
+
+function startRefreshCycle() {
+  var elapsed=0;
+  var fill=document.getElementById('refresh-fill');
+  var cd=document.getElementById('countdown');
+  clearInterval(countdownTimer); clearTimeout(refreshTimer);
+  fill.style.transition='none'; fill.style.width='0%';
+  countdownTimer = setInterval(function(){
+    elapsed++;
+    fill.style.transition='width 1s linear';
+    fill.style.width=(elapsed/REFRESH_SEC*100).toFixed(1)+'%';
+    cd.textContent=REFRESH_SEC-elapsed;
+    if(elapsed>=REFRESH_SEC) clearInterval(countdownTimer);
+  }, 1000);
+  refreshTimer = setTimeout(function(){ loadMessages(); startRefreshCycle(); }, REFRESH_SEC*1000);
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ══════════════════════════════════════
+// 초기 실행
+// ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  restoreSettings();
+  buildColorSwatches();
+  document.documentElement.style.setProperty('--popup-w', POPUP_W_PCT + 'vw');
+  document.documentElement.style.setProperty('--note-w',  NOTE_W + 'px');
+
+  if (!API_URL) {
+    hideLoading();
+    document.getElementById('empty-msg').classList.add('show');
+    openConfig();
+  } else {
+    loadMessages();
+  }
+  startRefreshCycle();
+});
+</script>
+</body>
+</html>

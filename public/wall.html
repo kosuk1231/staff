@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>서울복지 4.0 — 전자방명록</title>
+<meta name="description" content="서울사회복지사협회 창립 40주년 기념행사 전자방명록">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #0f172a;
+}
+
+#app {
+  width: 100vw; height: 100vh;
+  display: flex; align-items: stretch;
+}
+
+/* ── 왼쪽: 캔버스 ── */
+#canvas-side {
+  flex: 1 1 0; min-width: 0;
+  display: flex; flex-direction: column;
+  padding: 18px 12px 18px 20px;
+  gap: 10px;
+}
+.canvas-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.canvas-header .title { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; text-transform: uppercase; }
+.canvas-header .hint  { font-size: 0.7rem; color: rgba(255,255,255,0.25); }
+
+.canvas-wrap {
+  flex: 1 1 0; min-height: 0;
+  position: relative; border-radius: 16px; overflow: hidden;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: #fff; touch-action: none; cursor: crosshair;
+}
+.canvas-wrap.has-focus    { border-color: rgba(139,92,246,0.6); box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
+.canvas-wrap.eraser-mode  { cursor: cell; }
+
+#drawing-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+.placeholder {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; pointer-events: none; transition: opacity 0.25s;
+}
+.placeholder .ph-icon { font-size: 2.4rem; opacity: 0.18; }
+.placeholder .ph-text { font-size: 1rem; font-weight: 500; color: #94a3b8; text-align: center; line-height: 1.6; opacity: 0.7; }
+
+/* ── 오른쪽: 컨트롤 ── */
+#control-side {
+  width: 284px; flex-shrink: 0;
+  display: flex; flex-direction: column;
+  padding: 18px 20px 18px 12px;
+  gap: 13px;
+}
+
+.panel-header { flex-shrink: 0; }
+.event-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #fff; font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.05em; padding: 3px 10px;
+  border-radius: 999px; margin-bottom: 7px;
+}
+.panel-title {
+  font-size: clamp(0.78rem, 2.6vw, 1.05rem);
+  font-weight: 900; color: #fff;
+  white-space: nowrap; margin-bottom: 4px;
+}
+.panel-sub { font-size: 0.7rem; color: rgba(255,255,255,0.35); }
+
+.sep { border: none; border-top: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+
+.ctrl-group { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+.ctrl-label { font-size: 0.68rem; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 0.07em; }
+
+/* 도구 버튼 */
+.tool-row { display: flex; gap: 6px; }
+.tool-btn {
+  flex: 1; height: 36px; border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.55); font-size: 0.78rem; font-weight: 700;
+  font-family: inherit; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: all 0.12s; -webkit-appearance: none; outline: none;
+}
+.tool-btn:active { transform: scale(0.95); }
+.tool-btn.active        { border-color: #8b5cf6; background: rgba(139,92,246,0.2); color: #c4b5fd; }
+.tool-btn.eraser.active { border-color: #f97316; background: rgba(249,115,22,0.15); color: #fdba74; }
+
+/* 색상 팔레트 */
+.color-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.color-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2.5px solid transparent; flex-shrink: 0;
+  cursor: pointer; transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  -webkit-appearance: none; outline: none;
+}
+.color-dot:active { transform: scale(0.85); }
+.color-dot.active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.3); transform: scale(1.15); }
+
+.custom-color-wrap { position: relative; width: 28px; height: 28px; flex-shrink: 0; }
+.custom-color-wrap input[type=color] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: none; padding: 0; }
+.custom-color-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2px dashed rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: rgba(255,255,255,0.4);
+  pointer-events: none; background: rgba(255,255,255,0.05);
+}
+
+/* 원형 사이즈 버튼 */
+.size-row {
+  display: flex; align-items: center;
+  gap: 0; height: 44px;
+}
+.size-btn {
+  width: 44px; height: 44px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none; cursor: pointer;
+  -webkit-appearance: none; outline: none;
+  position: relative;
+}
+.size-btn .dot-vis {
+  border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+  transition: background 0.12s, transform 0.12s;
+  pointer-events: none;
+}
+.size-btn.active .dot-vis {
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.25);
+}
+.size-btn:active .dot-vis { transform: scale(0.85); }
+
+/* 슬라이더 */
+.size-slider-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.size-slider-row .slider-label {
+  font-size: 0.68rem; color: rgba(255,255,255,0.35);
+  min-width: 28px; text-align: right; flex-shrink: 0;
+}
+.size-slider-row input[type=range] {
+  flex: 1; -webkit-appearance: none;
+  height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,0.15);
+  outline: none; cursor: pointer;
+}
+.size-slider-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #8b5cf6;
+  cursor: pointer; box-shadow: 0 0 0 3px rgba(139,92,246,0.3);
+}
+#eraser-size-group input[type=range]::-webkit-slider-thumb {
+  background: #f97316;
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.3);
+}
+
+/* 편집 버튼 */
+.action-row { display: flex; gap: 6px; }
+.act-btn {
+  flex: 1; height: 36px; border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.55); font-size: 0.72rem; font-weight: 700;
+  font-family: inherit; cursor: pointer;
+  transition: all 0.12s; -webkit-appearance: none;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.act-btn:active { transform: scale(0.95); }
+.act-btn:hover  { background: rgba(255,255,255,0.12); color: #fff; }
+.act-btn.danger:hover { border-color: rgba(239,68,68,0.5); color: #fca5a5; background: rgba(239,68,68,0.1); }
+
+/* 닉네임 */
+.nick-field { flex-shrink: 0; }
+.nick-field label { display: block; font-size: 0.68rem; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 0.07em; margin-bottom: 7px; }
+.nick-field label span { font-weight: 400; color: rgba(255,255,255,0.2); margin-left: 4px; }
+.nick-field input {
+  width: 100%; border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 12px; padding: 11px 14px;
+  font-family: inherit; font-size: 0.95rem; color: #fff; outline: none;
+  background: rgba(255,255,255,0.07);
+  transition: border-color 0.15s, box-shadow 0.15s; -webkit-appearance: none;
+}
+.nick-field input::placeholder { color: rgba(255,255,255,0.22); }
+.nick-field input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.2); background: rgba(255,255,255,0.1); }
+
+.result { display: none; padding: 10px 14px; border-radius: 10px; font-size: 0.8rem; font-weight: 500; text-align: center; line-height: 1.5; flex-shrink: 0; }
+.result.error { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+.submit-btn {
+  width: 100%; margin-top: auto;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #fff; border: none; border-radius: 14px;
+  height: 52px; padding: 0 20px;
+  font-family: inherit; font-size: 1rem; font-weight: 700;
+  cursor: pointer; transition: opacity 0.18s, transform 0.12s;
+  -webkit-appearance: none; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.submit-btn:active:not(:disabled) { transform: scale(0.97); }
+.submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── 성공 화면 ── */
+#success-screen {
+  display: none; width: 100vw; height: 100vh; background: #0f172a;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; text-align: center; padding: 40px;
+}
+.success-circle { width: 80px; height: 80px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0; }
+#success-screen h2 { font-size: 1.6rem; font-weight: 900; color: #fff; }
+#success-screen p  { font-size: 0.85rem; color: rgba(255,255,255,0.4); line-height: 1.7; }
+.preview-wrap { border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.12); background: #fff; max-width: 500px; width: 100%; }
+.preview-wrap img { display: block; width: 100%; max-height: 240px; object-fit: contain; }
+.another-btn {
+  padding: 12px 32px; border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 999px; font-size: 0.9rem; font-weight: 700;
+  color: rgba(255,255,255,0.6); cursor: pointer;
+  background: rgba(255,255,255,0.06); font-family: inherit;
+  transition: all 0.15s; -webkit-appearance: none;
+}
+.another-btn:active { transform: scale(0.97); }
+
+/* ── API 설정 오버레이 ── */
+.config-overlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);align-items:center;justify-content:center}.config-overlay.show{display:flex}
+.config-dialog{background:#1e293b;border:1px solid rgba(139,92,246,0.3);border-radius:16px;padding:32px;max-width:480px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.config-dialog h3{font-size:18px;font-weight:700;color:#a78bfa;margin-bottom:8px}.config-dialog p{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6}
+.config-dialog input{width:100%;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;font-family:inherit;outline:none;margin-bottom:16px}
+.config-dialog input:focus{border-color:#8b5cf6}
+.config-dialog .config-btns{display:flex;gap:10px;justify-content:flex-end}
+.config-dialog .config-btns button{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;border:none}
+.cfg-cancel{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6)}
+.cfg-save{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff}
+
+/* ── 모바일 ── */
+@media(max-width:768px){
+  #app { flex-direction: column; }
+  #canvas-side { padding: 12px; flex: 1; }
+  #control-side { width: 100%; padding: 12px 16px; overflow-y: auto; max-height: 50vh; }
+}
+</style>
+</head>
+<body>
+
+<!-- API 설정 오버레이 -->
+<div class="config-overlay" id="configOverlay">
+  <div class="config-dialog">
+    <h3>⚙️ API 연결 설정</h3>
+    <p>Google Apps Script 웹앱 URL을 입력해주세요.<br>배포 → 새 배포 → 웹 앱으로 배포 후 URL을 입력합니다.</p>
+    <input id="apiUrlInput" placeholder="https://script.google.com/macros/s/.../exec" value="">
+    <div class="config-btns">
+      <button class="cfg-cancel" onclick="closeConfig()">취소</button>
+      <button class="cfg-save" onclick="saveConfig()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <!-- 왼쪽: 캔버스 -->
+  <div id="canvas-side">
+    <div class="canvas-header">
+      <span class="title">전자방명록</span>
+      <span class="hint">손가락 또는 S펜으로 작성</span>
+    </div>
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="drawing-canvas"></canvas>
+      <div class="placeholder" id="placeholder">
+        <span class="ph-icon">✍️</span>
+        <span class="ph-text">축하 메시지와 서명을<br>작성해주세요</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 오른쪽: 컨트롤 -->
+  <div id="control-side">
+
+    <!-- 헤더 -->
+    <div class="panel-header">
+      <div><span class="event-badge">🎉 창립 40주년 기념행사</span></div>
+      <div class="panel-title" id="panelTitle">서울복지 4.0</div>
+      <div class="panel-sub" id="panelSub">2026.4.22 (수) · 백범김구기념관</div>
+    </div>
+
+    <hr class="sep"/>
+
+    <!-- 도구 -->
+    <div class="ctrl-group">
+      <span class="ctrl-label">도구</span>
+      <div class="tool-row">
+        <button class="tool-btn active" id="btn-pen"    onclick="setTool('pen')">✏️ 펜</button>
+        <button class="tool-btn eraser" id="btn-eraser" onclick="setTool('eraser')">🧹 지우개</button>
+      </div>
+    </div>
+
+    <!-- 색상 -->
+    <div class="ctrl-group" id="color-group">
+      <span class="ctrl-label">색상</span>
+      <div class="color-row">
+        <button class="color-dot active" style="background:#1a1a2e" data-color="#1a1a2e" onclick="setColor(this)"></button>
+        <button class="color-dot" style="background:#ef4444" data-color="#ef4444" onclick="setColor(this)"></button>
+        <button class="color-dot" style="background:#f97316" data-color="#f97316" onclick="setColor(this)"></button>
+        <button class="color-dot" style="background:#eab308" data-color="#eab308" onclick="setColor(this)"></button>
+        <button class="color-dot" style="background:#22c55e" data-color="#22c55e" onclick="setColor(this)"></button>
+        <button class="color-dot" style="background:#3b82f6" data-color="#3b82f6" onclick="setColor(this)"></button>
+        <button class="color-dot" style="background:#8b5cf6" data-color="#8b5cf6" onclick="setColor(this)"></button>
+        <button class="color-dot" style="background:#ec4899" data-color="#ec4899" onclick="setColor(this)"></button>
+        <div class="custom-color-wrap">
+          <div class="custom-color-btn">＋</div>
+          <input type="color" id="custom-color" value="#000000" oninput="setCustomColor(this.value)"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- 펜 사이즈 -->
+    <div class="ctrl-group" id="pen-size-group">
+      <span class="ctrl-label">펜 굵기</span>
+      <div class="size-row" id="pen-size-btns"></div>
+      <div class="size-slider-row">
+        <input type="range" id="pen-slider" min="1" max="40" step="1" value="5" oninput="onPenSlider(this.value)"/>
+        <span class="slider-label" id="pen-slider-val">5</span>
+      </div>
+    </div>
+
+    <!-- 지우개 사이즈 -->
+    <div class="ctrl-group" id="eraser-size-group" style="display:none;">
+      <span class="ctrl-label">지우개 크기</span>
+      <div class="size-row" id="eraser-size-btns"></div>
+      <div class="size-slider-row">
+        <input type="range" id="eraser-slider" min="4" max="80" step="1" value="18" oninput="onEraserSlider(this.value)"/>
+        <span class="slider-label" id="eraser-slider-val">18</span>
+      </div>
+    </div>
+
+    <!-- 편집 -->
+    <div class="ctrl-group">
+      <span class="ctrl-label">편집</span>
+      <div class="action-row">
+        <button class="act-btn" onclick="undo()">↩ 되돌리기</button>
+        <button class="act-btn danger" onclick="clearCanvas()">🗑 전체 지우기</button>
+      </div>
+    </div>
+
+    <hr class="sep"/>
+
+    <!-- 닉네임 -->
+    <div class="nick-field">
+      <label>닉네임 <span>(선택 · 미입력 시 익명)</span></label>
+      <input type="text" id="nickname" placeholder="예: 서울복지인" maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false"/>
+    </div>
+
+    <div class="result" id="result-msg"></div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitForm()">
+      방명록 남기기 ✉️
+    </button>
+  </div>
+</div>
+
+<!-- 성공 화면 -->
+<div id="success-screen">
+  <div class="success-circle">✅</div>
+  <h2>등록 완료!</h2>
+  <div class="preview-wrap"><img id="preview-img" src="" alt="내가 쓴 방명록"/></div>
+  <p>잠시 후 현장 전광판에서 확인하실 수 있습니다</p>
+  <button class="another-btn" onclick="resetForm()">+ 다른 방명록 남기기</button>
+</div>
+
+<script>
+// ── API 설정 ─────────────────────────────────────────────
+var API_URL = localStorage.getItem('wall_api_url') || '';
+
+function openConfig() {
+  document.getElementById('apiUrlInput').value = API_URL;
+  document.getElementById('configOverlay').classList.add('show');
+}
+function closeConfig() { document.getElementById('configOverlay').classList.remove('show'); }
+function saveConfig() {
+  var url = document.getElementById('apiUrlInput').value.trim();
+  if (!url) return;
+  API_URL = url;
+  localStorage.setItem('wall_api_url', url);
+  closeConfig();
+  loadEventSettings();
+}
+
+function apiGet(action, params) {
+  if (!API_URL) return Promise.reject(new Error('API URL이 설정되지 않았습니다.'));
+  var url = API_URL + '?action=' + action;
+  if (params) Object.keys(params).forEach(function(k) { url += '&' + k + '=' + encodeURIComponent(params[k]); });
+  return fetch(url).then(function(r) { return r.json(); }).then(function(r) {
+    if (!r.success) throw new Error(r.message || '서버 오류');
+    return r.data;
+  });
+}
+
+function apiPost(action, data) {
+  if (!API_URL) return Promise.reject(new Error('API URL이 설정되지 않았습니다.'));
+  var body = Object.assign({ action: action }, data || {});
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  }).then(function(r) { return r.json(); });
+}
+
+// ── 사이즈 프리셋 ─────────────────────────────────────────
+var PEN_SIZES    = [2, 4, 7, 12, 18, 28];
+var ERASER_SIZES = [4, 8, 14, 22, 34, 52];
+
+// ── 상태 ─────────────────────────────────────────────────
+var penColor     = '#1a1a2e';
+var penSize      = 5;
+var eraserSize   = 18;
+var currentTool  = 'pen';
+var isDrawing    = false;
+var lastX = 0, lastY = 0;
+var hasDrawn  = false;
+var snapshots = [];
+var MAX_UNDO  = 30;
+var eventSettings = { title: '서울사회복지사협회 창립 40주년 기념행사', date: '2026.4.22(수)', place: '백범김구기념관' };
+
+// ── 캔버스 ───────────────────────────────────────────────
+var canvas      = document.getElementById('drawing-canvas');
+var ctx         = canvas.getContext('2d');
+var wrap        = document.getElementById('canvas-wrap');
+var placeholder = document.getElementById('placeholder');
+
+function initCanvas() {
+  var w = wrap.clientWidth, h = wrap.clientHeight;
+  if (w < 10 || h < 10) return;
+  canvas.width = w; canvas.height = h;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  snapshots = [ctx.getImageData(0, 0, w, h)];
+}
+
+function saveSnapshot() {
+  if (snapshots.length >= MAX_UNDO) snapshots.splice(1, 1);
+  snapshots.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+}
+
+function getPos(e) {
+  var rect = canvas.getBoundingClientRect();
+  var sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+  var src = e.touches ? e.touches[0] : e;
+  return { x: (src.clientX - rect.left) * sx, y: (src.clientY - rect.top) * sy };
+}
+
+function currentSize() { return currentTool === 'eraser' ? eraserSize : penSize; }
+
+function startDraw(e) {
+  e.preventDefault();
+  isDrawing = true;
+  wrap.classList.add('has-focus');
+  var pos = getPos(e);
+  lastX = pos.x; lastY = pos.y;
+
+  ctx.save();
+  ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+  ctx.beginPath();
+  ctx.arc(lastX, lastY, currentSize() / 2, 0, Math.PI * 2);
+  ctx.fillStyle = currentTool === 'eraser' ? 'rgba(0,0,0,1)' : penColor;
+  ctx.fill();
+  ctx.restore();
+
+  if (!hasDrawn && currentTool === 'pen') {
+    hasDrawn = true;
+    placeholder.style.opacity = '0';
+  }
+}
+
+function draw(e) {
+  if (!isDrawing) return;
+  e.preventDefault();
+  var pos = getPos(e);
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+  ctx.strokeStyle = currentTool === 'eraser' ? 'rgba(0,0,0,1)' : penColor;
+  ctx.lineWidth   = currentSize();
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
+  ctx.restore();
+  lastX = pos.x; lastY = pos.y;
+}
+
+function stopDraw() {
+  if (!isDrawing) return;
+  isDrawing = false;
+  saveSnapshot();
+}
+
+canvas.addEventListener('mousedown',  startDraw);
+canvas.addEventListener('mousemove',  draw);
+canvas.addEventListener('mouseup',    stopDraw);
+canvas.addEventListener('mouseleave', stopDraw);
+canvas.addEventListener('touchstart', startDraw, { passive: false });
+canvas.addEventListener('touchmove',  draw,      { passive: false });
+canvas.addEventListener('touchend',   stopDraw);
+
+// ── 원형 사이즈 버튼 생성 ─────────────────────────────────
+function buildSizeBtns(containerId, sizes, currentVal, onClickFn) {
+  var container = document.getElementById(containerId);
+  container.innerHTML = '';
+  var minS = sizes[0], maxS = sizes[sizes.length - 1];
+  sizes.forEach(function(s) {
+    var btn = document.createElement('button');
+    btn.className = 'size-btn' + (s === currentVal ? ' active' : '');
+    btn.dataset.size = s;
+    btn.onclick = function() { onClickFn(s, btn); };
+    var visSize = Math.round(6 + (s - minS) / (maxS - minS) * 30);
+    var dot = document.createElement('span');
+    dot.className = 'dot-vis';
+    dot.style.width  = visSize + 'px';
+    dot.style.height = visSize + 'px';
+    btn.appendChild(dot);
+    container.appendChild(btn);
+  });
+}
+
+function onPenSizeBtn(s, btn) {
+  penSize = s;
+  document.getElementById('pen-slider').value = s;
+  document.getElementById('pen-slider-val').textContent = s;
+  document.querySelectorAll('#pen-size-btns .size-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function onEraserSizeBtn(s, btn) {
+  eraserSize = s;
+  document.getElementById('eraser-slider').value = s;
+  document.getElementById('eraser-slider-val').textContent = s;
+  document.querySelectorAll('#eraser-size-btns .size-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function onPenSlider(val) {
+  penSize = parseInt(val);
+  document.getElementById('pen-slider-val').textContent = penSize;
+  var closest = PEN_SIZES.reduce(function(a, b){ return Math.abs(b - penSize) < Math.abs(a - penSize) ? b : a; });
+  document.querySelectorAll('#pen-size-btns .size-btn').forEach(function(b){
+    b.classList.toggle('active', parseInt(b.dataset.size) === closest);
+  });
+}
+
+function onEraserSlider(val) {
+  eraserSize = parseInt(val);
+  document.getElementById('eraser-slider-val').textContent = eraserSize;
+  var closest = ERASER_SIZES.reduce(function(a, b){ return Math.abs(b - eraserSize) < Math.abs(a - eraserSize) ? b : a; });
+  document.querySelectorAll('#eraser-size-btns .size-btn').forEach(function(b){
+    b.classList.toggle('active', parseInt(b.dataset.size) === closest);
+  });
+}
+
+// ── 도구 전환 ────────────────────────────────────────────
+function setTool(tool) {
+  currentTool = tool;
+  document.getElementById('btn-pen').classList.toggle('active',    tool === 'pen');
+  document.getElementById('btn-eraser').classList.toggle('active', tool === 'eraser');
+
+  var isPen = tool === 'pen';
+  document.getElementById('color-group').style.opacity       = isPen ? '1' : '0.35';
+  document.getElementById('color-group').style.pointerEvents = isPen ? 'auto' : 'none';
+  document.getElementById('pen-size-group').style.display    = isPen ? 'flex' : 'none';
+  document.getElementById('eraser-size-group').style.display = isPen ? 'none' : 'flex';
+  wrap.classList.toggle('eraser-mode', !isPen);
+}
+
+// ── 색상 ─────────────────────────────────────────────────
+function setColor(btn) {
+  if (currentTool === 'eraser') setTool('pen');
+  penColor = btn.dataset.color;
+  document.querySelectorAll('.color-dot').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+function setCustomColor(val) {
+  if (currentTool === 'eraser') setTool('pen');
+  penColor = val;
+  document.querySelectorAll('.color-dot').forEach(function(b){ b.classList.remove('active'); });
+}
+
+// ── Undo / Clear ─────────────────────────────────────────
+function undo() {
+  if (snapshots.length <= 1) return;
+  snapshots.pop();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.putImageData(snapshots[snapshots.length - 1], 0, 0);
+  if (snapshots.length === 1) {
+    hasDrawn = false;
+    placeholder.style.opacity = '1';
+    wrap.classList.remove('has-focus');
+  }
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  snapshots = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
+  hasDrawn = false;
+  placeholder.style.opacity = '1';
+  wrap.classList.remove('has-focus');
+}
+
+// ── 제출 ─────────────────────────────────────────────────
+function buildComposite(nickname) {
+  var barH  = Math.round(canvas.height * 0.07);
+  var fontSize = Math.round(barH * 0.38);
+  var padX  = Math.round(fontSize * 0.8);
+  var totalH = canvas.height + barH * 2;
+
+  var tmp = document.createElement('canvas');
+  tmp.width = canvas.width; tmp.height = totalH;
+  var t = tmp.getContext('2d');
+
+  t.fillStyle = '#ffffff';
+  t.fillRect(0, 0, tmp.width, totalH);
+
+  // 상단 바
+  t.fillStyle = '#f0f0f0';
+  t.fillRect(0, 0, tmp.width, barH);
+  t.fillStyle = '#999999';
+  t.font = 'bold ' + fontSize + 'px "Noto Sans KR", sans-serif';
+  t.textBaseline = 'middle';
+  var line1 = eventSettings.title || '서울사회복지사협회 창립 40주년 기념행사';
+  var line2 = (eventSettings.date || '') + (eventSettings.place ? ' · ' + eventSettings.place : '');
+  if (line2) {
+    t.font = 'bold ' + Math.round(fontSize * 0.9) + 'px "Noto Sans KR", sans-serif';
+    t.fillText(line1, padX, barH * 0.35);
+    t.font = Math.round(fontSize * 0.75) + 'px "Noto Sans KR", sans-serif';
+    t.fillText(line2, padX, barH * 0.72);
+  } else {
+    t.fillText(line1, padX, barH * 0.5);
+  }
+
+  t.drawImage(canvas, 0, barH);
+
+  // 하단 바
+  t.fillStyle = '#f0f0f0';
+  t.fillRect(0, barH + canvas.height, tmp.width, barH);
+  t.fillStyle = '#999999';
+  t.font = 'bold ' + fontSize + 'px "Noto Sans KR", sans-serif';
+  t.textBaseline = 'middle';
+  var nick = nickname || '익명';
+  t.fillText(nick, padX, barH + canvas.height + barH * 0.5);
+
+  var now = new Date();
+  var timeStr = now.getFullYear() + '.' + (now.getMonth()+1) + '.' + now.getDate() + ' '
+    + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  t.font = fontSize + 'px "Noto Sans KR", sans-serif';
+  t.textAlign = 'right';
+  t.fillText(timeStr, tmp.width - padX, barH + canvas.height + barH * 0.5);
+
+  return tmp.toDataURL('image/png');
+}
+
+function submitForm() {
+  if (!hasDrawn) return showError('손글씨나 그림을 먼저 그려주세요.');
+  if (!API_URL) { openConfig(); return showError('API URL을 먼저 설정해주세요.'); }
+
+  var nickname    = document.getElementById('nickname').value.trim();
+  var btn         = document.getElementById('submit-btn');
+  var imageBase64 = buildComposite(nickname);
+  btn.disabled = true; btn.textContent = '전송 중...';
+
+  apiPost('submitMessage', { imageBase64: imageBase64, nickname: nickname })
+    .then(function(res) {
+      btn.disabled = false; btn.textContent = '방명록 남기기 ✉️';
+      if (res.success) {
+        document.getElementById('preview-img').src              = imageBase64;
+        document.getElementById('app').style.display            = 'none';
+        document.getElementById('success-screen').style.display = 'flex';
+      } else {
+        showError(res.message || '오류가 발생했습니다.');
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false; btn.textContent = '방명록 남기기 ✉️';
+      showError('전송 실패: ' + (err.message || '잠시 후 다시 시도해주세요.'));
+    });
+}
+
+function showError(msg) {
+  var el = document.getElementById('result-msg');
+  el.className = 'result error'; el.textContent = msg; el.style.display = 'block';
+  setTimeout(function(){ el.style.display = 'none'; }, 4000);
+}
+
+function resetForm() {
+  clearCanvas(); setTool('pen');
+  document.getElementById('nickname').value               = '';
+  document.getElementById('success-screen').style.display = 'none';
+  document.getElementById('app').style.display            = 'flex';
+}
+
+// ── 이벤트 설정 로드 ─────────────────────────────────────
+function loadEventSettings() {
+  if (!API_URL) return;
+  apiGet('getEventSettings')
+    .then(function(s) {
+      if (s) {
+        eventSettings = s;
+        if (s.title) document.getElementById('panelTitle').textContent = s.title;
+        if (s.date || s.place) {
+          document.getElementById('panelSub').textContent = (s.date || '') + (s.place ? ' · ' + s.place : '');
+        }
+      }
+    })
+    .catch(function() { /* 무시 */ });
+}
+
+// ── 리사이즈 ─────────────────────────────────────────────
+var resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function() {
+    var imgData = hasDrawn ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null;
+    var oldW = canvas.width, oldH = canvas.height;
+    initCanvas();
+    if (imgData) {
+      var tmp = document.createElement('canvas');
+      tmp.width = oldW; tmp.height = oldH;
+      tmp.getContext('2d').putImageData(imgData, 0, 0);
+      ctx.drawImage(tmp, 0, 0, canvas.width, canvas.height);
+      saveSnapshot();
+    }
+  }, 150);
+});
+
+// ── 초기 실행 ────────────────────────────────────────────
+window.addEventListener('load', function() {
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      initCanvas();
+      buildSizeBtns('pen-size-btns',    PEN_SIZES,    penSize,    onPenSizeBtn);
+      buildSizeBtns('eraser-size-btns', ERASER_SIZES, eraserSize, onEraserSizeBtn);
+    });
+  });
+  loadEventSettings();
+});
+</script>
+</body>
+</html>
