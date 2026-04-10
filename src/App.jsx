@@ -505,7 +505,7 @@ function GuestbookTab() {
 // ============================================================
 // TAB: ATTENDEES (260)
 // ============================================================
-function AttendeesTab({ attendees, setAttendees }) {
+function AttendeesTab({ attendees, setAttendees, vipGuests, setVipGuests }) {
   const [search, setSearch] = useState("");
   const [filterTable, setFilterTable] = useState(0);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -610,21 +610,20 @@ function AttendeesTab({ attendees, setAttendees }) {
                   {row.map((t) => {
                     const isVipTable = VIP_TABLE_IDS.includes(t);
                     const tbGroup = isVipTable 
-                      ? { total: 10, checked: 0 }
+                      ? { total: 10, checked: vipGuests ? vipGuests.filter(v => v.table === t && v.checked).length : 0 }
                       : (tableStats.find(ts => ts.id === t) || { total: 0, checked: 0 });
                     
                     const isSelected = selectedTable === t;
                     
                     return (
                       <button key={t} onClick={() => {
-                        if (isVipTable) return;
                         setSelectedTable(isSelected ? null : t);
                       }} style={{
                         width: "44px", height: "44px",
                         borderRadius: "50%", 
                         border: `2px solid ${isVipTable ? TABLE_CONFIG[t].color : isSelected ? T.accent : T.border}`,
                         background: isVipTable ? `${TABLE_CONFIG[t].color}1A` : isSelected ? "rgba(145,201,192,0.1)" : "rgba(255,255,255,0.03)",
-                        cursor: isVipTable ? "default" : "pointer", display: "flex", flexDirection: "column",
+                        cursor: "pointer", display: "flex", flexDirection: "column",
                         alignItems: "center", justifyContent: "center", fontFamily: T.font,
                         transition: "all 0.2s",
                         opacity: isVipTable ? 0.9 : 1,
@@ -632,11 +631,9 @@ function AttendeesTab({ attendees, setAttendees }) {
                         <span style={{ fontSize: "10px", fontWeight: 700, color: isVipTable ? TABLE_CONFIG[t].color : T.textSec }}>
                           {isVipTable ? "내빈" : `T${t}`}
                         </span>
-                        {!isVipTable && (
-                          <span style={{ fontSize: "11px", fontWeight: 800, color: T.text }}>
-                            {tbGroup.checked}/{tbGroup.total}
-                          </span>
-                        )}
+                        <span style={{ fontSize: "11px", fontWeight: 800, color: isVipTable ? TABLE_CONFIG[t].color : T.text }}>
+                          {tbGroup.checked}/{tbGroup.total}
+                        </span>
                       </button>
                     );
                   })}
@@ -648,25 +645,54 @@ function AttendeesTab({ attendees, setAttendees }) {
           {selectedTable && (
             <div style={{
               background: "rgba(255,255,255,0.03)", borderRadius: T.radiusSm,
-              padding: "10px", marginTop: "8px",
+              padding: "12px", marginTop: "12px", border: `1px solid ${VIP_TABLE_IDS.includes(selectedTable) ? TABLE_CONFIG[selectedTable].color + '40' : T.border}`
             }}>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "8px" }}>
-                테이블 {selectedTable} 좌석 현황
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <span style={{ fontSize: "15px", fontWeight: 800, color: VIP_TABLE_IDS.includes(selectedTable) ? TABLE_CONFIG[selectedTable].color : T.accent }}>
+                  테이블 {selectedTable} 좌석 현황 {VIP_TABLE_IDS.includes(selectedTable) && "(내빈)"}
+                </span>
+                {VIP_TABLE_IDS.includes(selectedTable) && (
+                  <button
+                    onClick={() => {
+                      const name = window.prompt("추가할 내빈의 성함을 입력하세요:");
+                      if (!name) return;
+                      const org = window.prompt("소속이나 직책을 입력하세요:") || "-";
+                      const seat = window.prompt(`배정할 좌석 번호 (1~10):`) || "1";
+                      setVipGuests(prev => [...prev, {
+                        id: Date.now(), name, org, role: "-", table: selectedTable, seat: Number(seat), checked: true
+                      }]);
+                    }}
+                    style={{ ...ghostBtnStyle, padding: "5px 10px", fontSize: "12px", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "12px" }}
+                  >
+                    + 현장 추가
+                  </button>
+                )}
               </div>
-              {attendees.filter((a) => a.table === selectedTable).map((a) => (
+              {(VIP_TABLE_IDS.includes(selectedTable) ? vipGuests : attendees).filter((a) => a.table === selectedTable).map((a) => (
                 <div key={a.id} style={{
                   display: "flex", justifyContent: "space-between", alignItems: "center",
-                  padding: "4px 0", borderBottom: `1px solid ${T.border}`,
+                  padding: "8px 4px", borderBottom: `1px solid ${T.border}`, cursor: "pointer", transition: "all 0.2s"
+                }} onClick={() => {
+                  if (VIP_TABLE_IDS.includes(selectedTable)) {
+                    setVipGuests(prev => prev.map(v => v.id === a.id ? { ...v, checked: !v.checked } : v));
+                  } else {
+                    setAttendees(prev => prev.map(at => at.id === a.id ? { ...at, checked: !at.checked } : at));
+                  }
                 }}>
-                  <span style={{ fontSize: "13px", color: T.text }}>
-                    {a.seat}번 · {a.name} <span style={{ color: T.textSec }}>{a.org}</span>
+                  <span style={{ fontSize: "14px", color: T.text, opacity: a.checked ? 0.5 : 1 }}>
+                    <span style={{ display: "inline-block", width: "24px", color: T.textSec }}>{a.seat}</span>
+                    <b style={{ textDecoration: a.checked ? "line-through" : "none" }}>{a.name}</b> 
+                    <span style={{ color: T.textSec, fontSize: "12px", marginLeft: "6px" }}>{a.org}</span>
                   </span>
-                  <span style={badgeStyle(
+                  <span style={{...badgeStyle(
                     a.checked ? T.successBg : "rgba(255,255,255,0.05)",
                     a.checked ? T.success : T.textMuted,
-                  )}>{a.checked ? "참석" : "대기"}</span>
+                  ), fontSize: "11px", padding: "4px 8px" }}>{a.checked ? (VIP_TABLE_IDS.includes(selectedTable) ? "착석" : "참석") : "대기"}</span>
                 </div>
               ))}
+              {(VIP_TABLE_IDS.includes(selectedTable) ? vipGuests : attendees).filter((a) => a.table === selectedTable).length === 0 && (
+                <div style={{ textAlign: "center", padding: "16px", color: T.textMuted, fontSize: "13px" }}>배정된 인원이 없습니다.</div>
+              )}
             </div>
           )}
       </div>
@@ -1576,7 +1602,7 @@ export default function App() {
                 새로고침
               </button>
             </div>
-            <AttendeesTab attendees={attendees} setAttendees={setAttendees} />
+            <AttendeesTab attendees={attendees} setAttendees={setAttendees} vipGuests={vipGuests} setVipGuests={setVipGuests} />
           </div>
         )}
         {tab === "notices" && <NoticesTab notices={notices} setNotices={setNotices} />}
