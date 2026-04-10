@@ -80,6 +80,13 @@ function wallSubmitMessage(data) {
 
   var folder = DriveApp.getFolderById(WALL_FOLDER_ID);
   var file   = folder.createFile(blob);
+  
+  // 이미지를 전광판에서 바로 로드할 수 있도록 권한을 '링크가 있는 모든 사용자 보기'로 변경합니다.
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) {
+    Logger.log('공유 권한 설정 실패: ' + e.message);
+  }
 
   var sheet = wallGetOrCreateSheet();
   sheet.appendRow([

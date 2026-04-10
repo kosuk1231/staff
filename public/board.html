@@ -846,24 +846,13 @@ function loadMessages() {
       if (!newMsgs.length && !notes.length) { document.getElementById('empty-msg').classList.add('show'); }
       if (!newMsgs.length) return;
 
-      var idx = 0;
-      function loadNext() {
-        if (idx >= newMsgs.length) return;
-        var m = newMsgs[idx++];
-        if (knownIds.has(m.id) || !m.fileId) { loadNext(); return; }
+      newMsgs.forEach(function(m) {
+        if (!m.fileId) return;
         knownIds.add(m.id);
+        m.imageData = 'https://drive.google.com/uc?export=view&id=' + m.fileId;
         allMessages.push(m);
-
-        apiGet('getImageBase64', { fileId: m.fileId })
-          .then(function(dataUrl) {
-            if (!dataUrl) { knownIds.delete(m.id); allMessages = allMessages.filter(function(x){ return x.id !== m.id; }); loadNext(); return; }
-            m.imageData = dataUrl;
-            enqueueNewPopup(m);
-            loadNext();
-          })
-          .catch(function() { knownIds.delete(m.id); allMessages = allMessages.filter(function(x){ return x.id !== m.id; }); loadNext(); });
-      }
-      loadNext();
+        enqueueNewPopup(m);
+      });
     })
     .catch(function(err) { hideLoading(); console.error(err); });
 }
