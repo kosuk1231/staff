@@ -193,6 +193,7 @@ function apiPost(action, data) {
 
 // ─── 상태 변수 ────────────────────────────────────────────
 var guests = [], seats = [], photoMap = {}, councilIds = [], options = {};
+var TABLE_LABELS = { '2': '전현직 회장단', '3': '주요내빈석', '4': '단체장석', '5': '단체장석2' };
 var selectedTableGroup = null;
 var currentScreen = 'role', currentSort = 'name', councilSort = 'name';
 var selectedGuestId = null, confirmCallback = null, pollTimer = null;
@@ -409,10 +410,10 @@ function renderSeatGrid() {
   var html = '<div class="table-circle-container">';
   Object.keys(rows).sort().forEach(function(rk) {
     var tbl = rows[rk];
-    var isVIP = rk === '3' || rk === '4' || rk.indexOf('주요') >= 0;
+    var isVIP = rk === '3' || rk.indexOf('주요') >= 0;
     var isSelected = selectedTableGroup === rk;
     var cls = 'table-circle-btn' + (isVIP ? ' vip' : '') + (isSelected ? ' selected' : '');
-    var label = isVIP ? '주요내빈석' : '내빈석';
+    var label = TABLE_LABELS[rk] || (isVIP ? '주요내빈석' : '내빈석');
     var dispTbl = rk.indexOf('열') >= 0 ? rk.replace('열','') : rk;
     html += '<button class="' + cls + '" onclick="selectTableGroup(\'' + rk + '\')"><span class="tc-label">' + label + ' (' + dispTbl + ')</span><span class="tc-count">' + tbl.seated + '/' + tbl.total + '</span></button>';
   });
@@ -424,7 +425,7 @@ function renderSeatGrid() {
 
   if (selectedTableGroup && rows[selectedTableGroup]) {
     var rs = rows[selectedTableGroup].items.sort(function(a, b) { return a.순번 - b.순번; });
-    var tbLabel = (selectedTableGroup === '3' || selectedTableGroup === '4' || selectedTableGroup.indexOf('주요') >= 0) ? '주요내빈석' : '내빈석';
+    var tbLabel = TABLE_LABELS[selectedTableGroup] || ((selectedTableGroup === '3' || selectedTableGroup.indexOf('주요') >= 0) ? '주요내빈석' : '내빈석');
     var dispTbl = selectedTableGroup.indexOf('열') >= 0 ? selectedTableGroup.replace('열','') : selectedTableGroup;
     html += '<div class="table-seat-list">';
     html += '<div class="table-seat-header">' + tbLabel + ' (' + dispTbl + ') 좌석 현황</div>';
