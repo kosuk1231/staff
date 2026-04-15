@@ -25,48 +25,52 @@ const PROGRAM = [
 ];
 
 const VIP_GUESTS = [
-  { id: 1, name: "오세훈", org: "서울특별시", role: "서울시장", table: 3, seat: 1, checked: true },
+  // 테이블 3: 주요 내빈석
+  { id: 1, name: "오세훈", org: "서울특별시", role: "서울시장", table: 3, seat: 1, checked: false },
   { id: 2, name: "곽경인", org: "서울시사회복지사협회", role: "회장", table: 3, seat: 2, checked: false },
-  { id: 3, name: "남인순", org: "국회의원", role: "의원", table: 3, seat: 3, checked: true },
+  { id: 3, name: "남인순", org: "국회의원", role: "의원", table: 3, seat: 3, checked: false },
   { id: 4, name: "김연은", org: "연대회의", role: "상임대표", table: 3, seat: 4, checked: false },
   { id: 5, name: "조석영", org: "한국장애인복지관협회", role: "회장", table: 3, seat: 5, checked: false },
   { id: 6, name: "김태수", org: "서울시의회", role: "보건복지위원장", table: 3, seat: 6, checked: false },
-  { id: 7, name: "이영실", org: "서울시의회", role: "의원", table: 3, seat: 7, checked: true },
+  { id: 7, name: "이영실", org: "서울시의회", role: "의원", table: 3, seat: 7, checked: false },
   { id: 8, name: "김상철", org: "서울복지재단", role: "대표이사", table: 3, seat: 8, checked: false },
-  { id: 9, name: "박미경", org: "한국사회복지사협회", role: "부회장", table: 3, seat: 9, checked: true },
+  { id: 9, name: "박미경", org: "한국사회복지사협회", role: "부회장", table: 3, seat: 9, checked: false },
   { id: 10, name: "이재완", org: "사회복지공동모금회", role: "사무총장", table: 3, seat: 10, checked: false },
 
-  { id: 11, name: "장재구", org: "중앙사회복지관", role: "전)제11대 회장", table: 2, seat: 1, checked: true },
-  { id: 12, name: "심정원", org: "성산종합사회복지관", role: "현)제15대 회장", table: 2, seat: 2, checked: false },
-  { id: 13, name: "임성규", org: "전 서울시복지재단", role: "전)제10대 회장", table: 2, seat: 3, checked: false },
-  { id: 14, name: "강현덕", org: "영등포구가족센터", role: "수석부회장", table: 2, seat: 4, checked: true },
-  { id: 15, name: "김광제", org: "신목종합사회복지관", role: "권익옹호위원장", table: 2, seat: 5, checked: false },
-  { id: 16, name: "김아래미", org: "서울여자대학교", role: "정책위원장", table: 2, seat: 6, checked: false },
-  { id: 17, name: "변소현", org: "서부장애인종합복지관", role: "교육위원장", table: 2, seat: 7, checked: true },
-  { id: 18, name: "성미선", org: "강동노인종합복지관", role: "기획위원장", table: 2, seat: 8, checked: false },
-  { id: 19, name: "이천규", org: "서울은평노인복지관", role: "회원소통위원장", table: 2, seat: 9, checked: true },
+  // 테이블 2: 전현직 회장단 및 위원장단
+  { id: 11, name: "이천규", org: "역삼주간보호센터", role: "전현직 회장단", table: 2, seat: 1, checked: false },
+  { id: 12, name: "이은주", org: "도봉노인종합복지관", role: "전현직 회장단", table: 2, seat: 2, checked: false },
+  { id: 13, name: "김익환", org: "동작노인종합복지관", role: "전현직 회장단", table: 2, seat: 3, checked: false },
+  { id: 14, name: "신철민", org: "장위종합사회복지관", role: "전현직 회장단", table: 2, seat: 4, checked: false },
+  { id: 15, name: "성미선", org: "웰라이프백세인사회적협동조합", role: "전현직 회장단", table: 2, seat: 5, checked: false },
+  { id: 16, name: "김광제", org: "신목종합사회복지관", role: "전현직 회장단", table: 2, seat: 6, checked: false },
+  { id: 17, name: "강현덕", org: "영등포구가족센터", role: "수석부회장", table: 2, seat: 7, checked: false },
+  { id: 18, name: "김아래미", org: "서울여자대학교", role: "정책위원장", table: 2, seat: 8, checked: false },
+  { id: 19, name: "변소현", org: "서부장애인종합복지관", role: "교육위원장", table: 2, seat: 9, checked: false },
   { id: 20, name: "임명연", org: "마포영유아지원센터", role: "복지시민위원장", table: 2, seat: 10, checked: false },
 
-  { id: 21, name: "서동명", org: "동덕여자대학교", role: "교수", table: 4, seat: 1, checked: true },
-  { id: 22, name: "홍준호", org: "공생의 심장", role: "미래세대위원장", table: 4, seat: 2, checked: false },
-  { id: 23, name: "김일용", org: "즐거운사회복지궁리소", role: "선관위원장", table: 4, seat: 3, checked: true },
-  { id: 24, name: "서정화", org: "열린여성센터", role: "소장", table: 4, seat: 4, checked: false },
-  { id: 25, name: "박익현", org: "서북50플러스센터", role: "회장", table: 4, seat: 5, checked: false },
-  { id: 26, name: "백윤미", org: "서울시정신요양시설협회", role: "회장", table: 4, seat: 6, checked: false },
-  { id: 27, name: "신영숙", org: "여성폭력피해지원시설협회", role: "회장", table: 4, seat: 7, checked: true },
+  // 테이블 4: 단체장 및 위원장단
+  { id: 21, name: "권현수", org: "사당융합형우리동네키움센터", role: "키움센터 회장", table: 4, seat: 1, checked: false },
+  { id: 22, name: "김은영", org: "서울시지역아동센터협의회", role: "지역아동센터 회장", table: 4, seat: 2, checked: false },
+  { id: 23, name: "이봉원", org: "대한사회복지회", role: "대한사회복지회 회장", table: 4, seat: 3, checked: false },
+  { id: 24, name: "서동명", org: "동덕여자대학교", role: "교수", table: 4, seat: 4, checked: false },
+  { id: 25, name: "홍준호", org: "가슴뛰는연대공생", role: "미래세대위원장", table: 4, seat: 5, checked: false },
+  { id: 26, name: "김일용", org: "즐거운사회복지궁리소", role: "선관위원장", table: 4, seat: 6, checked: false },
+  { id: 27, name: "서정화", org: "열린여성센터", role: "소장", table: 4, seat: 7, checked: false },
   { id: 28, name: "이소영", org: "서울시아동복지협회", role: "회장", table: 4, seat: 8, checked: false },
-  { id: 29, name: "이은주", org: "서울시노인복지관협회", role: "회장", table: 4, seat: 9, checked: true },
+  { id: 29, name: "백윤미", org: "서울시정신요양시설협회", role: "회장", table: 4, seat: 9, checked: false },
   { id: 30, name: "임형균", org: "장애인복지관협회", role: "회장", table: 4, seat: 10, checked: false },
 
-  { id: 31, name: "정보영", org: "서울정신재활시설협회", role: "회장", table: 5, seat: 1, checked: true },
-  { id: 32, name: "한철수", org: "서울시노인복지협회", role: "회장", table: 5, seat: 2, checked: false },
-  { id: 33, name: "허곤", org: "장애인복지시설협회", role: "회장", table: 5, seat: 3, checked: false },
-  { id: 34, name: "정진모", org: "한국노인복지중앙회", role: "전)제8대 회장", table: 5, seat: 4, checked: true },
-  { id: 35, name: "김성주", org: "복지국가소사이어티", role: "대표", table: 5, seat: 5, checked: false },
-  { id: 36, name: "이다경", org: "서울복지연대", role: "운영위원", table: 5, seat: 6, checked: false },
-  { id: 37, name: "최은영", org: "한국도시연구소", role: "소장", table: 5, seat: 7, checked: false },
-  { id: 38, name: "정재훈", org: "서울여자대학교", role: "교수", table: 5, seat: 8, checked: true },
-  { id: 39, name: "권지웅", org: "청년복지정책연대", role: "대표", table: 5, seat: 9, checked: false },
+  // 테이블 5: 단체장 및 전직 임원
+  { id: 31, name: "권소현", org: "마포장애인종합복지관", role: "회장", table: 5, seat: 1, checked: false },
+  { id: 32, name: "신영숙", org: "여성폭력피해지원시설협회", role: "회장", table: 5, seat: 2, checked: false },
+  { id: 33, name: "정보영", org: "서울정신재활시설협회", role: "회장", table: 5, seat: 3, checked: false },
+  { id: 34, name: "한철수", org: "서울시노인복지협회", role: "회장", table: 5, seat: 4, checked: false },
+  { id: 35, name: "허곤", org: "장애인복지시설협회", role: "회장", table: 5, seat: 5, checked: false },
+  { id: 36, name: "정진모", org: "한국노인복지중앙회", role: "전)제8대 회장", table: 5, seat: 6, checked: false },
+  { id: 37, name: "이천규", org: "서울은평노인복지관", role: "회원소통위원장", table: 5, seat: 7, checked: false },
+  { id: 38, name: "정재훈", org: "서울여자대학교", role: "교수", table: 5, seat: 8, checked: false },
+  { id: 39, name: "최은영", org: "한국도시연구소", role: "소장", table: 5, seat: 9, checked: false },
   { id: 40, name: "윤민석", org: "서울연구원", role: "부연구위원", table: 5, seat: 10, checked: false },
 ];
 
@@ -469,36 +473,11 @@ function VipTab() {
 // TAB: GUESTBOOK
 // ============================================================
 function GuestbookTab() {
-  const [view, setView] = useState("board");
   return (
-    <div style={{ height: "calc(100vh - 125px)", margin: "-12px", display: "flex", flexDirection: "column", background: "#0f172a" }}>
-      <div style={{ padding: "10px", background: "#1e293b", borderBottom: "1px solid #334155", display: "flex", gap: "10px", justifyContent: "center" }}>
-        <button 
-          onClick={() => setView("board")}
-          style={{ 
-            padding: "8px 20px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.1)", 
-            background: view === "board" ? "linear-gradient(135deg, #3b82f6, #8b5cf6)" : "transparent", 
-            color: view === "board" ? "#fff" : "rgba(255,255,255,0.5)", 
-            fontWeight: "bold", cursor: "pointer", transition: "all 0.2s" 
-          }}
-        >
-          🖥️ 전광판 보기
-        </button>
-        <button 
-          onClick={() => setView("wall")}
-          style={{ 
-            padding: "8px 20px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.1)", 
-            background: view === "wall" ? "linear-gradient(135deg, #3b82f6, #8b5cf6)" : "transparent", 
-            color: view === "wall" ? "#fff" : "rgba(255,255,255,0.5)", 
-            fontWeight: "bold", cursor: "pointer", transition: "all 0.2s" 
-          }}
-        >
-          ✍️ 작성 폼
-        </button>
-      </div>
+    <div style={{ height: "calc(100vh - 125px)", margin: "-12px" }}>
       <iframe 
-        src={view === "board" ? "/board.html" : "/wall.html"} 
-        style={{ width: "100%", flex: 1, border: "none", display: "block" }} 
+        src="https://wall-ruby.vercel.app/" 
+        style={{ width: "100%", height: "100%", border: "none", display: "block" }} 
         title="방명록 시스템"
       />
     </div>
@@ -1443,7 +1422,7 @@ function StaffTab({ setStaffTeams }) {
 // ============================================================
 // GOOGLE SHEETS HELPER
 // ============================================================
-const SHEET_ID = "1xixpkKen7Ozky0carX6ZYhRSF6uRl5wpu10qrpM_o2s";
+const SHEET_ID = "1kUcjAtwyK85_ZWeRdOQ_UlyXhFCm0bah";
 const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
 
 function parseCSV(text) {
@@ -1461,6 +1440,8 @@ function parseCSV(text) {
     }
     row.push(field.trim());
     if (row.length >= 3 && row[1]) {
+      // 내빈으로 표시된 참석자는 VIP_GUESTS에서 별도 관리하므로 제외
+      if (row.length > 8 && row[8] && row[8].trim() === "내빈") continue;
       results.push({ name: row[1], org: row[2] || "" });
     }
   }
