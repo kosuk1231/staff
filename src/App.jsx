@@ -527,8 +527,9 @@ function VipTab() {
 // ============================================================
 // TAB: GUESTBOOK (Heart-shaped layout + Spreadsheet)
 // ============================================================
-const GUESTBOOK_SHEET_ID = "1nxOqb00oTt5ZuQ2Qx_hLcrC3b57iQXCRved0fPWEcC4";
+const GUESTBOOK_SHEET_ID = "1nhrBH-MYG_vvIH1OH0b1KamqG1ZPjfbNIJ_QjjAlFBE";
 const GUESTBOOK_CSV_URL = `https://docs.google.com/spreadsheets/d/${GUESTBOOK_SHEET_ID}/gviz/tq?tqx=out:csv`;
+const GUESTBOOK_API_URL = "https://script.google.com/macros/s/AKfycbxKwyes_jvVi-NAC8UKyyzraGgvUxWinMtivEYEd804ZUZGD5rCi_q2GkrTWc3onSE/exec";
 
 // Heart shape positions for messages
 function getHeartPositions(count) {
@@ -594,11 +595,11 @@ function GuestbookTab({ showToast }) {
           field += ch;
         }
         row.push(field.trim());
-        if (row.length >= 2 && row[0]) {
+        if (row.length >= 3 && row[1]) {
           parsed.push({
             id: `gb_${i}`,
-            name: row[0] || "익명",
-            message: row[1] || "",
+            name: row[1] || "익명",
+            message: row[2] || "",
             colorIdx: i % HEART_COLORS.length,
           });
         }
@@ -622,25 +623,42 @@ function GuestbookTab({ showToast }) {
 
   useEffect(() => { fetchMessages(); }, [fetchMessages]);
 
+  useEffect(() => {
+    const interval = setInterval(() => fetchMessages(), 30000);
+    return () => clearInterval(interval);
+  }, [fetchMessages]);
+
   const handleSubmit = async () => {
     if (!name.trim() || !message.trim()) {
       showToast("이름과 응원메시지를 모두 입력해주세요");
       return;
     }
     setSubmitting(true);
-    // Add locally immediately for UX
-    const newMsg = {
-      id: `local_${Date.now()}`,
-      name: name.trim(),
-      message: message.trim(),
-      colorIdx: messages.length % HEART_COLORS.length,
-    };
-    setMessages(prev => [newMsg, ...prev]);
-    setName("");
-    setMessage("");
-    showToast("응원메시지가 등록되었습니다! 💗");
+    try {
+      const res = await fetch(GUESTBOOK_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "submitMessage", name: name.trim(), message: message.trim() }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        const newMsg = {
+          id: `local_${Date.now()}`,
+          name: name.trim(),
+          message: message.trim(),
+          colorIdx: messages.length % HEART_COLORS.length,
+        };
+        setMessages(prev => [newMsg, ...prev]);
+        setName("");
+        setMessage("");
+        showToast("응원메시지가 등록되었습니다! 💗");
+      } else {
+        showToast(json.message || "등록에 실패했습니다");
+      }
+    } catch {
+      showToast("네트워크 오류 — 다시 시도해주세요");
+    }
     setSubmitting(false);
-    // TODO: POST to Apps Script when deployed
   };
 
   const positions = getHeartPositions(messages.length);
