@@ -81,6 +81,20 @@ const TABLE_CONFIG = {
   5: { seats: 10, label: "내빈석", color: "#F59E0B" },
 };
 
+// 10개 좌석 외각 점 좌표 (SVG viewBox 130×130 기준, 중심 65,65, 반지름 52)
+const SEAT_DOTS = [
+  [65,    13   ],  // seat 1  — 12시
+  [95.7,  23.4 ],  // seat 2  — 1~2시
+  [114.4, 51.6 ],  // seat 3  — 3시
+  [113,   81.9 ],  // seat 4  — 4~5시
+  [95.7,  106.6],  // seat 5  — 5~6시
+  [65,    117  ],  // seat 6  — 6시
+  [34.3,  106.6],  // seat 7  — 7~8시
+  [15.6,  81.9 ],  // seat 8  — 8~9시
+  [15.6,  51.6 ],  // seat 9  — 9~10시
+  [34.3,  23.4 ],  // seat 10 — 10~11시
+];
+
 const VIP_TABLE_IDS = [2, 3, 4, 5];
 const ALL_TABLE_IDS = Array.from({ length: 30 }, (_, i) => i + 1);
 
@@ -1334,6 +1348,197 @@ function AwardsTab() {
 }
 
 // ============================================================
+// TAB: SEATING MAP — Visual floor plan with seat dots
+// ============================================================
+function SeatingMapTab({ attendees, vipGuests }) {
+  const [selectedTable, setSelectedTable] = useState(null);
+
+  // 테이블별 착석 맵 생성: { tableId: Set<seatNumber> }
+  const checkedSeatMap = useMemo(() => {
+    const map = {};
+    ALL_TABLE_IDS.forEach(id => { map[id] = new Set(); });
+    attendees.forEach(a => { if (a.checked) map[a.table]?.add(a.seat); });
+    vipGuests.forEach(v => { if (v.checked) map[v.table]?.add(v.seat); });
+    return map;
+  }, [attendees, vipGuests]);
+
+  // 테이블별 전체/착석 수
+  const tableStats = useMemo(() => {
+    const stats = {};
+    ALL_TABLE_IDS.forEach(id => {
+      const isVip = VIP_TABLE_IDS.includes(id);
+      const members = isVip ? vipGuests.filter(v => v.table === id) : attendees.filter(a => a.table === id);
+      const checked = members.filter(m => m.checked).length;
+      stats[id] = { total: members.length, checked, members, isVip };
+    });
+    return stats;
+  }, [attendees, vipGuests]);
+
+  const renderTableSVG = (tableId, svgSize) => {
+    const isVip = VIP_TABLE_IDS.includes(tableId);
+    const cfg = TABLE_CONFIG[tableId];
+    const color = isVip ? (cfg?.color || T.accent) : T.accent;
+    const stat = tableStats[tableId] || { total: 0, checked: 0 };
+    const isFull = stat.total > 0 && stat.checked === stat.total;
+    const finalColor = isFull ? T.success : color;
+    const checkedSeats = checkedSeatMap[tableId] || new Set();
+
+    const label = isVip ? (cfg?.label || "내빈") : `T${tableId}`;
+    const isSelected = selectedTable === tableId;
+
+    return (
+      <div
+        key={tableId}
+        onClick={() => setSelectedTable(isSelected ? null : tableId)}
+        style={{
+          cursor: "pointer",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+          filter: isFull ? `drop-shadow(0 0 8px ${T.success}80)` : "none",
+          transition: "transform 0.15s, filter 0.3s",
+          transform: isSelected ? "scale(1.1)" : "scale(1)",
+        }}
+        title={`테이블 ${tableId} — ${stat.checked}/${stat.total}`}
+      >
+        <svg width={svgSize} height={svgSize} viewBox="0 0 130 130">
+          {/* 중앙 테이블 원 */}
+          <circle
+            cx="65" cy="65" r="36"
+            fill={isFull ? `${T.success}18` : (isSelected ? `${color}18` : "#111f1f")}
+            stroke={isSelected ? color : (isFull ? T.success : `${color}80`)}
+            strokeWidth={isSelected ? "3" : "2"}
+          />
+          {/* 라벨 */}
+          <text x="65" y={stat.total > 0 ? "60" : "65"} textAnchor="middle"
+            fill={isFull ? T.success : color}
+            fontSize={isVip ? "8" : "10"} fontWeight="700" fontFamily="sans-serif">
+            {label}
+          </text>
+          {/* 수치 */}
+          {stat.total > 0 && (
+            <text x="65" y="75" textAnchor="middle"
+              fill={isFull ? T.success : "#e8eded"}
+              fontSize="11" fontWeight="900" fontFamily="sans-serif">
+              {isFull ? `✓${stat.checked}` : `${stat.checked}/${stat.total}`}
+            </text>
+          )}
+          {/* 외각 좌석 점 10개 */}
+          {SEAT_DOTS.map(([cx, cy], dotIdx) => {
+            const seatNum = dotIdx + 1;
+            const isOccupied = checkedSeats.has(seatNum);
+            return (
+              <circle
+                key={dotIdx}
+                cx={cx} cy={cy}
+                r={isOccupied ? "7" : "6"}
+                fill={isOccupied ? finalColor : `${finalColor}18`}
+                stroke={isOccupied ? finalColor : `${finalColor}50`}
+                strokeWidth="1.5"
+              />
+            );
+          })}
+        </svg>
+        <div style={{ fontSize: "9px", color: isFull ? T.success : (isVip ? color : T.textMuted), fontWeight: isFull ? 700 : 400 }}>
+          {isFull ? "✓ 만석" : `T${tableId}`}
+        </div>
+      </div>
+    );
+  };
+
+  const totalChecked = ALL_TABLE_IDS.reduce((s, id) => s + (tableStats[id]?.checked || 0), 0);
+  const totalSeats = ALL_TABLE_IDS.reduce((s, id) => s + (tableStats[id]?.total || 0), 0);
+  const fullTables = ALL_TABLE_IDS.filter(id => {
+    const s = tableStats[id];
+    return s && s.total > 0 && s.checked === s.total;
+  }).length;
+
+  const selectedStat = selectedTable ? tableStats[selectedTable] : null;
+
+  return (
+    <div>
+      {/* 요약 통계 */}
+      <div className="stat-grid" style={{ marginBottom: "12px" }}>
+        <StatCard icon="🗺️" label="전체 테이블" value={ALL_TABLE_IDS.length} accent={T.accent} />
+        <StatCard icon="✅" label="만석 테이블" value={fullTables} accent={T.success} />
+        <StatCard icon="🪑" label="착석 인원" value={`${totalChecked}/${totalSeats}`} accent={T.accent} />
+      </div>
+
+      {/* 무대 */}
+      <div style={{
+        background: "linear-gradient(135deg, #162828, #1e3a3a)",
+        border: `1px solid ${T.accentBorder}`,
+        borderRadius: "10px",
+        textAlign: "center",
+        padding: "10px",
+        fontSize: "13px", fontWeight: 700, color: T.accent, letterSpacing: "3px",
+        marginBottom: "20px",
+      }}>
+        S T A G E &nbsp;（무대）
+      </div>
+
+      {/* 테이블 배치도 */}
+      <div style={{ overflowX: "auto", paddingBottom: "8px" }}>
+        {MAP_ROWS.map((row, rowIdx) => (
+          <div key={rowIdx} style={{
+            display: "flex", justifyContent: "center",
+            gap: "6px", marginBottom: "8px", flexWrap: "wrap",
+          }}>
+            {row.map(tableId => renderTableSVG(tableId, 88))}
+          </div>
+        ))}
+      </div>
+
+      {/* 선택된 테이블 상세 */}
+      {selectedTable && selectedStat && (
+        <div style={{
+          ...cardStyle, marginTop: "16px", padding: "16px",
+          borderTop: `3px solid ${VIP_TABLE_IDS.includes(selectedTable) ? (TABLE_CONFIG[selectedTable]?.color || T.accent) : T.accent}`,
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <span style={{ fontSize: "16px", fontWeight: 800, color: T.accent }}>
+              테이블 {selectedTable}
+              {VIP_TABLE_IDS.includes(selectedTable) && ` (${TABLE_CONFIG[selectedTable]?.label})`}
+            </span>
+            <span style={badgeStyle(
+              selectedStat.checked === selectedStat.total && selectedStat.total > 0 ? T.successBg : T.accentBg,
+              selectedStat.checked === selectedStat.total && selectedStat.total > 0 ? T.success : T.accent,
+            )}>
+              {selectedStat.checked}/{selectedStat.total}
+            </span>
+          </div>
+          {selectedStat.members.length === 0 ? (
+            <div style={{ textAlign: "center", color: T.textMuted, fontSize: "13px", padding: "12px" }}>
+              배정된 인원이 없습니다
+            </div>
+          ) : (
+            selectedStat.members.map((m, idx) => (
+              <div key={m.id || idx} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "8px 0", borderBottom: idx < selectedStat.members.length - 1 ? `1px solid ${T.border}` : "none",
+              }}>
+                <div>
+                  <span style={{ fontSize: "14px", fontWeight: 700, color: m.checked ? T.textSec : T.text }}>
+                    {m.name}
+                  </span>
+                  <span style={{ fontSize: "11px", color: T.textMuted, marginLeft: "6px" }}>
+                    좌석 {m.seat}
+                  </span>
+                </div>
+                <span style={badgeStyle(
+                  m.checked ? T.successBg : "rgba(255,255,255,0.05)",
+                  m.checked ? T.success : T.textMuted,
+                )}>
+                  {m.checked ? "착석" : "대기"}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // TAB: SUPPLIES
 // ============================================================
 function SuppliesTab() {
@@ -1764,6 +1969,7 @@ const TABS = [
   { id: "guestbook", label: "방명록", icon: "📝" },
   { id: "attendees", label: "참석자", icon: "\u{1F465}" },
   { id: "seating", label: "테이블", icon: "🪑" },
+  { id: "seatmap", label: "좌석도", icon: "🗺️" },
   { id: "notices", label: "공지", icon: "\u{1F4E2}" },
   { id: "emergency", label: "긴급", icon: "\u{1F6A8}" },
   { id: "awards", label: "포상", icon: "\u{1F3C6}" },
@@ -1880,6 +2086,7 @@ export default function App() {
           </div>
         )}
         {tab === "seating" && <SeatingTab attendees={attendees} vipGuests={vipGuests} showToast={showToast} />}
+        {tab === "seatmap" && <SeatingMapTab attendees={attendees} vipGuests={vipGuests} />}
         {tab === "notices" && <NoticesTab notices={notices} setNotices={setNotices} />}
         {tab === "emergency" && <EmergencyTab emergencies={emergencies} setEmergencies={setEmergencies} staffTeams={staffTeams} />}
         {tab === "awards" && <AwardsTab />}
