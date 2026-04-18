@@ -64,6 +64,80 @@ button:active {
 }
 
 /* ============================================================
+   Emergency Banner Animations
+   ============================================================ */
+
+@keyframes emergencyPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(226, 75, 74, 0.4);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 20px rgba(226, 75, 74, 0.7);
+  }
+}
+
+@keyframes emergencyDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ============================================================
+   Heart Layout for Guestbook
+   ============================================================ */
+
+@keyframes heartBeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes messagePopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes messageGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(226, 119, 148, 0.3); }
+  50% { box-shadow: 0 0 16px rgba(226, 119, 148, 0.6); }
+}
+
+/* ============================================================
+   Check-in Modal
+   ============================================================ */
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fabPulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(145, 201, 192, 0.4); }
+  50% { box-shadow: 0 4px 28px rgba(145, 201, 192, 0.7); }
+}
+
+/* ============================================================
+   Seating Table Card
+   ============================================================ */
+
+@keyframes seatFillGlow {
+  0%, 100% { box-shadow: 0 0 0 rgba(60, 179, 113, 0); }
+  50% { box-shadow: 0 0 20px rgba(60, 179, 113, 0.4); }
+}
+
+/* ============================================================
    Responsive Layout
    ============================================================ */
 
@@ -166,6 +240,62 @@ button:active {
   gap: 0;
 }
 
+/* Heart shape container */
+.heart-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  aspect-ratio: 1;
+}
+
+/* Seating grid */
+.seating-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+/* Check-in overlay */
+.checkin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.checkin-modal {
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideUp 0.3s ease;
+}
+
+/* Guestbook message expanded overlay */
+.guestbook-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.guestbook-expanded {
+  animation: modalSlideUp 0.25s ease;
+}
+
 /* ============================================================
    Small Mobile (< 360px)
    ============================================================ */
@@ -189,6 +319,11 @@ button:active {
 
   .app-bottom-nav button .nav-label {
     font-size: 8px;
+  }
+
+  .seating-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
   }
 }
 
@@ -231,6 +366,15 @@ button:active {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+  }
+
+  .seating-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+  }
+
+  .heart-container {
+    max-width: 500px;
   }
 }
 
@@ -283,6 +427,10 @@ button:active {
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
   }
+
+  .seating-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
 }
 
 /* ============================================================
@@ -300,6 +448,81 @@ button:active {
   .card-grid-3 {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+/* ============================================================
+   Guestbook Postit Cards
+   ============================================================ */
+
+@keyframes postitIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5) rotate(var(--rot));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(var(--rot));
+  }
+}
+
+.postit-card {
+  position: absolute;
+  width: 72px;
+  height: 68px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 5px 5px;
+  box-shadow: 2px 3px 8px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.2);
+  animation: postitIn 0.4s ease both;
+  transition: transform 0.2s, z-index 0s, box-shadow 0.2s;
+  transform: translate(-50%, -50%) scale(1) rotate(var(--rot));
+  font-family: 'Pretendard Variable', 'Pretendard', sans-serif;
+  border: none;
+  overflow: hidden;
+}
+
+.postit-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: rgba(0,0,0,0.12);
+}
+
+.postit-card:hover {
+  transform: translate(-50%, -50%) scale(1.35) rotate(var(--rot)) !important;
+  box-shadow: 4px 6px 18px rgba(0,0,0,0.5);
+  z-index: 20 !important;
+}
+
+.postit-name {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  margin-bottom: 3px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.postit-msg {
+  font-size: 9px;
+  line-height: 1.3;
+  text-align: center;
+  opacity: 0.85;
+  width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-all;
 }
 
 /* ============================================================

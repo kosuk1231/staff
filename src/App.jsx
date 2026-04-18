@@ -712,48 +712,46 @@ function GuestbookTab({ showToast }) {
         ) : messages.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px", color: T.textMuted }}>아직 등록된 메시지가 없습니다</div>
         ) : (
-          <div style={{ position: "relative", width: "100%", paddingTop: "100%", maxWidth: "450px", margin: "0 auto" }}>
+          <div style={{ position: "relative", width: "100%", paddingTop: "110%", maxWidth: "450px", margin: "0 auto" }}>
             <div style={{ position: "absolute", inset: 0 }}>
-              {messages.map((msg, i) => {
+              {messages.slice(0, 80).map((msg, i) => {
                 const pos = positions[i] || { x: 50, y: 50 };
                 const c = HEART_COLORS[msg.colorIdx || 0];
+                // 결정론적 기울기: 인덱스 기반으로 -6도 ~ +6도 사이 고정값
+                const rot = ((i * 137 + 42) % 13) - 6;
                 return (
                   <button
                     key={msg.id}
                     onClick={() => setExpandedMsg(msg)}
+                    className="postit-card"
                     style={{
-                      position: "absolute",
-                      left: `${pos.x}%`, top: `${pos.y}%`,
-                      transform: "translate(-50%, -50%)",
-                      width: "40px", height: "36px",
+                      left: `${pos.x}%`,
+                      top: `${pos.y}%`,
                       background: c.bg,
-                      border: `1.5px solid ${c.border}`,
-                      borderRadius: "50%",
-                      cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "14px",
-                      animation: `messagePopIn 0.4s ease ${i * 0.03}s both`,
-                      transition: "all 0.2s",
-                      fontFamily: T.font,
-                      padding: 0,
+                      color: c.text,
+                      border: `1px solid ${c.border}`,
+                      zIndex: i % 3 + 1,
+                      animationDelay: `${i * 0.025}s`,
+                      "--rot": `${rot}deg`,
                     }}
                     title={`${msg.name}: ${msg.message}`}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.transform = "translate(-50%, -50%) scale(1.4)";
-                      e.currentTarget.style.zIndex = "10";
-                      e.currentTarget.style.boxShadow = `0 0 12px ${c.border}`;
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.transform = "translate(-50%, -50%) scale(1)";
-                      e.currentTarget.style.zIndex = "1";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
                   >
-                    💗
+                    <div className="postit-name">{msg.name}</div>
+                    <div className="postit-msg">
+                      {msg.message.length > 20 ? msg.message.slice(0, 20) + "…" : msg.message}
+                    </div>
                   </button>
                 );
               })}
             </div>
+            {messages.length > 80 && (
+              <div style={{
+                position: "absolute", bottom: "-28px", left: "50%", transform: "translateX(-50%)",
+                fontSize: "12px", color: T.textMuted, whiteSpace: "nowrap",
+              }}>
+                💗 외 {messages.length - 80}개 더
+              </div>
+            )}
           </div>
         )}
       </div>
