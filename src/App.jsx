@@ -111,6 +111,10 @@ const generateAttendees = () => {
     const tableIdx = Math.floor((i - 1) / 10);
     const tableId = ATTENDEE_TABLES[tableIdx] ? ATTENDEE_TABLES[tableIdx].id : ATTENDEE_TABLES[ATTENDEE_TABLES.length - 1].id;
     const seatId = ((i - 1) % 10) + 1;
+    // Generate random birthdate for demo (1960~2000)
+    const year = 1960 + Math.floor(Math.random() * 40);
+    const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, "0");
+    const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, "0");
     arr.push({
       id: i,
       name: ln + fn,
@@ -118,6 +122,8 @@ const generateAttendees = () => {
       table: tableId,
       seat: seatId,
       checked: false,
+      birthdate: `${year}-${month}-${day}`,
+      checkedAt: null,
     });
   }
   return arr;
@@ -223,6 +229,8 @@ const T = {
   infoBg: "rgba(96,165,250,0.12)",
   coral: "#d88a72",
   coralBorder: "rgba(216,138,114,0.3)",
+  pink: "#E27794",
+  pinkBg: "rgba(226,119,148,0.12)",
   radius: "12px",
   radiusSm: "8px",
   font: "'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -336,9 +344,9 @@ function ProgressBar({ value, max, color }) {
 }
 
 // ============================================================
-// TAB: DASHBOARD
+// TAB: DASHBOARD (with emergency banner at top)
 // ============================================================
-function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
+function DashboardTab({ vipGuests, attendees, notices, emergencies, program, setTab }) {
   const vipChecked = vipGuests.filter((g) => g.checked).length;
   const attChecked = attendees.filter((a) => a.checked).length;
   const total = vipGuests.length + attendees.length;
@@ -356,21 +364,68 @@ function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
   }) : null;
 
   const recentNotice = notices.length > 0 ? notices[notices.length - 1] : null;
-  const activeEmergencies = emergencies.filter((e) => e.status !== "done").length;
+  const activeEmergencies = emergencies.filter((e) => e.status !== "done");
+
+  // Recent check-in counter (last 5 min)
+  const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+  const recentCheckins = attendees.filter(a => a.checkedAt && a.checkedAt > fiveMinAgo).length
+    + vipGuests.filter(v => v.checkedAt && v.checkedAt > fiveMinAgo).length;
 
   return (
     <div>
+      {/* ★ EMERGENCY BANNER AT TOP */}
+      {activeEmergencies.length > 0 && (
+        <div style={{
+          ...cardStyle, marginBottom: "12px", padding: "14px 16px",
+          background: "linear-gradient(135deg, rgba(226,75,74,0.15) 0%, rgba(226,75,74,0.05) 100%)",
+          border: `1px solid rgba(226,75,74,0.4)`,
+          borderLeft: `4px solid ${T.danger}`,
+          animation: "emergencyPulse 2s ease-in-out infinite",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+            <span style={{ fontSize: "18px", animation: "emergencyDot 1s infinite" }}>🚨</span>
+            <span style={{ fontSize: "15px", fontWeight: 800, color: T.danger }}>
+              긴급 협조 요청 ({activeEmergencies.length}건)
+            </span>
+          </div>
+          {activeEmergencies.slice(0, 2).map(e => (
+            <div key={e.id} style={{ fontSize: "14px", color: T.text, marginBottom: "4px", lineHeight: 1.4 }}>
+              <span style={badgeStyle(T.dangerBg, T.danger)}>{e.urgency === "high" ? "긴급" : "보통"}</span>
+              <span style={{ marginLeft: "8px" }}>{e.text}</span>
+              <span style={{ color: T.textMuted, fontSize: "12px", marginLeft: "6px" }}>{e.time}</span>
+            </div>
+          ))}
+          {activeEmergencies.length > 2 && (
+            <div style={{ fontSize: "12px", color: T.textMuted, marginTop: "4px" }}>+ {activeEmergencies.length - 2}건 더</div>
+          )}
+          <button
+            onClick={() => setTab("emergency")}
+            style={{ ...ghostBtnStyle, marginTop: "8px", padding: "6px 14px", fontSize: "12px", borderColor: T.danger, color: T.danger }}
+          >
+            자세히 보기 →
+          </button>
+        </div>
+      )}
+
       <div className="stat-grid">
         <StatCard icon={"\u{1F465}"} label="전체" value={total} sub={`참석 ${totalChecked}`} accent={T.accent} />
         <StatCard icon={"\u{2B50}"} label="내빈" value={`${vipChecked}/${vipGuests.length}`} accent={T.accent} />
         <StatCard icon={"\u{2705}"} label="참석자" value={`${attChecked}/${attendees.length}`} accent={T.success} />
-        <StatCard icon={"\u{1F6A8}"} label="긴급" value={activeEmergencies} accent={activeEmergencies > 0 ? T.danger : T.textMuted} />
+        <StatCard icon={"\u{1F6A8}"} label="긴급" value={activeEmergencies.length} accent={activeEmergencies.length > 0 ? T.danger : T.textMuted} />
       </div>
 
       <ProgressBar value={totalChecked} max={total} color={T.accent} />
       <div style={{ fontSize: "13px", color: T.textSec, textAlign: "right", marginTop: "4px", marginBottom: "14px" }}>
         전체 참석률 {total > 0 ? Math.round((totalChecked / total) * 100) : 0}%
       </div>
+
+      {/* Check-in speed widget */}
+      {recentCheckins > 0 && (
+        <div style={{ ...cardStyle, borderLeft: `3px solid ${T.success}`, padding: "12px 16px", marginBottom: "10px" }}>
+          <div style={{ fontSize: "13px", color: T.success, fontWeight: 600 }}>최근 5분간 체크인</div>
+          <div style={{ fontSize: "22px", fontWeight: 800, color: T.success }}>{recentCheckins}명</div>
+        </div>
+      )}
 
       {/* Current / Next Program */}
       <div style={{ ...cardStyle, borderLeft: `3px solid ${T.accent}` }}>
@@ -423,7 +478,7 @@ function DashboardTab({ vipGuests, attendees, notices, emergencies, program }) {
                 }} />
                 
                 {/* Content Box */}
-                <div style={{ display: "flex", gap: "14px", background: isCurrent ? "rgba(145,201,192,0.08)" : "transparent", padding: isCurrent ? "10px 14px" : "0 4px", borderRadius: T.radiusMd, border: isCurrent ? `1px solid rgba(145,201,192,0.2)` : "1px solid transparent", marginLeft: isCurrent ? "-10px" : "0", transition: "all 0.2s" }}>
+                <div style={{ display: "flex", gap: "14px", background: isCurrent ? "rgba(145,201,192,0.08)" : "transparent", padding: isCurrent ? "10px 14px" : "0 4px", borderRadius: T.radiusSm, border: isCurrent ? `1px solid rgba(145,201,192,0.2)` : "1px solid transparent", marginLeft: isCurrent ? "-10px" : "0", transition: "all 0.2s" }}>
                   <div style={{ width: "38px", flexShrink: 0, fontSize: "14px", color: isCurrent ? T.accent : T.textSec, fontWeight: 800, paddingTop: isCurrent ? "0px" : "1px" }}>{p.time}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: "15px", fontWeight: isCurrent ? 800 : 500, color: isCurrent ? T.accent : T.text, display: "flex", alignItems: "center", gap: "8px", lineHeight: 1.3 }}>
@@ -470,64 +525,309 @@ function VipTab() {
 }
 
 // ============================================================
-// TAB: GUESTBOOK
+// TAB: GUESTBOOK (Heart-shaped layout + Spreadsheet)
 // ============================================================
-function GuestbookTab() {
+const GUESTBOOK_SHEET_ID = "1nxOqb00oTt5ZuQ2Qx_hLcrC3b57iQXCRved0fPWEcC4";
+const GUESTBOOK_CSV_URL = `https://docs.google.com/spreadsheets/d/${GUESTBOOK_SHEET_ID}/gviz/tq?tqx=out:csv`;
+
+// Heart shape positions for messages
+function getHeartPositions(count) {
+  const positions = [];
+  const maxItems = Math.min(count, 60);
+  for (let i = 0; i < maxItems; i++) {
+    const t = (i / maxItems) * Math.PI * 2;
+    // Parametric heart curve
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+    // Normalize to percentage
+    positions.push({
+      x: 50 + (x / 16) * 38,
+      y: 50 + (y / 17) * 38,
+    });
+  }
+  // Fill inside with additional items
+  for (let i = maxItems; i < count && i < 120; i++) {
+    const scale = 0.3 + Math.random() * 0.5;
+    const t = Math.random() * Math.PI * 2;
+    const x = 16 * Math.pow(Math.sin(t), 3) * scale;
+    const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * scale;
+    positions.push({
+      x: 50 + (x / 16) * 38,
+      y: 50 + (y / 17) * 38,
+    });
+  }
+  return positions;
+}
+
+const HEART_COLORS = [
+  { bg: "rgba(226,119,148,0.2)", border: "rgba(226,119,148,0.5)", text: "#E27794" },
+  { bg: "rgba(248,177,149,0.2)", border: "rgba(248,177,149,0.5)", text: "#F8B195" },
+  { bg: "rgba(196,145,253,0.2)", border: "rgba(196,145,253,0.5)", text: "#C491FD" },
+  { bg: "rgba(145,201,192,0.2)", border: "rgba(145,201,192,0.5)", text: "#91C9C0" },
+  { bg: "rgba(252,165,165,0.2)", border: "rgba(252,165,165,0.5)", text: "#FCA5A5" },
+];
+
+function GuestbookTab({ showToast }) {
+  const [messages, setMessages] = useState([]);
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [expandedMsg, setExpandedMsg] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch messages from spreadsheet
+  const fetchMessages = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(GUESTBOOK_CSV_URL);
+      if (!res.ok) throw new Error("Failed");
+      const text = await res.text();
+      const lines = text.split("\n").filter(l => l.trim());
+      const parsed = [];
+      for (let i = 1; i < lines.length; i++) {
+        const row = [];
+        let inQuote = false, field = "";
+        for (let j = 0; j < lines[i].length; j++) {
+          const ch = lines[i][j];
+          if (ch === '"') { inQuote = !inQuote; continue; }
+          if (ch === ',' && !inQuote) { row.push(field.trim()); field = ""; continue; }
+          field += ch;
+        }
+        row.push(field.trim());
+        if (row.length >= 2 && row[0]) {
+          parsed.push({
+            id: `gb_${i}`,
+            name: row[0] || "익명",
+            message: row[1] || "",
+            colorIdx: i % HEART_COLORS.length,
+          });
+        }
+      }
+      setMessages(parsed);
+    } catch {
+      // Use demo data if fetch fails
+      setMessages([
+        { id: "demo1", name: "김민지", message: "40주년 축하합니다! 🎉", colorIdx: 0 },
+        { id: "demo2", name: "이서연", message: "서울 복지의 미래를 응원합니다!", colorIdx: 1 },
+        { id: "demo3", name: "박지우", message: "항상 함께하겠습니다 💪", colorIdx: 2 },
+        { id: "demo4", name: "최하은", message: "사회복지사 화이팅!", colorIdx: 3 },
+        { id: "demo5", name: "정수빈", message: "축하드립니다!", colorIdx: 4 },
+        { id: "demo6", name: "강지현", message: "더 나은 복지를 위해!", colorIdx: 0 },
+        { id: "demo7", name: "조예진", message: "함께 걸어온 40년, 함께 갈 미래", colorIdx: 1 },
+        { id: "demo8", name: "윤유진", message: "감동적인 행사입니다", colorIdx: 2 },
+      ]);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchMessages(); }, [fetchMessages]);
+
+  const handleSubmit = async () => {
+    if (!name.trim() || !message.trim()) {
+      showToast("이름과 응원메시지를 모두 입력해주세요");
+      return;
+    }
+    setSubmitting(true);
+    // Add locally immediately for UX
+    const newMsg = {
+      id: `local_${Date.now()}`,
+      name: name.trim(),
+      message: message.trim(),
+      colorIdx: messages.length % HEART_COLORS.length,
+    };
+    setMessages(prev => [newMsg, ...prev]);
+    setName("");
+    setMessage("");
+    showToast("응원메시지가 등록되었습니다! 💗");
+    setSubmitting(false);
+    // TODO: POST to Apps Script when deployed
+  };
+
+  const positions = getHeartPositions(messages.length);
+
   return (
-    <div style={{ height: "calc(100vh - 125px)", margin: "-12px" }}>
-      <iframe 
-        src="https://wall-ruby.vercel.app/" 
-        style={{ width: "100%", height: "100%", border: "none", display: "block" }} 
-        title="방명록 시스템"
-      />
+    <div>
+      {/* Input Form */}
+      <div style={{ ...cardStyle, borderTop: `2px solid ${T.pink}` }}>
+        <div style={{ fontSize: "14px", fontWeight: 700, color: T.pink, marginBottom: "10px" }}>
+          💗 응원 메시지 남기기
+        </div>
+        <input
+          style={{ ...inputStyle, marginBottom: "8px" }}
+          value={name} onChange={e => setName(e.target.value)}
+          placeholder="이름"
+          maxLength={50}
+        />
+        <textarea
+          style={{ ...inputStyle, height: "60px", resize: "none", marginBottom: "8px" }}
+          value={message} onChange={e => setMessage(e.target.value)}
+          placeholder="응원 메시지를 입력하세요..."
+          maxLength={500}
+        />
+        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+          <button style={{ ...ghostBtnStyle, fontSize: "12px", padding: "6px 12px" }} onClick={fetchMessages}>
+            새로고침
+          </button>
+          <button
+            style={{ ...accentBtnStyle, background: `linear-gradient(135deg, ${T.pink} 0%, #C2185B 100%)`, color: "#fff" }}
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? "등록 중..." : "💌 등록"}
+          </button>
+        </div>
+      </div>
+
+      {/* Heart Shape Display */}
+      <div style={{ ...cardStyle, padding: "20px", overflow: "hidden" }}>
+        <div style={{ textAlign: "center", marginBottom: "16px" }}>
+          <div style={{ fontSize: "16px", fontWeight: 700, color: T.pink }}>
+            응원의 하트 💕
+          </div>
+          <div style={{ fontSize: "13px", color: T.textSec, marginTop: "4px" }}>
+            {messages.length}개의 응원메시지 · 클릭하면 메시지를 확인할 수 있어요
+          </div>
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "40px", color: T.textMuted }}>불러오는 중...</div>
+        ) : messages.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px", color: T.textMuted }}>아직 등록된 메시지가 없습니다</div>
+        ) : (
+          <div style={{ position: "relative", width: "100%", paddingTop: "100%", maxWidth: "450px", margin: "0 auto" }}>
+            <div style={{ position: "absolute", inset: 0 }}>
+              {messages.map((msg, i) => {
+                const pos = positions[i] || { x: 50, y: 50 };
+                const c = HEART_COLORS[msg.colorIdx || 0];
+                return (
+                  <button
+                    key={msg.id}
+                    onClick={() => setExpandedMsg(msg)}
+                    style={{
+                      position: "absolute",
+                      left: `${pos.x}%`, top: `${pos.y}%`,
+                      transform: "translate(-50%, -50%)",
+                      width: "40px", height: "36px",
+                      background: c.bg,
+                      border: `1.5px solid ${c.border}`,
+                      borderRadius: "50%",
+                      cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "14px",
+                      animation: `messagePopIn 0.4s ease ${i * 0.03}s both`,
+                      transition: "all 0.2s",
+                      fontFamily: T.font,
+                      padding: 0,
+                    }}
+                    title={`${msg.name}: ${msg.message}`}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform = "translate(-50%, -50%) scale(1.4)";
+                      e.currentTarget.style.zIndex = "10";
+                      e.currentTarget.style.boxShadow = `0 0 12px ${c.border}`;
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = "translate(-50%, -50%) scale(1)";
+                      e.currentTarget.style.zIndex = "1";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  >
+                    💗
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Message List (alternative view) */}
+      <div style={{ ...cardStyle }}>
+        <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "10px" }}>
+          메시지 목록
+        </div>
+        {messages.slice(0, 20).map((msg) => {
+          const c = HEART_COLORS[msg.colorIdx || 0];
+          return (
+            <div
+              key={msg.id}
+              onClick={() => setExpandedMsg(msg)}
+              style={{
+                padding: "10px 12px", marginBottom: "6px",
+                background: c.bg, borderRadius: T.radiusSm,
+                border: `1px solid ${c.border}`,
+                cursor: "pointer", transition: "all 0.2s",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 700, color: c.text, fontSize: "14px" }}>💗 {msg.name}</span>
+              </div>
+              <div style={{ fontSize: "13px", color: T.text, marginTop: "4px", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {msg.message}
+              </div>
+            </div>
+          );
+        })}
+        {messages.length > 20 && (
+          <div style={{ textAlign: "center", fontSize: "13px", color: T.textMuted, padding: "8px" }}>
+            + {messages.length - 20}개 더
+          </div>
+        )}
+      </div>
+
+      {/* Expanded Message Modal */}
+      {expandedMsg && (
+        <div className="guestbook-overlay" onClick={() => setExpandedMsg(null)}>
+          <div className="guestbook-expanded" onClick={e => e.stopPropagation()} style={{
+            background: T.bgCard, borderRadius: "20px", padding: "32px 28px",
+            border: `2px solid ${HEART_COLORS[expandedMsg.colorIdx || 0].border}`,
+            maxWidth: "400px", width: "100%", textAlign: "center",
+            boxShadow: `0 0 40px ${HEART_COLORS[expandedMsg.colorIdx || 0].border}`,
+          }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>💗</div>
+            <div style={{ fontSize: "20px", fontWeight: 800, color: HEART_COLORS[expandedMsg.colorIdx || 0].text, marginBottom: "8px" }}>
+              {expandedMsg.name}
+            </div>
+            <div style={{ fontSize: "16px", color: T.text, lineHeight: 1.6, marginBottom: "20px", wordBreak: "break-word" }}>
+              {expandedMsg.message}
+            </div>
+            <button
+              onClick={() => setExpandedMsg(null)}
+              style={{ ...ghostBtnStyle, borderColor: HEART_COLORS[expandedMsg.colorIdx || 0].border, color: HEART_COLORS[expandedMsg.colorIdx || 0].text }}
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ============================================================
-// TAB: ATTENDEES (260)
+// TAB: ATTENDEES — Simplified (name + checked status only)
 // ============================================================
-function AttendeesTab({ attendees, setAttendees, vipGuests, setVipGuests }) {
+function AttendeesTab({ attendees, setAttendees }) {
   const [search, setSearch] = useState("");
-  const [filterTable, setFilterTable] = useState(0);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [selectedTable, setSelectedTable] = useState(null);
 
   const toggle = (id) => {
-    setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, checked: !a.checked } : a));
-  };
-
-  const updateSeat = (id, field, value) => {
-    setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, [field]: Number(value) } : a));
-  };
-
-  const toggleAllInGroup = (ids) => {
-    setAttendees((prev) => {
-      const groupItems = prev.filter((a) => ids.includes(a.id));
-      const allChecked = groupItems.every((a) => a.checked);
-      return prev.map((a) => ids.includes(a.id) ? { ...a, checked: !allChecked } : a);
-    });
+    setAttendees((prev) => prev.map((a) => a.id === id ? {
+      ...a,
+      checked: !a.checked,
+      checkedAt: !a.checked ? Date.now() : null,
+    } : a));
   };
 
   const filtered = useMemo(() => {
     return attendees.filter((a) => {
       if (search && !a.name.includes(search) && !a.org.includes(search)) return false;
-      if (filterTable > 0 && a.table !== filterTable) return false;
       if (filterStatus === "checked" && !a.checked) return false;
       if (filterStatus === "unchecked" && a.checked) return false;
       return true;
     });
-  }, [attendees, search, filterTable, filterStatus]);
+  }, [attendees, search, filterStatus]);
 
   const stats = { total: attendees.length, checked: attendees.filter((a) => a.checked).length };
-
-  // Group stats
-  const tableStats = useMemo(() => {
-    return ATTENDEE_TABLES.map((t) => {
-      const items = attendees.filter((a) => a.table === t.id);
-      return { name: t.label, id: t.id, total: items.length, checked: items.filter((a) => a.checked).length, ids: items.map((a) => a.id) };
-    });
-  }, [attendees]);
 
   return (
     <div>
@@ -537,157 +837,13 @@ function AttendeesTab({ attendees, setAttendees, vipGuests, setVipGuests }) {
         <StatCard icon={"\u{23F3}"} label="미참석" value={stats.total - stats.checked} accent={T.textMuted} />
       </div>
 
-      {/* Group Summary */}
-      <div style={cardStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-          <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent }}>
-            테이블별 참석 현황
-          </div>
-        </div>
-        {tableStats.map((g) => {
-          const pct = g.total > 0 ? Math.round((g.checked / g.total) * 100) : 0;
-          const allChecked = g.checked === g.total && g.total > 0;
-          return (
-            <div key={g.name} style={{ marginBottom: "8px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "13px", marginBottom: "3px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ color: T.text, fontWeight: 600 }}>{g.name}</span>
-                  <span style={{ color: T.textMuted, fontSize: "12px" }}>{g.checked}/{g.total}</span>
-                </div>
-                <button
-                  style={{
-                    ...ghostBtnStyle,
-                    padding: "3px 10px",
-                    fontSize: "12px",
-                    color: allChecked ? T.warn : T.success,
-                    borderColor: allChecked ? T.warn : T.success,
-                  }}
-                  onClick={() => toggleAllInGroup(g.ids)}
-                >
-                  {allChecked ? "전체 취소" : "전체 참석"}
-                </button>
-              </div>
-              <ProgressBar value={g.checked} max={g.total} color={T.accent} />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Seat Map for Attendees */}
-      <div style={{ ...cardStyle, padding: "18px", overflow: "hidden" }}>
-          <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "12px", textAlign: "center" }}>
-            세부 좌석 배치도
-          </div>
-          <div style={{
-            textAlign: "center", padding: "6px 0", marginBottom: "16px",
-            background: "rgba(145,201,192,0.1)", borderRadius: "6px",
-            fontSize: "12px", fontWeight: 700, color: T.accent, letterSpacing: "3px",
-            border: `1px solid ${T.accentBorder}`
-          }}>STAGE (무대)</div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "100%", overflowX: "auto", paddingBottom: "10px" }}>
-            <div style={{ minWidth: "320px" }}>
-              {MAP_ROWS.map((row, ri) => (
-                <div key={ri} style={{ display: "flex", justifyContent: "center", gap: "10px", marginBottom: "8px" }}>
-                  {row.map((t) => {
-                    const isVipTable = VIP_TABLE_IDS.includes(t);
-                    const tbGroup = isVipTable 
-                      ? { total: 10, checked: vipGuests ? vipGuests.filter(v => v.table === t && v.checked).length : 0 }
-                      : (tableStats.find(ts => ts.id === t) || { total: 0, checked: 0 });
-                    
-                    const isSelected = selectedTable === t;
-                    
-                    return (
-                      <button key={t} onClick={() => {
-                        setSelectedTable(isSelected ? null : t);
-                      }} style={{
-                        width: "44px", height: "44px",
-                        borderRadius: "50%", 
-                        border: `2px solid ${isVipTable ? TABLE_CONFIG[t].color : isSelected ? T.accent : T.border}`,
-                        background: isVipTable ? `${TABLE_CONFIG[t].color}1A` : isSelected ? "rgba(145,201,192,0.1)" : "rgba(255,255,255,0.03)",
-                        cursor: "pointer", display: "flex", flexDirection: "column",
-                        alignItems: "center", justifyContent: "center", fontFamily: T.font,
-                        transition: "all 0.2s",
-                        opacity: isVipTable ? 0.9 : 1,
-                      }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, color: isVipTable ? TABLE_CONFIG[t].color : T.textSec }}>
-                          {isVipTable ? "내빈" : `T${t}`}
-                        </span>
-                        <span style={{ fontSize: "11px", fontWeight: 800, color: isVipTable ? TABLE_CONFIG[t].color : T.text }}>
-                          {tbGroup.checked}/{tbGroup.total}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {selectedTable && (
-            <div style={{
-              background: "rgba(255,255,255,0.03)", borderRadius: T.radiusSm,
-              padding: "12px", marginTop: "12px", border: `1px solid ${VIP_TABLE_IDS.includes(selectedTable) ? TABLE_CONFIG[selectedTable].color + '40' : T.border}`
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <span style={{ fontSize: "15px", fontWeight: 800, color: VIP_TABLE_IDS.includes(selectedTable) ? TABLE_CONFIG[selectedTable].color : T.accent }}>
-                  테이블 {selectedTable} 좌석 현황 {VIP_TABLE_IDS.includes(selectedTable) && "(내빈)"}
-                </span>
-                {VIP_TABLE_IDS.includes(selectedTable) && (
-                  <button
-                    onClick={() => {
-                      const name = window.prompt("추가할 내빈의 성함을 입력하세요:");
-                      if (!name) return;
-                      const org = window.prompt("소속이나 직책을 입력하세요:") || "-";
-                      const seat = window.prompt(`배정할 좌석 번호 (1~10):`) || "1";
-                      setVipGuests(prev => [...prev, {
-                        id: Date.now(), name, org, role: "-", table: selectedTable, seat: Number(seat), checked: true
-                      }]);
-                    }}
-                    style={{ ...ghostBtnStyle, padding: "5px 10px", fontSize: "12px", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "12px" }}
-                  >
-                    + 현장 추가
-                  </button>
-                )}
-              </div>
-              {(VIP_TABLE_IDS.includes(selectedTable) ? vipGuests : attendees).filter((a) => a.table === selectedTable).map((a) => (
-                <div key={a.id} style={{
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                  padding: "8px 4px", borderBottom: `1px solid ${T.border}`, cursor: "pointer", transition: "all 0.2s"
-                }} onClick={() => {
-                  if (VIP_TABLE_IDS.includes(selectedTable)) {
-                    setVipGuests(prev => prev.map(v => v.id === a.id ? { ...v, checked: !v.checked } : v));
-                  } else {
-                    setAttendees(prev => prev.map(at => at.id === a.id ? { ...at, checked: !at.checked } : at));
-                  }
-                }}>
-                  <span style={{ fontSize: "14px", color: T.text, opacity: a.checked ? 0.5 : 1 }}>
-                    <span style={{ display: "inline-block", width: "24px", color: T.textSec }}>{a.seat}</span>
-                    <b style={{ textDecoration: a.checked ? "line-through" : "none" }}>{a.name}</b> 
-                    <span style={{ color: T.textSec, fontSize: "12px", marginLeft: "6px" }}>{a.org}</span>
-                  </span>
-                  <span style={{...badgeStyle(
-                    a.checked ? T.successBg : "rgba(255,255,255,0.05)",
-                    a.checked ? T.success : T.textMuted,
-                  ), fontSize: "11px", padding: "4px 8px" }}>{a.checked ? (VIP_TABLE_IDS.includes(selectedTable) ? "착석" : "참석") : "대기"}</span>
-                </div>
-              ))}
-              {(VIP_TABLE_IDS.includes(selectedTable) ? vipGuests : attendees).filter((a) => a.table === selectedTable).length === 0 && (
-                <div style={{ textAlign: "center", padding: "16px", color: T.textMuted, fontSize: "13px" }}>배정된 인원이 없습니다.</div>
-              )}
-            </div>
-          )}
+      <ProgressBar value={stats.checked} max={stats.total} color={T.accent} />
+      <div style={{ fontSize: "12px", color: T.textSec, textAlign: "right", marginTop: "4px", marginBottom: "12px" }}>
+        참석률 {Math.round((stats.checked / stats.total) * 100)}%
       </div>
 
       <SearchBar value={search} onChange={setSearch} placeholder="참석자 검색 (이름, 소속)" />
 
-      <FilterPills
-        options={[
-          { value: 0, label: "전체 테이블" },
-          ...ATTENDEE_TABLES.map((t) => ({ value: t.id, label: `T${t.id}` })),
-        ]}
-        value={filterTable} onChange={setFilterTable}
-      />
       <FilterPills
         options={[{ value: "all", label: "전체" }, { value: "checked", label: "참석" }, { value: "unchecked", label: "미참석" }]}
         value={filterStatus} onChange={setFilterStatus}
@@ -697,57 +853,215 @@ function AttendeesTab({ attendees, setAttendees, vipGuests, setVipGuests }) {
         {filtered.length}명 표시 중
       </div>
 
-      <div className="card-grid-2">
-        {filtered.slice(0, 50).map((a) => (
-          <div key={a.id} style={{ ...cardStyle }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", paddingBottom: "8px" }} onClick={() => toggle(a.id)}>
-              <div style={{
-                width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
-                background: a.checked ? T.successBg : "rgba(255,255,255,0.05)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "12px", border: a.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
-                color: a.checked ? T.success : T.textMuted, transition: "all 0.2s",
-              }}>
-                {a.checked ? "\u2713" : ""}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, color: T.text, fontSize: "15px" }}>{a.name}</div>
-                <div style={{ fontSize: "13px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {a.org}
-                </div>
-              </div>
+      {filtered.slice(0, 50).map((a) => (
+        <div key={a.id} style={{
+          ...cardStyle, display: "flex", alignItems: "center", gap: "10px",
+          padding: "12px 14px", cursor: "pointer",
+        }} onClick={() => toggle(a.id)}>
+          {/* Check circle */}
+          <div style={{
+            width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
+            background: a.checked ? T.successBg : "rgba(255,255,255,0.05)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "12px", border: a.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
+            color: a.checked ? T.success : T.textMuted, transition: "all 0.2s",
+          }}>
+            {a.checked ? "\u2713" : ""}
+          </div>
+          {/* Info */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontWeight: 700, color: T.text, fontSize: "15px" }}>{a.name}</span>
+              <span style={{
+                ...badgeStyle("rgba(255,255,255,0.06)", T.textMuted),
+                fontSize: "11px", padding: "2px 8px",
+              }}>T{a.table}</span>
             </div>
-            
-            {/* Seat selection */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingTop: "8px", borderTop: `1px solid ${T.border}` }}>
-              <span style={{ fontSize: "13px", color: T.textSec, flexShrink: 0 }}>내역</span>
-              <select
-                value={a.table}
-                onChange={(e) => { e.stopPropagation(); updateSeat(a.id, "table", e.target.value); }}
-                onClick={(e) => e.stopPropagation()}
-                style={{ ...inputStyle, width: "auto", flex: 1, padding: "6px 8px", fontSize: "13px" }}
-              >
-                {ATTENDEE_TABLES.map((t) => (
-                  <option key={t.id} value={t.id}>{t.label}</option>
-                ))}
-              </select>
-              <select
-                value={a.seat}
-                onChange={(e) => { e.stopPropagation(); updateSeat(a.id, "seat", e.target.value); }}
-                onClick={(e) => e.stopPropagation()}
-                style={{ ...inputStyle, width: "auto", flex: 1, padding: "6px 8px", fontSize: "13px" }}
-              >
-                {Array.from({ length: 10 }, (_, i) => i + 1).map((s) => (
-                  <option key={s} value={s}>{s}번</option>
-                ))}
-              </select>
+            <div style={{ fontSize: "13px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {a.org}
             </div>
           </div>
-        ))}
-      </div>
+          {/* Status badge */}
+          <span style={badgeStyle(
+            a.checked ? T.successBg : "rgba(255,255,255,0.05)",
+            a.checked ? T.success : T.textMuted,
+          )}>
+            {a.checked ? "참석" : "대기"}
+          </span>
+        </div>
+      ))}
       {filtered.length > 50 && (
         <div style={{ textAlign: "center", padding: "12px", fontSize: "13px", color: T.textSec }}>
           + {filtered.length - 50}명 더 있음 (검색으로 찾아주세요)
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB: SEATING — Large table-focused view
+// ============================================================
+function SeatingTab({ attendees, vipGuests, showToast }) {
+  const [selectedTable, setSelectedTable] = useState(null);
+
+  // Compute per-table stats
+  const tableData = useMemo(() => {
+    const result = [];
+    ALL_TABLE_IDS.forEach(id => {
+      const isVip = VIP_TABLE_IDS.includes(id);
+      const members = isVip
+        ? vipGuests.filter(v => v.table === id)
+        : attendees.filter(a => a.table === id);
+      const checked = members.filter(m => m.checked).length;
+      const total = members.length;
+      const isFull = total > 0 && checked === total;
+      result.push({ id, isVip, members, checked, total, isFull, config: TABLE_CONFIG[id] });
+    });
+    return result;
+  }, [attendees, vipGuests]);
+
+  const selectedData = selectedTable ? tableData.find(t => t.id === selectedTable) : null;
+
+  return (
+    <div>
+      {/* Summary stats */}
+      <div className="stat-grid">
+        <StatCard icon="🪑" label="전체 테이블" value={ALL_TABLE_IDS.length} accent={T.accent} />
+        <StatCard icon="⭐" label="내빈 테이블" value={VIP_TABLE_IDS.length} accent="#C8A44E" />
+        <StatCard
+          icon="✅"
+          label="배석 완료"
+          value={tableData.filter(t => t.isFull).length}
+          accent={T.success}
+        />
+      </div>
+
+      {/* Table Grid — LARGE cards */}
+      <div className="seating-grid">
+        {tableData.map(t => {
+          const borderColor = t.isVip ? (t.config?.color || T.accent) : (t.isFull ? T.success : T.border);
+          const pct = t.total > 0 ? Math.round((t.checked / t.total) * 100) : 0;
+          const isSelected = selectedTable === t.id;
+
+          return (
+            <button
+              key={t.id}
+              onClick={() => setSelectedTable(isSelected ? null : t.id)}
+              style={{
+                background: isSelected
+                  ? "rgba(145,201,192,0.12)"
+                  : t.isFull
+                    ? "rgba(60,179,113,0.08)"
+                    : T.bgCard,
+                border: `2px solid ${isSelected ? T.accent : borderColor}`,
+                borderRadius: "16px",
+                padding: "20px 16px",
+                cursor: "pointer",
+                textAlign: "center",
+                fontFamily: T.font,
+                transition: "all 0.2s",
+                animation: t.isFull ? "seatFillGlow 3s ease-in-out infinite" : "none",
+              }}
+            >
+              {/* Table Number — LARGE */}
+              <div style={{
+                fontSize: "36px", fontWeight: 900,
+                color: t.isVip ? (t.config?.color || T.accent) : (t.isFull ? T.success : T.text),
+                lineHeight: 1, marginBottom: "8px",
+              }}>
+                {t.id}
+              </div>
+
+              {/* Label */}
+              <div style={{
+                fontSize: "11px", fontWeight: 600,
+                color: t.isVip ? (t.config?.color || T.accent) : T.textSec,
+                marginBottom: "8px",
+              }}>
+                {t.isVip ? (t.config?.label || "내빈석") : `테이블 ${t.id}`}
+              </div>
+
+              {/* Count */}
+              <div style={{
+                fontSize: "18px", fontWeight: 800,
+                color: t.isFull ? T.success : T.text,
+              }}>
+                {t.checked}/{t.total}
+              </div>
+
+              {/* Progress bar */}
+              <div style={{
+                height: "4px", borderRadius: "2px",
+                background: "rgba(255,255,255,0.08)",
+                marginTop: "8px", overflow: "hidden",
+              }}>
+                <div style={{
+                  height: "100%", width: `${pct}%`,
+                  background: t.isFull ? T.success : (t.isVip ? (t.config?.color || T.accent) : T.accent),
+                  borderRadius: "2px", transition: "width 0.3s",
+                }} />
+              </div>
+
+              {/* Full badge */}
+              {t.isFull && (
+                <div style={{
+                  marginTop: "6px", fontSize: "11px", fontWeight: 700,
+                  color: T.success, letterSpacing: "1px",
+                }}>
+                  ✓ 완료
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected Table Detail */}
+      {selectedData && (
+        <div style={{
+          ...cardStyle, marginTop: "16px", padding: "18px",
+          borderTop: `3px solid ${selectedData.isVip ? (selectedData.config?.color || T.accent) : T.accent}`,
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+            <span style={{ fontSize: "18px", fontWeight: 800, color: selectedData.isVip ? (selectedData.config?.color || T.accent) : T.accent }}>
+              테이블 {selectedData.id} {selectedData.isVip && `(${selectedData.config?.label})`}
+            </span>
+            <span style={badgeStyle(
+              selectedData.isFull ? T.successBg : T.accentBg,
+              selectedData.isFull ? T.success : T.accent,
+            )}>
+              {selectedData.checked}/{selectedData.total}
+            </span>
+          </div>
+
+          {selectedData.members.map((m, idx) => (
+            <div key={m.id || idx} style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "8px 4px", borderBottom: idx < selectedData.members.length - 1 ? `1px solid ${T.border}` : "none",
+            }}>
+              <div>
+                <span style={{ fontSize: "14px", fontWeight: 700, color: m.checked ? T.textSec : T.text }}>
+                  {m.name}
+                </span>
+                <span style={{ fontSize: "12px", color: T.textMuted, marginLeft: "8px" }}>
+                  {m.org}
+                </span>
+              </div>
+              <span style={badgeStyle(
+                m.checked ? T.successBg : "rgba(255,255,255,0.05)",
+                m.checked ? T.success : T.textMuted,
+              )}>
+                {m.checked ? "착석" : "대기"}
+              </span>
+            </div>
+          ))}
+
+          {selectedData.members.length === 0 && (
+            <div style={{ textAlign: "center", padding: "16px", color: T.textMuted, fontSize: "13px" }}>
+              배정된 인원이 없습니다.
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -915,188 +1229,6 @@ function EmergencyTab({ emergencies, setEmergencies, staffTeams }) {
           긴급 요청이 없습니다
         </div>
       )}
-    </div>
-  );
-}
-
-// ============================================================
-// TAB: PROGRAM TIMER
-// ============================================================
-function ProgramTab({ program }) {
-  const [now, setNow] = useState(new Date());
-  const [manualIdx, setManualIdx] = useState(null);
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const eventDate = new Date("2026-04-22T15:00:00");
-  const isEventDay = now.toDateString() === eventDate.toDateString();
-
-  // Find current program index (auto mode)
-  const autoIdx = (() => {
-    if (!isEventDay) return -1;
-    for (let i = 0; i < program.length; i++) {
-      const [h, m] = program[i].time.split(":").map(Number);
-      const [eh, em] = program[i].end.split(":").map(Number);
-      const start = new Date(now); start.setHours(h, m, 0, 0);
-      const end = new Date(now); end.setHours(eh, em, 0, 0);
-      if (now >= start && now < end) return i;
-    }
-    // Check if before first program
-    const [fh, fm] = program[0].time.split(":").map(Number);
-    const firstStart = new Date(now); firstStart.setHours(fh, fm, 0, 0);
-    if (now < firstStart) return -2; // before event
-    return -3; // after event
-  })();
-
-  const currentIdx = manualIdx !== null ? manualIdx : (autoIdx >= 0 ? autoIdx : 0);
-  const cp = program[currentIdx];
-
-  // Calculate timer values
-  const isManual = manualIdx !== null;
-  const isBeforeEvent = !isEventDay || autoIdx === -2;
-  const isAfterEvent = isEventDay && autoIdx === -3;
-
-  let remaining, totalDuration, elapsed, pct, timerLabel;
-
-  if (isManual) {
-    // Manual mode: show full program duration
-    const [sh, sm] = cp.time.split(":").map(Number);
-    const [eh, em] = cp.end.split(":").map(Number);
-    totalDuration = ((eh * 60 + em) - (sh * 60 + sm)) * 60;
-    remaining = totalDuration;
-    elapsed = 0;
-    pct = 0;
-    timerLabel = "프로그램 전체 시간";
-  } else if (isBeforeEvent) {
-    // Before event: D-Day countdown
-    const diff = Math.max(0, Math.floor((eventDate - now) / 1000));
-    const days = Math.floor(diff / 86400);
-    const hours = Math.floor((diff % 86400) / 3600);
-    const mins2 = Math.floor((diff % 3600) / 60);
-    remaining = diff;
-    totalDuration = diff;
-    elapsed = 0;
-    pct = 0;
-    timerLabel = `D-${days}일 ${hours}시간 ${mins2}분`;
-  } else if (isAfterEvent) {
-    remaining = 0;
-    totalDuration = 1;
-    elapsed = 1;
-    pct = 100;
-    timerLabel = "행사 종료";
-  } else {
-    // Normal: during event
-    const [eh, em] = cp.end.split(":").map(Number);
-    const endTime = new Date(now); endTime.setHours(eh, em, 0, 0);
-    remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-    const [sh, sm] = cp.time.split(":").map(Number);
-    const startTime = new Date(now); startTime.setHours(sh, sm, 0, 0);
-    totalDuration = Math.max(1, Math.floor((endTime - startTime) / 1000));
-    elapsed = totalDuration - remaining;
-    pct = Math.min(100, (elapsed / totalDuration) * 100);
-    timerLabel = "남은 시간";
-  }
-
-  const mins = Math.floor(remaining / 60);
-  const secs = remaining % 60;
-
-  return (
-    <div>
-      {/* Current Program Hero */}
-      <div style={{
-        ...cardStyle, textAlign: "center", padding: "24px 16px",
-        background: `linear-gradient(180deg, rgba(145,201,192,0.1) 0%, ${T.bgCard} 100%)`,
-        borderTop: `2px solid ${isAfterEvent ? T.textMuted : T.accent}`,
-      }}>
-        {isBeforeEvent && !isManual ? (
-          <>
-            <div style={{ fontSize: "13px", color: T.accentDark, fontWeight: 600, marginBottom: "8px" }}>
-              행사 시작까지
-            </div>
-            <div style={{ fontSize: "36px", fontWeight: 800, color: T.accent, letterSpacing: "1px" }}>
-              {timerLabel}
-            </div>
-            <div style={{ fontSize: "14px", color: T.textSec, marginTop: "8px" }}>
-              2026. 4. 22 (수) 15:00 · 백범김구기념관
-            </div>
-          </>
-        ) : isAfterEvent && !isManual ? (
-          <>
-            <div style={{ fontSize: "36px", fontWeight: 800, color: T.textMuted }}>
-              행사 종료
-            </div>
-            <div style={{ fontSize: "14px", color: T.textSec, marginTop: "8px" }}>
-              모든 프로그램이 완료되었습니다
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ fontSize: "13px", color: T.accentDark, fontWeight: 600, marginBottom: "4px" }}>
-              {isManual && <span style={badgeStyle(T.warnBg, T.warn)}>수동 모드</span>}
-              {" "}{cp.part} · {cp.type === "award" ? "포상" : cp.type === "lecture" ? "특강" : cp.type === "speech" ? "식사" : "진행"}
-            </div>
-            <div style={{ fontSize: "18px", fontWeight: 800, color: T.text, marginBottom: "6px" }}>
-              {cp.title}
-            </div>
-            {cp.speaker && <div style={{ fontSize: "14px", color: T.textSec, marginBottom: "14px" }}>{cp.speaker}</div>}
-
-            <div style={{ fontSize: "48px", fontWeight: 800, color: T.accent, letterSpacing: "2px", fontVariantNumeric: "tabular-nums" }}>
-              {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
-            </div>
-            <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "8px" }}>{timerLabel}</div>
-
-            <div style={{ maxWidth: "280px", margin: "0 auto" }}>
-              <ProgressBar value={elapsed} max={totalDuration} color={T.accent} />
-            </div>
-            <div style={{ fontSize: "12px", color: T.textMuted, marginTop: "4px" }}>
-              {cp.time} ~ {cp.end}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Manual Override */}
-      <div style={{ display: "flex", gap: "4px", overflowX: "auto", padding: "4px 0", marginBottom: "8px" }}>
-        <button style={pillNav(manualIdx === null)} onClick={() => setManualIdx(null)}>자동</button>
-        {program.map((p, i) => (
-          <button key={p.id} style={pillNav(manualIdx === i)} onClick={() => setManualIdx(i)}>
-            {p.time}
-          </button>
-        ))}
-      </div>
-
-      {/* All Programs */}
-      {program.map((p, i) => {
-        const isCurrent = i === currentIdx;
-        return (
-          <div key={p.id} style={{
-            ...cardStyle, display: "flex", gap: "10px", alignItems: "center",
-            borderLeft: `3px solid ${isCurrent ? T.accent : "transparent"}`,
-            background: isCurrent ? "rgba(145,201,192,0.06)" : T.bgCard,
-          }}>
-            <div style={{
-              width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              background: isCurrent ? T.accentBg : "rgba(255,255,255,0.03)",
-              border: `1px solid ${isCurrent ? T.accent : T.border}`,
-              fontSize: "12px", fontWeight: 700, color: isCurrent ? T.accent : T.textMuted,
-            }}>
-              {p.part}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: isCurrent ? T.accent : T.text }}>
-                {p.title}
-              </div>
-              <div style={{ fontSize: "13px", color: T.textSec }}>
-                {p.time} ~ {p.end} {p.speaker && `· ${p.speaker}`}
-              </div>
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -1420,6 +1552,165 @@ function StaffTab({ setStaffTeams }) {
 }
 
 // ============================================================
+// CHECK-IN MODAL (Floating, section-independent)
+// ============================================================
+function CheckInModal({ isOpen, onClose, attendees, setAttendees, vipGuests, setVipGuests, showToast }) {
+  const [search, setSearch] = useState("");
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 200);
+    }
+    if (!isOpen) {
+      setSearch("");
+      setConfirmTarget(null);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  // Combine all people for search
+  const allPeople = [
+    ...vipGuests.map(v => ({ ...v, type: "vip" })),
+    ...attendees.map(a => ({ ...a, type: "attendee" })),
+  ];
+
+  const results = search.length >= 1
+    ? allPeople.filter(p => p.name.includes(search))
+    : [];
+
+  const handleConfirm = (person) => {
+    if (person.type === "vip") {
+      setVipGuests(prev => prev.map(v => v.id === person.id ? { ...v, checked: true, checkedAt: Date.now() } : v));
+    } else {
+      setAttendees(prev => prev.map(a => a.id === person.id ? { ...a, checked: true, checkedAt: Date.now() } : a));
+    }
+    showToast(`${person.name} 님 참석 확인 완료`);
+    setConfirmTarget(null);
+    setSearch("");
+  };
+
+  return (
+    <div className="checkin-overlay" onClick={onClose}>
+      <div className="checkin-modal" onClick={e => e.stopPropagation()} style={{
+        background: T.bg, borderRadius: "20px", padding: "24px",
+        border: `1px solid ${T.accentBorder}`,
+      }}>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <div>
+            <div style={{ fontSize: "20px", fontWeight: 800, color: T.accent }}>접수 확인</div>
+            <div style={{ fontSize: "13px", color: T.textSec }}>성함을 입력하여 참석자를 확인하세요</div>
+          </div>
+          <button onClick={onClose} style={{
+            width: "36px", height: "36px", borderRadius: "50%",
+            background: "rgba(255,255,255,0.06)", border: `1px solid ${T.border}`,
+            color: T.textSec, fontSize: "18px", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontFamily: T.font,
+          }}>✕</button>
+        </div>
+
+        {/* Search Input */}
+        <div style={{ position: "relative", marginBottom: "16px" }}>
+          <input
+            ref={inputRef}
+            style={{ ...inputStyle, fontSize: "18px", padding: "14px 16px", paddingLeft: "40px", fontWeight: 600 }}
+            value={search}
+            onChange={e => { setSearch(e.target.value); setConfirmTarget(null); }}
+            placeholder="성함 입력..."
+          />
+          <span style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", fontSize: "18px", opacity: 0.4 }}>🔍</span>
+        </div>
+
+        {/* Confirm Dialog */}
+        {confirmTarget && (
+          <div style={{
+            background: "rgba(145,201,192,0.08)", borderRadius: "16px",
+            padding: "24px", border: `2px solid ${T.accent}`,
+            textAlign: "center", marginBottom: "16px",
+          }}>
+            <div style={{ fontSize: "12px", color: T.accentDark, fontWeight: 600, marginBottom: "12px" }}>
+              참석자 정보 확인
+            </div>
+            <div style={{ fontSize: "28px", fontWeight: 900, color: T.text, marginBottom: "8px" }}>
+              {confirmTarget.name}
+            </div>
+            <div style={{ fontSize: "14px", color: T.textSec, marginBottom: "4px" }}>
+              생년월일: {confirmTarget.birthdate || "정보 없음"}
+            </div>
+            <div style={{ fontSize: "14px", color: T.textSec, marginBottom: "16px" }}>
+              소속: {confirmTarget.org || "정보 없음"}
+            </div>
+            {confirmTarget.type === "vip" && (
+              <div style={{ ...badgeStyle("#C8A44E20", "#C8A44E"), marginBottom: "12px", fontSize: "13px" }}>
+                ⭐ 내빈 (테이블 {confirmTarget.table})
+              </div>
+            )}
+            {confirmTarget.checked ? (
+              <div style={badgeStyle(T.successBg, T.success)}>✅ 이미 참석 확인됨</div>
+            ) : (
+              <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+                <button
+                  onClick={() => setConfirmTarget(null)}
+                  style={{ ...ghostBtnStyle, padding: "10px 20px" }}
+                >취소</button>
+                <button
+                  onClick={() => handleConfirm(confirmTarget)}
+                  style={{ ...accentBtnStyle, padding: "10px 24px", fontSize: "15px" }}
+                >✓ 참석 확인</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Search Results */}
+        {search.length >= 1 && !confirmTarget && (
+          <div>
+            <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "8px" }}>
+              검색 결과: {results.length}명
+            </div>
+            {results.length === 0 && (
+              <div style={{ textAlign: "center", padding: "30px", color: T.textMuted }}>
+                일치하는 참석자가 없습니다
+              </div>
+            )}
+            {results.slice(0, 10).map(p => (
+              <div
+                key={`${p.type}_${p.id}`}
+                onClick={() => setConfirmTarget(p)}
+                style={{
+                  ...cardStyle, cursor: "pointer", padding: "14px",
+                  display: "flex", alignItems: "center", gap: "12px",
+                  background: p.checked ? "rgba(60,179,113,0.06)" : T.bgCard,
+                  borderLeft: `3px solid ${p.type === "vip" ? "#C8A44E" : (p.checked ? T.success : T.border)}`,
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "18px", fontWeight: 800, color: T.text }}>
+                    {p.name}
+                    {p.type === "vip" && <span style={{ fontSize: "12px", color: "#C8A44E", marginLeft: "8px" }}>⭐ 내빈</span>}
+                  </div>
+                  <div style={{ fontSize: "13px", color: T.textSec, marginTop: "2px" }}>{p.org}</div>
+                </div>
+                <span style={badgeStyle(
+                  p.checked ? T.successBg : "rgba(255,255,255,0.05)",
+                  p.checked ? T.success : T.textMuted,
+                )}>
+                  {p.checked ? "참석" : "대기"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // GOOGLE SHEETS HELPER
 // ============================================================
 const SHEET_ID = "1kUcjAtwyK85_ZWeRdOQ_UlyXhFCm0bah";
@@ -1456,9 +1747,9 @@ const TABS = [
   { id: "vip", label: "내빈", icon: "\u{2B50}" },
   { id: "guestbook", label: "방명록", icon: "📝" },
   { id: "attendees", label: "참석자", icon: "\u{1F465}" },
+  { id: "seating", label: "테이블", icon: "🪑" },
   { id: "notices", label: "공지", icon: "\u{1F4E2}" },
   { id: "emergency", label: "긴급", icon: "\u{1F6A8}" },
-  { id: "program", label: "타이머", icon: "\u{23F1}" },
   { id: "awards", label: "포상", icon: "\u{1F3C6}" },
   { id: "supplies", label: "물품", icon: "\u{1F4E6}" },
   { id: "staff", label: "스태프", icon: "\u{1F46A}" },
@@ -1472,20 +1763,14 @@ export default function App() {
   const [emergencies, setEmergencies] = useState([]);
   const [staffTeams, setStaffTeams] = useState(["등록팀", "안내팀", "무대팀", "포상팀", "다과팀"]);
   const [toast, setToast] = useState("");
-  const [clock, setClock] = useState(new Date());
   const [sheetStatus, setSheetStatus] = useState("idle"); // idle, loading, loaded, error
   const [sheetCount, setSheetCount] = useState(0);
+  const [checkinOpen, setCheckinOpen] = useState(false);
   const contentRef = useRef(null);
 
   const showToast = useCallback((msg) => {
     setToast(msg);
     setTimeout(() => setToast(""), 2000);
-  }, []);
-
-  // Real-time clock
-  useEffect(() => {
-    const interval = setInterval(() => setClock(new Date()), 1000);
-    return () => clearInterval(interval);
   }, []);
 
   // Google Sheets fetch
@@ -1503,6 +1788,8 @@ export default function App() {
           org: p.org,
           table: ATTENDEE_TABLES[Math.min(Math.floor(i / 10), ATTENDEE_TABLES.length - 1)]?.id || ATTENDEE_TABLES[0].id,
           checked: false,
+          birthdate: null,
+          checkedAt: null,
         }));
         setAttendees(mapped);
         setSheetCount(parsed.length);
@@ -1525,11 +1812,6 @@ export default function App() {
     if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [tab]);
 
-  // D-Day
-  const eventDate = new Date("2026-04-22T15:00:00");
-  const dDay = Math.ceil((eventDate - clock) / 86400000);
-  const clockStr = clock.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
-
   return (
     <div className="app-shell" style={{ fontFamily: T.font, background: T.bg, color: T.text }}>
       {/* Header */}
@@ -1549,22 +1831,14 @@ export default function App() {
               2026. 4. 22 (수) 15:00 · 백범김구기념관
             </div>
           </div>
-          <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <div style={{ fontSize: "16px", fontWeight: 700, color: T.accent, fontVariantNumeric: "tabular-nums" }}>
-              {clockStr}
-            </div>
-            <div style={{ fontSize: "11px", color: dDay > 0 ? T.warn : T.success, fontWeight: 600 }}>
-              {dDay > 0 ? `D-${dDay}` : dDay === 0 ? "D-DAY" : "행사 종료"}
-            </div>
-          </div>
         </div>
       </header>
 
       {/* Content */}
       <div ref={contentRef} className="app-content">
-        {tab === "dashboard" && <DashboardTab vipGuests={vipGuests} attendees={attendees} notices={notices} emergencies={emergencies} program={PROGRAM} />}
+        {tab === "dashboard" && <DashboardTab vipGuests={vipGuests} attendees={attendees} notices={notices} emergencies={emergencies} program={PROGRAM} setTab={setTab} />}
         {tab === "vip" && <VipTab guests={vipGuests} setGuests={setVipGuests} />}
-        {tab === "guestbook" && <GuestbookTab />}
+        {tab === "guestbook" && <GuestbookTab showToast={showToast} />}
         {tab === "attendees" && (
           <div>
             {/* Sheet status bar */}
@@ -1586,12 +1860,12 @@ export default function App() {
                 새로고침
               </button>
             </div>
-            <AttendeesTab attendees={attendees} setAttendees={setAttendees} vipGuests={vipGuests} setVipGuests={setVipGuests} />
+            <AttendeesTab attendees={attendees} setAttendees={setAttendees} />
           </div>
         )}
+        {tab === "seating" && <SeatingTab attendees={attendees} vipGuests={vipGuests} showToast={showToast} />}
         {tab === "notices" && <NoticesTab notices={notices} setNotices={setNotices} />}
         {tab === "emergency" && <EmergencyTab emergencies={emergencies} setEmergencies={setEmergencies} staffTeams={staffTeams} />}
-        {tab === "program" && <ProgramTab program={PROGRAM} />}
         {tab === "awards" && <AwardsTab />}
         {tab === "supplies" && <SuppliesTab />}
         {tab === "staff" && <StaffTab staffTeams={staffTeams} setStaffTeams={setStaffTeams} />}
@@ -1613,6 +1887,36 @@ export default function App() {
           </button>
         ))}
       </nav>
+
+      {/* Floating Check-in Button (always visible) */}
+      <button
+        onClick={() => setCheckinOpen(true)}
+        style={{
+          position: "fixed", right: "16px", bottom: "76px",
+          width: "56px", height: "56px", borderRadius: "50%",
+          background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accentDark} 100%)`,
+          border: "none", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "22px", color: "#0a1616",
+          zIndex: 90,
+          animation: "fabPulse 3s ease-in-out infinite",
+          boxShadow: `0 4px 16px rgba(145,201,192,0.4)`,
+        }}
+        title="접수 확인"
+      >
+        📋
+      </button>
+
+      {/* Check-in Modal */}
+      <CheckInModal
+        isOpen={checkinOpen}
+        onClose={() => setCheckinOpen(false)}
+        attendees={attendees}
+        setAttendees={setAttendees}
+        vipGuests={vipGuests}
+        setVipGuests={setVipGuests}
+        showToast={showToast}
+      />
 
       <Toast msg={toast} />
     </div>
