@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>좌석도 미리보기</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a1616;
+    color: #e8eded;
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h2 {
+    text-align: center;
+    color: #91c9c0;
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #8a9e9b;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  /* Stage */
+  .stage {
+    background: linear-gradient(135deg, #162828, #1e3a3a);
+    border: 1px solid rgba(145,201,192,0.3);
+    border-radius: 10px;
+    text-align: center;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #91c9c0;
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+  }
+
+  /* Table row */
+  .table-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  /* Table circle */
+  .table-circle {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: 2px solid;
+    overflow: hidden;
+  }
+  .table-circle:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 18px rgba(145,201,192,0.3);
+  }
+
+  /* Fill overlay */
+  .table-fill {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    transition: height 0.5s ease;
+    opacity: 0.35;
+  }
+
+  .table-label {
+    position: relative;
+    z-index: 1;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 2px;
+  }
+  .table-count {
+    position: relative;
+    z-index: 1;
+    font-size: 15px;
+    font-weight: 900;
+  }
+  .table-pct {
+    position: relative;
+    z-index: 1;
+    font-size: 10px;
+    margin-top: 1px;
+    opacity: 0.7;
+  }
+
+  /* Status legend */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #8a9e9b;
+  }
+  .legend-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid;
+  }
+
+  .note {
+    text-align: center;
+    font-size: 12px;
+    color: #506664;
+    margin-top: 16px;
+    padding: 12px;
+    border: 1px dashed rgba(145,201,192,0.15);
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+
+<h2>좌석도 — 테이블 착석 현황</h2>
+<p class="subtitle">착석 확인 시 테이블이 색으로 채워집니다 · 클릭하면 착석자 목록</p>
+
+<div style="max-width:520px;margin:0 auto;">
+
+  <!-- STAGE -->
+  <div class="stage">S T A G E &nbsp;（무대）</div>
+
+  <!-- Row 1: T1~T6 -->
+  <div class="table-row">
+    <!-- T1: 일반, 0% -->
+    <div class="table-circle" style="border-color:rgba(145,201,192,0.25);background:#111f1f;color:#8a9e9b;">
+      <div class="table-fill" style="background:#91c9c0;height:0%;"></div>
+      <div class="table-label">T1</div>
+      <div class="table-count">0/10</div>
+    </div>
+
+    <!-- T2: VIP 보라, 30% -->
+    <div class="table-circle" style="border-color:#8B5CF6;background:#111f1f;color:#8B5CF6;">
+      <div class="table-fill" style="background:#8B5CF6;height:30%;"></div>
+      <div class="table-label" style="color:#8B5CF6;">내빈</div>
+      <div class="table-count" style="color:#e8eded;">3/10</div>
+      <div class="table-pct">30%</div>
+    </div>
+
+    <!-- T3: VIP 골드, 70% -->
+    <div class="table-circle" style="border-color:#C8A44E;background:#111f1f;color:#C8A44E;">
+      <div class="table-fill" style="background:#C8A44E;height:70%;"></div>
+      <div class="table-label" style="color:#C8A44E;">주요내빈</div>
+      <div class="table-count" style="color:#e8eded;">7/10</div>
+      <div class="table-pct">70%</div>
+    </div>
+
+    <!-- T4: VIP 초록, 100% 완료 -->
+    <div class="table-circle" style="border-color:#10B981;background:#111f1f;color:#10B981;box-shadow:0 0 16px rgba(16,185,129,0.4);">
+      <div class="table-fill" style="background:#10B981;height:100%;"></div>
+      <div class="table-label" style="color:#0a1616;position:relative;z-index:1;">주요내빈</div>
+      <div class="table-count" style="color:#0a1616;position:relative;z-index:1;">10/10</div>
+      <div class="table-pct" style="color:#0a1616;position:relative;z-index:1;">✓ 완료</div>
+    </div>
+
+    <!-- T5: VIP 주황, 50% -->
+    <div class="table-circle" style="border-color:#F59E0B;background:#111f1f;color:#F59E0B;">
+      <div class="table-fill" style="background:#F59E0B;height:50%;"></div>
+      <div class="table-label" style="color:#F59E0B;">내빈</div>
+      <div class="table-count" style="color:#e8eded;">5/10</div>
+      <div class="table-pct">50%</div>
+    </div>
+
+    <!-- T6: 일반, 0% -->
+    <div class="table-circle" style="border-color:rgba(145,201,192,0.25);background:#111f1f;color:#8a9e9b;">
+      <div class="table-fill" style="background:#91c9c0;height:0%;"></div>
+      <div class="table-label">T6</div>
+      <div class="table-count">0/10</div>
+    </div>
+  </div>
+
+  <!-- Row 2: T7~T13 -->
+  <div class="table-row">
+    <div class="table-circle" style="border-color:rgba(145,201,192,0.25);background:#111f1f;color:#8a9e9b;width:70px;height:70px;">
+      <div class="table-fill" style="background:#91c9c0;height:20%;"></div>
+      <div class="table-label">T7</div><div class="table-count" style="font-size:13px;">2/10</div>
+    </div>
+    <div class="table-circle" style="border-color:rgba(145,201,192,0.25);background:#111f1f;color:#8a9e9b;width:70px;height:70px;">
+      <div class="table-fill" style="background:#91c9c0;height:50%;"></div>
+      <div class="table-label">T8</div><div class="table-count" style="font-size:13px;">5/10</div>
+    </div>
+    <div class="table-circle" style="border-color:rgba(145,201,192,0.25);background:#111f1f;color:#8a9e9b;width:70px;height:70px;">
+      <div class="table-fill" style="background:#91c9c0;height:80%;"></div>
+      <div class="table-label">T9</div><div class="table-count" style="font-size:13px;">8/10</div>
+    </div>
+    <!-- T10: 100% 완료 -->
+    <div class="table-circle" style="border-color:#3CB371;background:#111f1f;color:#3CB371;box-shadow:0 0 14px rgba(60,179,113,0.35);width:70px;height:70px;">
+      <div class="table-fill" style="background:#3CB371;height:100%;"></div>
+      <div class="table-label" style="color:#0a1616;position:relative;z-index:1;">T10</div>
+      <div class="table-count" style="font-size:13px;color:#0a1616;position:relative;z-index:1;">✓10/10</div>
+    </div>
+    <div class="table-circle" style="border-color:rgba(145,201,192,0.25);background:#111f1f;color:#8a9e9b;width:70px;height:70px;">
+      <div class="table-fill" style="background:#91c9c0;height:0%;"></div>
+      <div class="table-label">T11</div><div class="table-count" style="font-size:13px;">0/10</div>
+    </div>
+    <div class="table-circle" style="border-color:rgba(145,201,192,0.25);background:#111f1f;color:#8a9e9b;width:70px;height:70px;">
+      <div class="table-fill" style="background:#91c9c0;height:30%;"></div>
+      <div class="table-label">T12</div><div class="table-count" style="font-size:13px;">3/10</div>
+    </div>
+    <div class="table-circle" style="border-color:rgba(145,201,192,0.25);background:#111f1f;color:#8a9e9b;width:70px;height:70px;">
+      <div class="table-fill" style="background:#91c9c0;height:0%;"></div>
+      <div class="table-label">T13</div><div class="table-count" style="font-size:13px;">0/10</div>
+    </div>
+  </div>
+
+  <!-- 나머지 행들 (축약) -->
+  <div class="table-row" style="opacity:0.6;gap:10px;">
+    <div style="color:#506664;font-size:12px;align-self:center;">T14~T30 · · ·</div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="border-color:rgba(145,201,192,0.25);background:transparent;"></div>
+      대기 (0%)
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="border-color:#91c9c0;background:rgba(145,201,192,0.4);"></div>
+      착석 중
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="border-color:#3CB371;background:#3CB371;"></div>
+      완료 (100%)
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="border-color:#C8A44E;background:rgba(200,164,78,0.4);"></div>
+      VIP
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:16px;">
+    💡 이 화면이 새 "좌석도" 탭으로 추가됩니다<br>
+    착석 % 에 따라 원이 아래에서 위로 채워지는 애니메이션
+  </div>
+</div>
+
+</body>
+</html>

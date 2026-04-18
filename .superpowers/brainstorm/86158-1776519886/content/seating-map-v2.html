@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>좌석도 v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a1616;
+    color: #e8eded;
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h2 { text-align:center; color:#91c9c0; font-size:20px; margin-bottom:4px; }
+  .subtitle { text-align:center; color:#8a9e9b; font-size:13px; margin-bottom:20px; }
+  .stage {
+    background:linear-gradient(135deg,#162828,#1e3a3a);
+    border:1px solid rgba(145,201,192,0.3);
+    border-radius:10px;
+    text-align:center;
+    padding:10px;
+    font-size:13px; font-weight:700; color:#91c9c0; letter-spacing:3px;
+    margin-bottom:24px;
+  }
+  .table-row { display:flex; justify-content:center; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
+
+  /* SVG 기반 테이블 */
+  .table-wrap {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    cursor:pointer;
+    transition:transform 0.15s;
+  }
+  .table-wrap:hover { transform:scale(1.07); }
+
+  .note {
+    text-align:center; font-size:12px; color:#506664;
+    margin-top:16px; padding:12px;
+    border:1px dashed rgba(145,201,192,0.15); border-radius:8px;
+  }
+
+  .legend {
+    display:flex; justify-content:center; gap:20px;
+    margin-top:16px; flex-wrap:wrap;
+  }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:12px; color:#8a9e9b; }
+  .legend-dot { width:12px; height:12px; border-radius:50%; border:2px solid; }
+</style>
+</head>
+<body>
+
+<h2>좌석도 — 세부 착석 현황</h2>
+<p class="subtitle">각 테이블의 10개 좌석이 개별 표시됩니다 · 착석 시 점이 채워짐</p>
+
+<div style="max-width:560px;margin:0 auto;">
+
+<div class="stage">S T A G E &nbsp;（무대）</div>
+
+<!-- Row 1: T1~T6 -->
+<div class="table-row">
+
+  <!-- T1: 0/10 일반 -->
+  <div class="table-wrap" title="테이블 1">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <!-- 외곽 원 -->
+      <circle cx="45" cy="45" r="42" fill="#111f1f" stroke="rgba(145,201,192,0.2)" stroke-width="2"/>
+      <!-- 중앙 텍스트 -->
+      <text x="45" y="41" text-anchor="middle" fill="#8a9e9b" font-size="10" font-weight="700" font-family="sans-serif">T1</text>
+      <text x="45" y="54" text-anchor="middle" fill="#8a9e9b" font-size="12" font-weight="900" font-family="sans-serif">0/10</text>
+      <!-- 10개 좌석 점 (원 테두리 안쪽에 배치) -->
+      <!-- 360/10 = 36도 간격, 반지름 34px -->
+      <circle cx="45" cy="11" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/> <!-- 0° -->
+      <circle cx="66.8" cy="18.2" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/> <!-- 36° -->
+      <circle cx="79" cy="39" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/> <!-- 72° -->
+      <circle cx="79" cy="51" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/> <!-- 108° -->
+      <circle cx="66.8" cy="71.8" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/> <!-- 144° -->
+      <circle cx="45" cy="79" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/> <!-- 180° -->
+      <circle cx="23.2" cy="71.8" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/> <!-- 216° -->
+      <circle cx="11" cy="51" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/> <!-- 252° -->
+      <circle cx="11" cy="39" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/> <!-- 288° -->
+      <circle cx="23.2" cy="18.2" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/> <!-- 324° -->
+    </svg>
+    <div style="font-size:10px;color:#506664;">T1</div>
+  </div>
+
+  <!-- T2: VIP 보라 3/10 -->
+  <div class="table-wrap" title="테이블 2 (내빈)">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="42" fill="#111f1f" stroke="#8B5CF6" stroke-width="2.5"/>
+      <text x="45" y="38" text-anchor="middle" fill="#8B5CF6" font-size="9" font-weight="700" font-family="sans-serif">내빈</text>
+      <text x="45" y="51" text-anchor="middle" fill="#e8eded" font-size="12" font-weight="900" font-family="sans-serif">3/10</text>
+      <!-- 빈 좌석 (7개) -->
+      <circle cx="45" cy="11" r="4" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.3)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="18.2" r="4" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.3)" stroke-width="1.5"/>
+      <circle cx="79" cy="39" r="4" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.3)" stroke-width="1.5"/>
+      <circle cx="79" cy="51" r="4" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.3)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="71.8" r="4" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.3)" stroke-width="1.5"/>
+      <circle cx="45" cy="79" r="4" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.3)" stroke-width="1.5"/>
+      <circle cx="23.2" cy="71.8" r="4" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.3)" stroke-width="1.5"/>
+      <!-- 착석 좌석 (3개) - 채워짐 -->
+      <circle cx="11" cy="51" r="4.5" fill="#8B5CF6" stroke="#8B5CF6" stroke-width="1"/>
+      <circle cx="11" cy="39" r="4.5" fill="#8B5CF6" stroke="#8B5CF6" stroke-width="1"/>
+      <circle cx="23.2" cy="18.2" r="4.5" fill="#8B5CF6" stroke="#8B5CF6" stroke-width="1"/>
+    </svg>
+    <div style="font-size:10px;color:#8B5CF6;">내빈 T2</div>
+  </div>
+
+  <!-- T3: VIP 골드 7/10 -->
+  <div class="table-wrap" title="테이블 3 (주요내빈)">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="42" fill="#111f1f" stroke="#C8A44E" stroke-width="2.5"/>
+      <text x="45" y="38" text-anchor="middle" fill="#C8A44E" font-size="8" font-weight="700" font-family="sans-serif">주요내빈</text>
+      <text x="45" y="51" text-anchor="middle" fill="#e8eded" font-size="12" font-weight="900" font-family="sans-serif">7/10</text>
+      <!-- 빈 (3개) -->
+      <circle cx="45" cy="11" r="4" fill="rgba(200,164,78,0.15)" stroke="rgba(200,164,78,0.3)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="18.2" r="4" fill="rgba(200,164,78,0.15)" stroke="rgba(200,164,78,0.3)" stroke-width="1.5"/>
+      <circle cx="79" cy="39" r="4" fill="rgba(200,164,78,0.15)" stroke="rgba(200,164,78,0.3)" stroke-width="1.5"/>
+      <!-- 착석 (7개) -->
+      <circle cx="79" cy="51" r="4.5" fill="#C8A44E" stroke="#C8A44E" stroke-width="1"/>
+      <circle cx="66.8" cy="71.8" r="4.5" fill="#C8A44E" stroke="#C8A44E" stroke-width="1"/>
+      <circle cx="45" cy="79" r="4.5" fill="#C8A44E" stroke="#C8A44E" stroke-width="1"/>
+      <circle cx="23.2" cy="71.8" r="4.5" fill="#C8A44E" stroke="#C8A44E" stroke-width="1"/>
+      <circle cx="11" cy="51" r="4.5" fill="#C8A44E" stroke="#C8A44E" stroke-width="1"/>
+      <circle cx="11" cy="39" r="4.5" fill="#C8A44E" stroke="#C8A44E" stroke-width="1"/>
+      <circle cx="23.2" cy="18.2" r="4.5" fill="#C8A44E" stroke="#C8A44E" stroke-width="1"/>
+    </svg>
+    <div style="font-size:10px;color:#C8A44E;">주요내빈 T3</div>
+  </div>
+
+  <!-- T4: VIP 초록 10/10 완료 -->
+  <div class="table-wrap" title="테이블 4 — 완료!" style="filter:drop-shadow(0 0 10px rgba(16,185,129,0.5))">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="42" fill="rgba(16,185,129,0.12)" stroke="#10B981" stroke-width="3"/>
+      <text x="45" y="38" text-anchor="middle" fill="#10B981" font-size="8" font-weight="700" font-family="sans-serif">주요내빈</text>
+      <text x="45" y="51" text-anchor="middle" fill="#10B981" font-size="11" font-weight="900" font-family="sans-serif">✓ 10/10</text>
+      <!-- 전체 착석 (10개) -->
+      <circle cx="45" cy="11" r="4.5" fill="#10B981"/>
+      <circle cx="66.8" cy="18.2" r="4.5" fill="#10B981"/>
+      <circle cx="79" cy="39" r="4.5" fill="#10B981"/>
+      <circle cx="79" cy="51" r="4.5" fill="#10B981"/>
+      <circle cx="66.8" cy="71.8" r="4.5" fill="#10B981"/>
+      <circle cx="45" cy="79" r="4.5" fill="#10B981"/>
+      <circle cx="23.2" cy="71.8" r="4.5" fill="#10B981"/>
+      <circle cx="11" cy="51" r="4.5" fill="#10B981"/>
+      <circle cx="11" cy="39" r="4.5" fill="#10B981"/>
+      <circle cx="23.2" cy="18.2" r="4.5" fill="#10B981"/>
+    </svg>
+    <div style="font-size:10px;color:#10B981;font-weight:700;">✓ 완료 T4</div>
+  </div>
+
+  <!-- T5: VIP 주황 5/10 -->
+  <div class="table-wrap" title="테이블 5 (내빈)">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="42" fill="#111f1f" stroke="#F59E0B" stroke-width="2.5"/>
+      <text x="45" y="38" text-anchor="middle" fill="#F59E0B" font-size="9" font-weight="700" font-family="sans-serif">내빈</text>
+      <text x="45" y="51" text-anchor="middle" fill="#e8eded" font-size="12" font-weight="900" font-family="sans-serif">5/10</text>
+      <!-- 빈 (5개) -->
+      <circle cx="45" cy="11" r="4" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="18.2" r="4" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5"/>
+      <circle cx="79" cy="39" r="4" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5"/>
+      <circle cx="79" cy="51" r="4" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="71.8" r="4" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5"/>
+      <!-- 착석 (5개) -->
+      <circle cx="45" cy="79" r="4.5" fill="#F59E0B"/>
+      <circle cx="23.2" cy="71.8" r="4.5" fill="#F59E0B"/>
+      <circle cx="11" cy="51" r="4.5" fill="#F59E0B"/>
+      <circle cx="11" cy="39" r="4.5" fill="#F59E0B"/>
+      <circle cx="23.2" cy="18.2" r="4.5" fill="#F59E0B"/>
+    </svg>
+    <div style="font-size:10px;color:#F59E0B;">내빈 T5</div>
+  </div>
+
+  <!-- T6: 일반 2/10 -->
+  <div class="table-wrap" title="테이블 6">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="42" fill="#111f1f" stroke="rgba(145,201,192,0.25)" stroke-width="2"/>
+      <text x="45" y="41" text-anchor="middle" fill="#8a9e9b" font-size="10" font-weight="700" font-family="sans-serif">T6</text>
+      <text x="45" y="54" text-anchor="middle" fill="#e8eded" font-size="12" font-weight="900" font-family="sans-serif">2/10</text>
+      <circle cx="45" cy="11" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="18.2" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="79" cy="39" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="79" cy="51" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="71.8" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="45" cy="79" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="23.2" cy="71.8" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="11" cy="51" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <!-- 착석 2개 -->
+      <circle cx="11" cy="39" r="4.5" fill="#91c9c0"/>
+      <circle cx="23.2" cy="18.2" r="4.5" fill="#91c9c0"/>
+    </svg>
+    <div style="font-size:10px;color:#506664;">T6</div>
+  </div>
+</div>
+
+<!-- Row 2 예시 (작은 크기) -->
+<div class="table-row" style="gap:10px;">
+  <!-- T7~T13 축약 예시 3개 -->
+  <div class="table-wrap">
+    <svg width="74" height="74" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="42" fill="#111f1f" stroke="rgba(145,201,192,0.2)" stroke-width="2"/>
+      <text x="45" y="41" text-anchor="middle" fill="#8a9e9b" font-size="10" font-weight="700" font-family="sans-serif">T7</text>
+      <text x="45" y="54" text-anchor="middle" fill="#e8eded" font-size="12" font-weight="900" font-family="sans-serif">4/10</text>
+      <circle cx="45" cy="11" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="18.2" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="79" cy="39" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="79" cy="51" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="71.8" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="45" cy="79" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="23.2" cy="71.8" r="4.5" fill="#91c9c0"/>
+      <circle cx="11" cy="51" r="4.5" fill="#91c9c0"/>
+      <circle cx="11" cy="39" r="4.5" fill="#91c9c0"/>
+      <circle cx="23.2" cy="18.2" r="4.5" fill="#91c9c0"/>
+    </svg>
+    <div style="font-size:10px;color:#506664;">T7</div>
+  </div>
+
+  <div class="table-wrap" style="filter:drop-shadow(0 0 8px rgba(60,179,113,0.4))">
+    <svg width="74" height="74" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="42" fill="rgba(60,179,113,0.1)" stroke="#3CB371" stroke-width="2.5"/>
+      <text x="45" y="41" text-anchor="middle" fill="#3CB371" font-size="10" font-weight="700" font-family="sans-serif">T8</text>
+      <text x="45" y="54" text-anchor="middle" fill="#3CB371" font-size="11" font-weight="900" font-family="sans-serif">✓10/10</text>
+      <circle cx="45" cy="11" r="4.5" fill="#3CB371"/>
+      <circle cx="66.8" cy="18.2" r="4.5" fill="#3CB371"/>
+      <circle cx="79" cy="39" r="4.5" fill="#3CB371"/>
+      <circle cx="79" cy="51" r="4.5" fill="#3CB371"/>
+      <circle cx="66.8" cy="71.8" r="4.5" fill="#3CB371"/>
+      <circle cx="45" cy="79" r="4.5" fill="#3CB371"/>
+      <circle cx="23.2" cy="71.8" r="4.5" fill="#3CB371"/>
+      <circle cx="11" cy="51" r="4.5" fill="#3CB371"/>
+      <circle cx="11" cy="39" r="4.5" fill="#3CB371"/>
+      <circle cx="23.2" cy="18.2" r="4.5" fill="#3CB371"/>
+    </svg>
+    <div style="font-size:10px;color:#3CB371;font-weight:700;">✓ T8</div>
+  </div>
+
+  <div class="table-wrap">
+    <svg width="74" height="74" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="42" fill="#111f1f" stroke="rgba(145,201,192,0.2)" stroke-width="2"/>
+      <text x="45" y="41" text-anchor="middle" fill="#8a9e9b" font-size="10" font-weight="700" font-family="sans-serif">T9</text>
+      <text x="45" y="54" text-anchor="middle" fill="#e8eded" font-size="12" font-weight="900" font-family="sans-serif">1/10</text>
+      <circle cx="45" cy="11" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="18.2" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="79" cy="39" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="79" cy="51" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="66.8" cy="71.8" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="45" cy="79" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="23.2" cy="71.8" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="11" cy="51" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="11" cy="39" r="4" fill="rgba(145,201,192,0.1)" stroke="rgba(145,201,192,0.25)" stroke-width="1.5"/>
+      <circle cx="23.2" cy="18.2" r="4.5" fill="#91c9c0"/>
+    </svg>
+    <div style="font-size:10px;color:#506664;">T9</div>
+  </div>
+
+  <div style="align-self:center;color:#506664;font-size:12px;">… T10~T30</div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-dot" style="border-color:rgba(145,201,192,0.25);background:rgba(145,201,192,0.08);"></div>빈 좌석
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="border-color:#91c9c0;background:#91c9c0;"></div>착석 완료
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="border-color:#3CB371;background:#3CB371;"></div>테이블 만석
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="border-color:#C8A44E;background:#C8A44E;"></div>VIP 착석
+  </div>
+</div>
+
+<div class="note" style="margin-top:16px;">
+  💡 10개의 점 = 10개의 좌석 · 착석 확인 시 해당 점이 채워짐<br>
+  중앙에는 테이블 번호 + 수치(n/10) 표시 유지
+</div>
+
+</div>
+</body>
+</html>
