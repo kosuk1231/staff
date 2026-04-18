@@ -907,9 +907,6 @@ function AttendeesTab({ attendees, setAttendees }) {
                 fontSize: "11px", padding: "2px 8px",
               }}>T{a.table}</span>
             </div>
-            <div style={{ fontSize: "13px", color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {a.org}
-            </div>
           </div>
           {/* Status badge */}
           <span style={badgeStyle(
@@ -2034,6 +2031,8 @@ export default function App() {
     if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [tab]);
 
+  const activeEmergencyCount = emergencies.filter(e => e.status !== "done").length;
+
   return (
     <div className="app-shell" style={{ fontFamily: T.font, background: T.bg, color: T.text }}>
       {/* Header */}
@@ -2101,12 +2100,25 @@ export default function App() {
             key={t.id}
             onClick={() => setTab(t.id)}
             style={{
+              position: "relative",
               color: tab === t.id ? T.accent : T.textMuted,
               fontFamily: T.font,
             }}
           >
             <span className="nav-icon">{t.icon}</span>
             <span className="nav-label" style={{ fontWeight: tab === t.id ? 700 : 400 }}>{t.label}</span>
+            {t.id === "emergency" && activeEmergencyCount > 0 && (
+              <span style={{
+                position: "absolute", top: "2px", right: "2px",
+                background: T.danger, color: "#fff",
+                fontSize: "9px", fontWeight: 800,
+                width: "16px", height: "16px", borderRadius: "50%",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: T.font,
+              }}>
+                {activeEmergencyCount > 9 ? "9+" : activeEmergencyCount}
+              </span>
+            )}
           </button>
         ))}
       </nav>
@@ -2116,18 +2128,23 @@ export default function App() {
         onClick={() => setCheckinOpen(true)}
         style={{
           position: "fixed", right: "16px", bottom: "76px",
-          width: "56px", height: "56px", borderRadius: "50%",
+          width: "auto", height: "auto",
+          borderRadius: "28px",
           background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accentDark} 100%)`,
           border: "none", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "22px", color: "#0a1616",
+          display: "flex", alignItems: "center", gap: "8px",
+          padding: "14px 20px",
+          fontSize: "14px", fontWeight: 800, color: "#0a1616",
+          fontFamily: T.font,
           zIndex: 90,
           animation: "fabPulse 3s ease-in-out infinite",
-          boxShadow: `0 4px 16px rgba(145,201,192,0.4)`,
+          boxShadow: `0 4px 20px rgba(145,201,192,0.5)`,
+          letterSpacing: "-0.3px",
         }}
         title="접수 확인"
       >
-        📋
+        <span style={{ fontSize: "18px" }}>📋</span>
+        접수확인
       </button>
 
       {/* Check-in Modal */}
