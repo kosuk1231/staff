@@ -652,9 +652,9 @@ function AttendeesTab({ attendees, setAttendees, showToast }) {
 
       {filtered.slice(0, 100).map(a => (
         <div key={a.id} style={{ ...cardStyle, display: "flex", alignItems: "center", gap: "10px", padding: "12px 14px" }}>
-          {/* 체크 버튼 */}
+          {/* 체크 버튼: tableNo 없으면 모달 오픈, 있으면 바로 토글 */}
           <div
-            onClick={() => toggle(a)}
+            onClick={() => a.tableNo ? toggle(a) : setDetail(a)}
             style={{
               width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0, cursor: "pointer",
               background: a.checked ? T.successBg : "rgba(255,255,255,0.05)",
@@ -669,11 +669,10 @@ function AttendeesTab({ attendees, setAttendees, showToast }) {
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <span style={{ fontWeight: 700, color: T.text, fontSize: "15px" }}>{a.name}</span>
               {a.org && <span style={{ fontSize: "12px", color: T.textSec }}>{a.org}</span>}
-              {a.tableNo && (
-                <span style={{ ...badgeStyle("rgba(145,201,192,0.12)", T.accent), fontSize: "11px", padding: "2px 8px" }}>
-                  테이블 {a.tableNo}
-                </span>
-              )}
+              {a.tableNo
+                ? <span style={{ ...badgeStyle("rgba(145,201,192,0.12)", T.accent), fontSize: "11px", padding: "2px 8px" }}>💺 {a.tableNo}</span>
+                : <span style={{ ...badgeStyle("rgba(232,168,72,0.12)", T.warn), fontSize: "11px", padding: "2px 8px" }}>미배정</span>
+              }
             </div>
           </div>
           {/* 상태 뱃지 */}
@@ -694,18 +693,15 @@ function AttendeesTab({ attendees, setAttendees, showToast }) {
           onClick={() => setDetail(null)}>
           <div style={{ background: T.bgCard, borderRadius: "16px", padding: "28px 24px", maxWidth: "340px", width: "90%", border: `1px solid ${T.border}` }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: "20px", fontWeight: 800, color: T.text, marginBottom: "16px" }}>{detail.name}</div>
-            {[
-              { label: "소속", val: detail.org },
-              { label: "생년월일", val: detail.birthdate },
-              { label: "연락처", val: detail.contact },
-              { label: "테이블", val: detail.tableNo || "미배정" },
-            ].filter(r => r.val).map(r => (
-              <div key={r.label} style={{ display: "flex", gap: "12px", marginBottom: "10px", fontSize: "14px" }}>
-                <span style={{ color: T.textMuted, minWidth: "60px" }}>{r.label}</span>
-                <span style={{ color: r.label === "테이블" && !detail.tableNo ? T.warn : T.text }}>{r.val}</span>
-              </div>
-            ))}
+            <div style={{ fontSize: "20px", fontWeight: 800, color: T.text, marginBottom: "4px" }}>{detail.name}</div>
+            {detail.org && <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "14px" }}>{detail.org}</div>}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+              <span style={{ fontSize: "12px", color: T.textMuted }}>테이블</span>
+              <span style={{ ...badgeStyle(detail.tableNo ? "rgba(145,201,192,0.12)" : "rgba(232,168,72,0.12)", detail.tableNo ? T.accent : T.warn), fontSize: "13px", fontWeight: 700 }}>
+                {detail.tableNo || "미배정"}
+              </span>
+            </div>
+            {/* 좌석 배정: 미배정인 경우 항상 표시 */}
             {!detail.tableNo && (
               <div style={{ marginTop: "14px", padding: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: `1px solid ${T.border}` }}>
                 {/* 1단계: 테이블 선택 */}
@@ -1290,9 +1286,9 @@ function SeatingMapTab({ attendees, vipGuests }) {
               <circle
                 key={dotIdx}
                 cx={cx} cy={cy}
-                r={state === "checked" ? "7" : state === "assigned" ? "6.5" : "6"}
-                fill={state === "checked" ? finalColor : state === "assigned" ? `${finalColor}bb` : `${finalColor}18`}
-                stroke={state === "checked" ? finalColor : state === "assigned" ? finalColor : `${finalColor}40`}
+                r={state === "checked" ? "7.5" : state === "assigned" ? "6" : "5.5"}
+                fill={state === "checked" ? finalColor : state === "assigned" ? `${finalColor}38` : `${finalColor}12`}
+                stroke={state === "checked" ? finalColor : state === "assigned" ? `${finalColor}70` : `${finalColor}30`}
                 strokeWidth="1.5"
               />
             );
@@ -1639,37 +1635,68 @@ function StaffTab({ setStaffTeams }) {
 function CheckInModal({ isOpen, onClose, attendees, setAttendees, vipGuests, setVipGuests, showToast }) {
   const [search, setSearch] = useState("");
   const [confirmTarget, setConfirmTarget] = useState(null);
+  const [pickTable, setPickTable] = useState(null);
+  const [pickSeat, setPickSeat] = useState(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 200);
-    }
-    if (!isOpen) {
-      setSearch("");
-      setConfirmTarget(null);
-    }
+    if (isOpen && inputRef.current) setTimeout(() => inputRef.current?.focus(), 200);
+    if (!isOpen) { setSearch(""); setConfirmTarget(null); }
   }, [isOpen]);
+
+  useEffect(() => { setPickTable(null); setPickSeat(null); }, [confirmTarget]);
 
   if (!isOpen) return null;
 
-  // Combine all people for search
   const allPeople = [
     ...vipGuests.map(v => ({ ...v, type: "vip" })),
     ...attendees.map(a => ({ ...a, type: "attendee" })),
   ];
 
+  // 이름 + 소속 기관 검색
   const results = search.length >= 1
-    ? allPeople.filter(p => p.name.includes(search))
+    ? allPeople.filter(p => p.name.includes(search) || (p.org || "").includes(search))
     : [];
 
-  const handleConfirm = (person) => {
-    if (person.type === "vip") {
-      setVipGuests(prev => prev.map(v => v.id === person.id ? { ...v, checked: true, checkedAt: Date.now() } : v));
-    } else {
-      setAttendees(prev => prev.map(a => a.id === person.id ? { ...a, checked: true, checkedAt: Date.now() } : a));
+  // 잔여 좌석 계산 (미배정 참석자용)
+  const occupiedSeats = new Set(attendees.filter(a => a.tableNo).map(a => a.tableNo));
+  const tableOptions = ATTENDEE_TABLES.map(t => {
+    const freeSeats = [];
+    for (let s = 1; s <= 10; s++) {
+      if (!occupiedSeats.has(`${t.id}-${s}`)) freeSeats.push(s);
     }
-    showToast(`${person.name} 님 참석 확인 완료`);
+    return { id: t.id, freeSeats, freeCount: freeSeats.length };
+  }).filter(t => t.freeCount > 0);
+  const seatsForPickedTable = tableOptions.find(t => t.id === pickTable)?.freeSeats ?? [];
+
+  const needsSeat = confirmTarget?.type === "attendee" && !confirmTarget.tableNo;
+  const canConfirm = !needsSeat || (pickTable && pickSeat);
+
+  const handleConfirm = async (person) => {
+    const tableNo = (pickTable && pickSeat) ? `${pickTable}-${pickSeat}` : null;
+    if (person.type === "vip") {
+      setVipGuests(prev => prev.map(v => v.id === person.id
+        ? { ...v, checked: true, checkedAt: Date.now() } : v));
+    } else {
+      setAttendees(prev => prev.map(a => a.id === person.id
+        ? { ...a, checked: true, checkedAt: Date.now(), ...(tableNo ? { tableNo, table: pickTable, seat: pickSeat } : {}) }
+        : a));
+      if (ATTENDEE_API_URL) {
+        try {
+          await fetch(ATTENDEE_API_URL, {
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "toggleAttendance", name: person.name, org: person.org, rowIndex: person.rowIndex, checked: true }),
+          });
+          if (tableNo) {
+            await fetch(ATTENDEE_API_URL, {
+              method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ action: "assignSeat", name: person.name, org: person.org, rowIndex: person.rowIndex, tableNo }),
+            });
+          }
+        } catch (_) {}
+      }
+    }
+    showToast(`${person.name} 님 참석 확인 완료${tableNo ? ` · 좌석 ${tableNo}` : ""}`);
     setConfirmTarget(null);
     setSearch("");
   };
@@ -1678,20 +1705,19 @@ function CheckInModal({ isOpen, onClose, attendees, setAttendees, vipGuests, set
     <div className="checkin-overlay" onClick={onClose}>
       <div className="checkin-modal" onClick={e => e.stopPropagation()} style={{
         background: T.bg, borderRadius: "20px", padding: "24px",
-        border: `1px solid ${T.accentBorder}`,
+        border: `1px solid ${T.accentBorder}`, maxHeight: "88vh", overflowY: "auto",
       }}>
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <div>
             <div style={{ fontSize: "20px", fontWeight: 800, color: T.accent }}>접수 확인</div>
-            <div style={{ fontSize: "13px", color: T.textSec }}>성함을 입력하여 참석자를 확인하세요</div>
+            <div style={{ fontSize: "13px", color: T.textSec }}>성함 또는 소속 기관을 입력하세요</div>
           </div>
           <button onClick={onClose} style={{
             width: "36px", height: "36px", borderRadius: "50%",
             background: "rgba(255,255,255,0.06)", border: `1px solid ${T.border}`,
             color: T.textSec, fontSize: "18px", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: T.font,
+            display: "flex", alignItems: "center", justifyContent: "center", fontFamily: T.font,
           }}>✕</button>
         </div>
 
@@ -1702,7 +1728,7 @@ function CheckInModal({ isOpen, onClose, attendees, setAttendees, vipGuests, set
             style={{ ...inputStyle, fontSize: "18px", padding: "14px 16px", paddingLeft: "40px", fontWeight: 600 }}
             value={search}
             onChange={e => { setSearch(e.target.value); setConfirmTarget(null); }}
-            placeholder="성함 입력..."
+            placeholder="성함 또는 기관명..."
           />
           <span style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", fontSize: "18px", opacity: 0.4 }}>🔍</span>
         </div>
@@ -1711,38 +1737,90 @@ function CheckInModal({ isOpen, onClose, attendees, setAttendees, vipGuests, set
         {confirmTarget && (
           <div style={{
             background: "rgba(145,201,192,0.08)", borderRadius: "16px",
-            padding: "24px", border: `2px solid ${T.accent}`,
-            textAlign: "center", marginBottom: "16px",
+            padding: "20px", border: `2px solid ${T.accent}`, marginBottom: "16px",
           }}>
-            <div style={{ fontSize: "12px", color: T.accentDark, fontWeight: 600, marginBottom: "12px" }}>
+            <div style={{ fontSize: "11px", color: T.accentDark, fontWeight: 600, marginBottom: "10px", textAlign: "center", letterSpacing: "1px" }}>
               참석자 정보 확인
             </div>
-            <div style={{ fontSize: "28px", fontWeight: 900, color: T.text, marginBottom: "8px" }}>
+            <div style={{ fontSize: "26px", fontWeight: 900, color: T.text, marginBottom: "2px", textAlign: "center" }}>
               {confirmTarget.name}
             </div>
-            <div style={{ fontSize: "14px", color: T.textSec, marginBottom: "4px" }}>
-              생년월일: {confirmTarget.birthdate || "정보 없음"}
-            </div>
-            <div style={{ fontSize: "14px", color: T.textSec, marginBottom: "16px" }}>
-              소속: {confirmTarget.org || "정보 없음"}
-            </div>
-            {confirmTarget.type === "vip" && (
-              <div style={{ ...badgeStyle("#C8A44E20", "#C8A44E"), marginBottom: "12px", fontSize: "13px" }}>
-                ⭐ 내빈 (테이블 {confirmTarget.table})
+            {confirmTarget.org && (
+              <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "10px", textAlign: "center" }}>
+                {confirmTarget.org}
               </div>
             )}
+            {/* 테이블 상태 */}
+            <div style={{ textAlign: "center", marginBottom: "14px" }}>
+              {confirmTarget.tableNo
+                ? <span style={{ ...badgeStyle("rgba(145,201,192,0.12)", T.accent), fontSize: "13px" }}>💺 {confirmTarget.tableNo}</span>
+                : confirmTarget.type === "attendee"
+                  ? <span style={{ ...badgeStyle("rgba(232,168,72,0.12)", T.warn), fontSize: "12px" }}>좌석 미배정 — 아래서 선택하세요</span>
+                  : null}
+              {confirmTarget.type === "vip" && (
+                <span style={{ ...badgeStyle("#C8A44E20", "#C8A44E"), fontSize: "13px" }}>
+                  ⭐ 내빈 (테이블 {confirmTarget.table})
+                </span>
+              )}
+            </div>
+
+            {/* 좌석 배정 (미배정 attendee) */}
+            {needsSeat && (
+              <div style={{ marginBottom: "14px", padding: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: `1px solid ${T.border}` }}>
+                <div style={{ fontSize: "11px", color: T.textMuted, marginBottom: "6px", fontWeight: 600 }}>
+                  {pickTable ? `테이블 ${pickTable} 선택됨 — 좌석을 고르세요` : "① 테이블 선택"}
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: pickTable ? "10px" : "0" }}>
+                  {tableOptions.map(t => (
+                    <button key={t.id} onClick={() => { setPickTable(t.id); setPickSeat(null); }}
+                      style={{
+                        padding: "5px 9px", borderRadius: "7px", fontSize: "13px", fontWeight: 700,
+                        background: pickTable === t.id ? T.accentBg : "rgba(255,255,255,0.05)",
+                        border: `1px solid ${pickTable === t.id ? T.accent : T.border}`,
+                        color: pickTable === t.id ? T.accent : T.textSec,
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}>
+                      {t.id}<span style={{ fontSize: "10px", opacity: 0.65, marginLeft: "3px" }}>({t.freeCount})</span>
+                    </button>
+                  ))}
+                </div>
+                {pickTable && (
+                  <>
+                    <div style={{ fontSize: "11px", color: T.textMuted, marginBottom: "6px", fontWeight: 600 }}>② 좌석 선택</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+                      {seatsForPickedTable.map(s => (
+                        <button key={s} onClick={() => setPickSeat(s)}
+                          style={{
+                            width: "38px", height: "38px", borderRadius: "8px", fontSize: "14px", fontWeight: 700,
+                            background: pickSeat === s ? T.accentBg : "rgba(255,255,255,0.05)",
+                            border: `1px solid ${pickSeat === s ? T.accent : T.border}`,
+                            color: pickSeat === s ? T.accent : T.text,
+                            cursor: "pointer", fontFamily: "inherit",
+                          }}>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {confirmTarget.checked ? (
-              <div style={badgeStyle(T.successBg, T.success)}>✅ 이미 참석 확인됨</div>
+              <div style={{ textAlign: "center" }}>
+                <span style={badgeStyle(T.successBg, T.success)}>✅ 이미 참석 확인됨</span>
+              </div>
             ) : (
               <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
-                <button
-                  onClick={() => setConfirmTarget(null)}
-                  style={{ ...ghostBtnStyle, padding: "10px 20px" }}
-                >취소</button>
+                <button onClick={() => setConfirmTarget(null)} style={{ ...ghostBtnStyle, padding: "10px 20px" }}>취소</button>
                 <button
                   onClick={() => handleConfirm(confirmTarget)}
-                  style={{ ...accentBtnStyle, padding: "10px 24px", fontSize: "15px" }}
-                >✓ 참석 확인</button>
+                  disabled={!canConfirm}
+                  style={{ ...accentBtnStyle, padding: "10px 20px", fontSize: "14px", opacity: canConfirm ? 1 : 0.4 }}>
+                  {needsSeat
+                    ? (pickTable && pickSeat ? `${pickTable}-${pickSeat} 배정 + 참석 확인` : "좌석 선택 후 확인")
+                    : "✓ 참석 확인"}
+                </button>
               </div>
             )}
           </div>
@@ -1755,32 +1833,27 @@ function CheckInModal({ isOpen, onClose, attendees, setAttendees, vipGuests, set
               검색 결과: {results.length}명
             </div>
             {results.length === 0 && (
-              <div style={{ textAlign: "center", padding: "30px", color: T.textMuted }}>
-                일치하는 참석자가 없습니다
-              </div>
+              <div style={{ textAlign: "center", padding: "30px", color: T.textMuted }}>일치하는 참석자가 없습니다</div>
             )}
             {results.slice(0, 10).map(p => (
-              <div
-                key={`${p.type}_${p.id}`}
-                onClick={() => setConfirmTarget(p)}
+              <div key={`${p.type}_${p.id}`} onClick={() => setConfirmTarget(p)}
                 style={{
                   ...cardStyle, cursor: "pointer", padding: "14px",
                   display: "flex", alignItems: "center", gap: "12px",
                   background: p.checked ? "rgba(60,179,113,0.06)" : T.bgCard,
                   borderLeft: `3px solid ${p.type === "vip" ? "#C8A44E" : (p.checked ? T.success : T.border)}`,
-                }}
-              >
+                }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "18px", fontWeight: 800, color: T.text }}>
+                  <div style={{ fontSize: "17px", fontWeight: 800, color: T.text }}>
                     {p.name}
-                    {p.type === "vip" && <span style={{ fontSize: "12px", color: "#C8A44E", marginLeft: "8px" }}>⭐ 내빈</span>}
+                    {p.type === "vip" && <span style={{ fontSize: "12px", color: "#C8A44E", marginLeft: "8px" }}>⭐</span>}
                   </div>
-                  <div style={{ fontSize: "13px", color: T.textSec, marginTop: "2px" }}>{p.org}</div>
+                  <div style={{ fontSize: "12px", color: T.textSec, marginTop: "2px" }}>{p.org}</div>
                 </div>
-                <span style={badgeStyle(
-                  p.checked ? T.successBg : "rgba(255,255,255,0.05)",
-                  p.checked ? T.success : T.textMuted,
-                )}>
+                {p.type === "attendee" && !p.tableNo && (
+                  <span style={{ ...badgeStyle("rgba(232,168,72,0.1)", T.warn), fontSize: "10px" }}>미배정</span>
+                )}
+                <span style={badgeStyle(p.checked ? T.successBg : "rgba(255,255,255,0.05)", p.checked ? T.success : T.textMuted)}>
                   {p.checked ? "참석" : "대기"}
                 </span>
               </div>
@@ -1822,7 +1895,10 @@ function parseCSV(text) {
     // 컬럼: A=연번 B=성함 C=소속 D=생년월일 E=연락처 F=이메일 G=편의제공조사 H=좌석배정 I=참석여부
     if (!row[1]) continue;
     const attended = row[8] === "O" || row[8] === "Y" || row[8] === "참석" || row[8] === "✓";
+    // 연번(A열)이 1-indexed이므로 rowIndex = 연번 + 1 (헤더 행 고려)
+    const seqNum = parseInt(row[0]) || 0;
     results.push({
+      rowIndex: seqNum > 0 ? seqNum + 1 : null,
       name: row[1] || "",
       org: row[2] || "",
       birthdate: row[3] || "",
@@ -1894,12 +1970,13 @@ export default function App() {
             org: p.org,
             birthdate: p.birthdate,
             contact: p.contact,
-            rowIndex: existing?.rowIndex ?? null,
+            rowIndex: p.rowIndex ?? existing?.rowIndex ?? null,
             tableNo: finalTableNo,
             table: finalTable,
             seat: finalSeat,
-            checked: existing ? existing.checked : p.checked,
-            checkedAt: existing ? existing.checkedAt : (p.checked ? Date.now() : null),
+            // 이 세션에서 로컬 확인된 경우 우선, 그 외 스프레드시트 값 사용
+            checked: (existing?.checkedAt ? existing.checked : null) ?? p.checked,
+            checkedAt: existing?.checkedAt ?? (p.checked ? Date.now() : null),
           };
         }));
         setSheetCount(parsed.length);

@@ -84,14 +84,14 @@ function getAttendeeList() {
   var lc = Math.max(sheet.getLastColumn(), 9);
   var data = sheet.getRange(2, 1, lr - 1, lc).getValues();
 
-  return data
-    .filter(function(row) { return row[1]; }) // 성함(B열) 없으면 제외
-    .map(function(row, i) {
+  // filter 후 map하면 빈 행 때문에 rowIndex가 틀어지므로 reduce로 처리
+  return data.reduce(function(acc, row, i) {
+    if (!row[1]) return acc; // 성함(B열) 없으면 제외
       var tableRaw = safeStrSeat(row[7]); // H열: 좌석배정
       var attended = row[8] === 'O' || row[8] === 'Y' || row[8] === '참석' || row[8] === '✓';
-      return {
-        rowIndex: i + 2,
-        seq: Number(row[0]) || (i + 1),
+      acc.push({
+        rowIndex: i + 2, // i는 원본 배열 기준 0-indexed, 헤더 1행 포함해서 +2
+        seq: Number(row[0]) || (acc.length + 1),
         name: String(row[1] || '').trim(),
         org: String(row[2] || '').trim(),
         birthdate: String(row[3] || '').trim(),
@@ -100,8 +100,9 @@ function getAttendeeList() {
         accommodation: String(row[6] || '').trim(),
         tableNo: tableRaw,
         checked: attended
-      };
-    });
+      });
+    return acc;
+  }, []);
 }
 
 // ─── 통계 ─────────────────────────────────────────────────

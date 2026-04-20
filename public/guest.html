@@ -700,9 +700,9 @@ function mcSliderChange() { mcFontPx = +document.getElementById('mcFontSlider').
 function mcSetMode(m) { mcMode = m; mcSingleIndex = 0; document.getElementById('mcModeListBtn').className = 'tbtn' + (m === 'list' ? ' active' : ''); document.getElementById('mcModeSingleBtn').className = 'tbtn' + (m === 'single' ? ' active' : ''); renderMC(true); }
 function mcSetOrder(o, btn) { mcOrder = o; var tb = btn.parentElement; var sep = 0; tb.childNodes.forEach(function(n) { if (n.classList && n.classList.contains('mc-sep')) sep++; if (sep >= 2 && n.classList && n.classList.contains('tbtn')) n.classList.remove('active'); }); btn.classList.add('active'); renderMC(true); }
 
-function mcToggleCheck(id) {
-  // 로컬 상태로 소개완료 관리
-  introducedMap[id] = !introducedMap[id];
+function mcToggleCheck(rowIndex) {
+  // rowIndex 기준으로 소개완료 관리 (내빈ID가 빈 값일 때 공유 방지)
+  introducedMap[rowIndex] = !introducedMap[rowIndex];
   renderMC(true);
 }
 
@@ -711,7 +711,7 @@ function mcGo(d) { var s = guests.filter(function(g) { return g.상태 === '착�
 function renderMC(force) {
   var seated = guests.filter(function(g) { return g.상태 === '착석'; }).sort(function(a, b) { return a.우선순위 - b.우선순위; });
   var body = document.getElementById('mcBody');
-  var hash = JSON.stringify(seated.map(function(g) { return g.내빈ID + (introducedMap[g.내빈ID] ? '1' : '0'); })) + mcMode + mcFontPx + mcLinePx + mcSingleIndex + mcOrder;
+  var hash = JSON.stringify(seated.map(function(g) { return g.rowIndex + (introducedMap[g.rowIndex] ? '1' : '0'); })) + mcMode + mcFontPx + mcLinePx + mcSingleIndex + mcOrder;
   if (!force && hash === prevMcHash) { updateMcFoot(seated); return; }
   prevMcHash = hash;
   if (!seated.length) { body.innerHTML = '<div class="mc-empty">착석 완료된 내빈이 없습니다</div>'; updateMcFoot(seated); return; }
@@ -722,8 +722,8 @@ function renderMC(force) {
     body.innerHTML = '<div class="mc-single-view"><div class="mc-single-line" style="font-size:' + Math.min(mcFontPx * 1.5, 72) + 'px;line-height:1.4">' + mcFmt(g) + '</div><div class="mc-nav"><button class="mc-nav-btn" onclick="mcGo(-1)" ' + (mcSingleIndex <= 0 ? 'disabled' : '') + '>◀ 이전</button><span class="mc-nav-counter">' + (mcSingleIndex + 1) + '/' + seated.length + '</span><button class="mc-nav-btn" onclick="mcGo(1)" ' + (mcSingleIndex >= seated.length - 1 ? 'disabled' : '') + '>다음 ▶</button></div></div>';
   } else {
     body.innerHTML = seated.map(function(g) {
-      var chk = !!introducedMap[g.내빈ID];
-      return '<div class="mc-item ' + (chk ? 'checked' : '') + '" style="' + pad + '"><button class="mc-check-btn ' + (chk ? 'done' : '') + '" onclick="mcToggleCheck(\'' + g.내빈ID + '\')">✓</button><div class="mc-line" style="font-size:' + mcFontPx + 'px;line-height:1.4">' + mcFmt(g) + '</div></div>';
+      var chk = !!introducedMap[g.rowIndex];
+      return '<div class="mc-item ' + (chk ? 'checked' : '') + '" style="' + pad + '"><button class="mc-check-btn ' + (chk ? 'done' : '') + '" onclick="mcToggleCheck(' + g.rowIndex + ')">✓</button><div class="mc-line" style="font-size:' + mcFontPx + 'px;line-height:1.4">' + mcFmt(g) + '</div></div>';
     }).join('');
   }
   updateMcFoot(seated);
