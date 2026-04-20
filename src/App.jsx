@@ -539,296 +539,17 @@ function VipTab() {
 }
 
 // ============================================================
-// TAB: GUESTBOOK (Heart-shaped layout + Spreadsheet)
+// TAB: GUESTBOOK (iframe → wall.html)
 // ============================================================
-const GUESTBOOK_SHEET_ID = "1nhrBH-MYG_vvIH1OH0b1KamqG1ZPjfbNIJ_QjjAlFBE";
-const GUESTBOOK_CSV_URL = `https://docs.google.com/spreadsheets/d/${GUESTBOOK_SHEET_ID}/gviz/tq?tqx=out:csv`;
-const GUESTBOOK_API_URL = "https://script.google.com/macros/s/AKfycbxKwyes_jvVi-NAC8UKyyzraGgvUxWinMtivEYEd804ZUZGD5rCi_q2GkrTWc3onSE/exec";
-
-// Heart shape positions for messages
-function getHeartPositions(count) {
-  const positions = [];
-  const maxItems = Math.min(count, 60);
-  for (let i = 0; i < maxItems; i++) {
-    const t = (i / maxItems) * Math.PI * 2;
-    // Parametric heart curve
-    const x = 16 * Math.pow(Math.sin(t), 3);
-    const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-    // Normalize to percentage
-    positions.push({
-      x: 50 + (x / 16) * 38,
-      y: 50 + (y / 17) * 38,
-    });
-  }
-  // Fill inside with additional items
-  for (let i = maxItems; i < count && i < 120; i++) {
-    const scale = 0.3 + Math.random() * 0.5;
-    const t = Math.random() * Math.PI * 2;
-    const x = 16 * Math.pow(Math.sin(t), 3) * scale;
-    const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * scale;
-    positions.push({
-      x: 50 + (x / 16) * 38,
-      y: 50 + (y / 17) * 38,
-    });
-  }
-  return positions;
-}
-
-const HEART_COLORS = [
-  { bg: "rgba(226,119,148,0.2)", border: "rgba(226,119,148,0.5)", text: "#E27794" },
-  { bg: "rgba(248,177,149,0.2)", border: "rgba(248,177,149,0.5)", text: "#F8B195" },
-  { bg: "rgba(196,145,253,0.2)", border: "rgba(196,145,253,0.5)", text: "#C491FD" },
-  { bg: "rgba(145,201,192,0.2)", border: "rgba(145,201,192,0.5)", text: "#91C9C0" },
-  { bg: "rgba(252,165,165,0.2)", border: "rgba(252,165,165,0.5)", text: "#FCA5A5" },
-];
-
-function GuestbookTab({ showToast }) {
-  const [messages, setMessages] = useState([]);
-  const [name, setName] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [expandedMsg, setExpandedMsg] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  // Fetch messages from spreadsheet
-  const fetchMessages = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(GUESTBOOK_CSV_URL);
-      if (!res.ok) throw new Error("Failed");
-      const text = await res.text();
-      const lines = text.split("\n").filter(l => l.trim());
-      const parsed = [];
-      for (let i = 1; i < lines.length; i++) {
-        const row = [];
-        let inQuote = false, field = "";
-        for (let j = 0; j < lines[i].length; j++) {
-          const ch = lines[i][j];
-          if (ch === '"') { inQuote = !inQuote; continue; }
-          if (ch === ',' && !inQuote) { row.push(field.trim()); field = ""; continue; }
-          field += ch;
-        }
-        row.push(field.trim());
-        if (row.length >= 3 && row[1]) {
-          parsed.push({
-            id: `gb_${i}`,
-            name: row[1] || "익명",
-            message: row[2] || "",
-            colorIdx: i % HEART_COLORS.length,
-          });
-        }
-      }
-      setMessages(parsed);
-    } catch {
-      // Use demo data if fetch fails
-      setMessages([
-        { id: "demo1", name: "김민지", message: "40주년 축하합니다! 🎉", colorIdx: 0 },
-        { id: "demo2", name: "이서연", message: "서울 복지의 미래를 응원합니다!", colorIdx: 1 },
-        { id: "demo3", name: "박지우", message: "항상 함께하겠습니다 💪", colorIdx: 2 },
-        { id: "demo4", name: "최하은", message: "사회복지사 화이팅!", colorIdx: 3 },
-        { id: "demo5", name: "정수빈", message: "축하드립니다!", colorIdx: 4 },
-        { id: "demo6", name: "강지현", message: "더 나은 복지를 위해!", colorIdx: 0 },
-        { id: "demo7", name: "조예진", message: "함께 걸어온 40년, 함께 갈 미래", colorIdx: 1 },
-        { id: "demo8", name: "윤유진", message: "감동적인 행사입니다", colorIdx: 2 },
-      ]);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchMessages(); }, [fetchMessages]);
-
-  useEffect(() => {
-    const interval = setInterval(() => fetchMessages(), 30000);
-    return () => clearInterval(interval);
-  }, [fetchMessages]);
-
-  const handleSubmit = async () => {
-    if (!name.trim() || !message.trim()) {
-      showToast("이름과 응원메시지를 모두 입력해주세요");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const res = await fetch(GUESTBOOK_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action: "submitMessage", name: name.trim(), message: message.trim() }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        const newMsg = {
-          id: `local_${Date.now()}`,
-          name: name.trim(),
-          message: message.trim(),
-          colorIdx: messages.length % HEART_COLORS.length,
-        };
-        setMessages(prev => [newMsg, ...prev]);
-        setName("");
-        setMessage("");
-        showToast("응원메시지가 등록되었습니다! 💗");
-      } else {
-        showToast(json.message || "등록에 실패했습니다");
-      }
-    } catch {
-      showToast("네트워크 오류 — 다시 시도해주세요");
-    }
-    setSubmitting(false);
-  };
-
-  const positions = getHeartPositions(messages.length);
-
+function GuestbookTab() {
   return (
-    <div>
-      {/* Input Form */}
-      <div style={{ ...cardStyle, borderTop: `2px solid ${T.pink}` }}>
-        <div style={{ fontSize: "14px", fontWeight: 700, color: T.pink, marginBottom: "10px" }}>
-          💗 응원 메시지 남기기
-        </div>
-        <input
-          style={{ ...inputStyle, marginBottom: "8px" }}
-          value={name} onChange={e => setName(e.target.value)}
-          placeholder="이름"
-          maxLength={50}
-        />
-        <textarea
-          style={{ ...inputStyle, height: "60px", resize: "none", marginBottom: "8px" }}
-          value={message} onChange={e => setMessage(e.target.value)}
-          placeholder="응원 메시지를 입력하세요..."
-          maxLength={500}
-        />
-        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-          <button style={{ ...ghostBtnStyle, fontSize: "12px", padding: "6px 12px" }} onClick={fetchMessages}>
-            새로고침
-          </button>
-          <button
-            style={{ ...accentBtnStyle, background: `linear-gradient(135deg, ${T.pink} 0%, #C2185B 100%)`, color: "#fff" }}
-            onClick={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting ? "등록 중..." : "💌 등록"}
-          </button>
-        </div>
-      </div>
-
-      {/* Heart Shape Display */}
-      <div style={{ ...cardStyle, padding: "20px", overflow: "hidden" }}>
-        <div style={{ textAlign: "center", marginBottom: "16px" }}>
-          <div style={{ fontSize: "16px", fontWeight: 700, color: T.pink }}>
-            응원의 하트 💕
-          </div>
-          <div style={{ fontSize: "13px", color: T.textSec, marginTop: "4px" }}>
-            {messages.length}개의 응원메시지 · 클릭하면 메시지를 확인할 수 있어요
-          </div>
-        </div>
-
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: T.textMuted }}>불러오는 중...</div>
-        ) : messages.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px", color: T.textMuted }}>아직 등록된 메시지가 없습니다</div>
-        ) : (
-          <div style={{ position: "relative", width: "100%", paddingTop: "110%", maxWidth: "450px", margin: "0 auto" }}>
-            <div style={{ position: "absolute", inset: 0 }}>
-              {messages.slice(0, 80).map((msg, i) => {
-                const pos = positions[i] || { x: 50, y: 50 };
-                const c = HEART_COLORS[msg.colorIdx || 0];
-                // 결정론적 기울기: 인덱스 기반으로 -6도 ~ +6도 사이 고정값
-                const rot = ((i * 137 + 42) % 13) - 6;
-                return (
-                  <button
-                    key={msg.id}
-                    onClick={() => setExpandedMsg(msg)}
-                    className="postit-card"
-                    style={{
-                      left: `${pos.x}%`,
-                      top: `${pos.y}%`,
-                      background: c.bg,
-                      color: c.text,
-                      border: `1px solid ${c.border}`,
-                      zIndex: i % 3 + 1,
-                      animationDelay: `${i * 0.025}s`,
-                      "--rot": `${rot}deg`,
-                    }}
-                    title={`${msg.name}: ${msg.message}`}
-                  >
-                    <div className="postit-name">{msg.name}</div>
-                    <div className="postit-msg">
-                      {msg.message.length > 20 ? msg.message.slice(0, 20) + "…" : msg.message}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            {messages.length > 80 && (
-              <div style={{
-                position: "absolute", bottom: "-28px", left: "50%", transform: "translateX(-50%)",
-                fontSize: "12px", color: T.textMuted, whiteSpace: "nowrap",
-              }}>
-                💗 외 {messages.length - 80}개 더
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Message List (alternative view) */}
-      <div style={{ ...cardStyle }}>
-        <div style={{ fontSize: "14px", fontWeight: 700, color: T.accent, marginBottom: "10px" }}>
-          메시지 목록
-        </div>
-        {messages.slice(0, 20).map((msg) => {
-          const c = HEART_COLORS[msg.colorIdx || 0];
-          return (
-            <div
-              key={msg.id}
-              onClick={() => setExpandedMsg(msg)}
-              style={{
-                padding: "10px 12px", marginBottom: "6px",
-                background: c.bg, borderRadius: T.radiusSm,
-                border: `1px solid ${c.border}`,
-                cursor: "pointer", transition: "all 0.2s",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontWeight: 700, color: c.text, fontSize: "14px" }}>💗 {msg.name}</span>
-              </div>
-              <div style={{ fontSize: "13px", color: T.text, marginTop: "4px", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {msg.message}
-              </div>
-            </div>
-          );
-        })}
-        {messages.length > 20 && (
-          <div style={{ textAlign: "center", fontSize: "13px", color: T.textMuted, padding: "8px" }}>
-            + {messages.length - 20}개 더
-          </div>
-        )}
-      </div>
-
-      {/* Expanded Message Modal */}
-      {expandedMsg && (
-        <div className="guestbook-overlay" onClick={() => setExpandedMsg(null)}>
-          <div className="guestbook-expanded" onClick={e => e.stopPropagation()} style={{
-            background: T.bgCard, borderRadius: "20px", padding: "32px 28px",
-            border: `2px solid ${HEART_COLORS[expandedMsg.colorIdx || 0].border}`,
-            maxWidth: "400px", width: "100%", textAlign: "center",
-            boxShadow: `0 0 40px ${HEART_COLORS[expandedMsg.colorIdx || 0].border}`,
-          }}>
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>💗</div>
-            <div style={{ fontSize: "20px", fontWeight: 800, color: HEART_COLORS[expandedMsg.colorIdx || 0].text, marginBottom: "8px" }}>
-              {expandedMsg.name}
-            </div>
-            <div style={{ fontSize: "16px", color: T.text, lineHeight: 1.6, marginBottom: "20px", wordBreak: "break-word" }}>
-              {expandedMsg.message}
-            </div>
-            <button
-              onClick={() => setExpandedMsg(null)}
-              style={{ ...ghostBtnStyle, borderColor: HEART_COLORS[expandedMsg.colorIdx || 0].border, color: HEART_COLORS[expandedMsg.colorIdx || 0].text }}
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
+    <div style={{ height: "calc(100vh - 120px)", minHeight: "500px" }}>
+      <iframe
+        src="/wall.html"
+        style={{ width: "100%", height: "100%", border: "none", borderRadius: "12px" }}
+        title="전자방명록"
+        allow="camera"
+      />
     </div>
   );
 }
@@ -836,90 +557,211 @@ function GuestbookTab({ showToast }) {
 // ============================================================
 // TAB: ATTENDEES — Simplified (name + checked status only)
 // ============================================================
-function AttendeesTab({ attendees, setAttendees }) {
+function AttendeesTab({ attendees, setAttendees, showToast }) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [detail, setDetail] = useState(null);
+  const [pickTable, setPickTable] = useState(null);
+  const [pickSeat, setPickSeat] = useState(null);
 
-  const toggle = (id) => {
-    setAttendees((prev) => prev.map((a) => a.id === id ? {
-      ...a,
-      checked: !a.checked,
-      checkedAt: !a.checked ? Date.now() : null,
-    } : a));
+  useEffect(() => { setPickTable(null); setPickSeat(null); }, [detail]);
+
+  const toggle = async (a) => {
+    const newChecked = !a.checked;
+    setAttendees(prev => prev.map(x => x.id === a.id
+      ? { ...x, checked: newChecked, checkedAt: newChecked ? Date.now() : null }
+      : x));
+    if (ATTENDEE_API_URL) {
+      try {
+        await fetch(ATTENDEE_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "toggleAttendance", name: a.name, org: a.org, rowIndex: a.rowIndex, checked: newChecked }),
+        });
+      } catch (e) { /* silent */ }
+    }
+    showToast(newChecked ? `${a.name} 님 참석 확인` : `${a.name} 님 참석 취소`);
   };
 
-  const filtered = useMemo(() => {
-    return attendees.filter((a) => {
-      if (search && !a.name.includes(search) && !a.org.includes(search)) return false;
-      if (filterStatus === "checked" && !a.checked) return false;
-      if (filterStatus === "unchecked" && a.checked) return false;
-      return true;
-    });
-  }, [attendees, search, filterStatus]);
+  const assignSeat = async (a) => {
+    if (!pickTable || !pickSeat) return;
+    const tableNo = `${pickTable}-${pickSeat}`;
+    setAttendees(prev => prev.map(x => x.id === a.id ? { ...x, tableNo, table: pickTable, seat: pickSeat } : x));
+    setDetail(null);
+    if (ATTENDEE_API_URL) {
+      try {
+        await fetch(ATTENDEE_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "assignSeat", name: a.name, org: a.org, rowIndex: a.rowIndex, tableNo }),
+        });
+      } catch (e) { /* silent */ }
+    }
+    showToast(`${a.name} 님 좌석 ${tableNo} 배정 완료`);
+  };
 
-  const stats = { total: attendees.length, checked: attendees.filter((a) => a.checked).length };
+  // 이미 배정된 좌석 Set (예: "10-1")
+  const occupiedSeats = useMemo(
+    () => new Set(attendees.filter(a => a.tableNo).map(a => a.tableNo)),
+    [attendees]
+  );
+
+  // 테이블별 잔여 좌석 정보 (테이블 6~30)
+  const tableOptions = useMemo(() => ATTENDEE_TABLES.map(t => {
+    const freeSeats = [];
+    for (let s = 1; s <= 10; s++) {
+      if (!occupiedSeats.has(`${t.id}-${s}`)) freeSeats.push(s);
+    }
+    return { id: t.id, freeSeats, freeCount: freeSeats.length };
+  }).filter(t => t.freeCount > 0), [occupiedSeats]);
+
+  // 선택된 테이블의 잔여 좌석
+  const seatsForPickedTable = useMemo(
+    () => tableOptions.find(t => t.id === pickTable)?.freeSeats ?? [],
+    [pickTable, tableOptions]
+  );
+
+  const filtered = useMemo(() => attendees.filter(a => {
+    if (search && !a.name.includes(search) && !(a.org || "").includes(search)) return false;
+    if (filterStatus === "checked" && !a.checked) return false;
+    if (filterStatus === "unchecked" && a.checked) return false;
+    return true;
+  }), [attendees, search, filterStatus]);
+
+  const stats = { total: attendees.length, checked: attendees.filter(a => a.checked).length };
+  const pct = stats.total ? Math.round((stats.checked / stats.total) * 100) : 0;
 
   return (
     <div>
       <div className="stat-grid">
-        <StatCard icon={"\u{1F465}"} label="전체" value={stats.total} accent={T.accent} />
-        <StatCard icon={"\u{2705}"} label="참석" value={stats.checked} sub={`${Math.round((stats.checked / stats.total) * 100)}%`} accent={T.success} />
-        <StatCard icon={"\u{23F3}"} label="미참석" value={stats.total - stats.checked} accent={T.textMuted} />
+        <StatCard icon="👥" label="전체" value={stats.total} accent={T.accent} />
+        <StatCard icon="✅" label="참석" value={stats.checked} sub={`${pct}%`} accent={T.success} />
+        <StatCard icon="⏳" label="미참석" value={stats.total - stats.checked} accent={T.textMuted} />
       </div>
-
       <ProgressBar value={stats.checked} max={stats.total} color={T.accent} />
       <div style={{ fontSize: "12px", color: T.textSec, textAlign: "right", marginTop: "4px", marginBottom: "12px" }}>
-        참석률 {Math.round((stats.checked / stats.total) * 100)}%
+        참석률 {pct}%
       </div>
 
-      <SearchBar value={search} onChange={setSearch} placeholder="참석자 검색 (이름, 소속)" />
-
+      <SearchBar value={search} onChange={setSearch} placeholder="이름 또는 소속 검색" />
       <FilterPills
         options={[{ value: "all", label: "전체" }, { value: "checked", label: "참석" }, { value: "unchecked", label: "미참석" }]}
         value={filterStatus} onChange={setFilterStatus}
       />
+      <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "8px" }}>{filtered.length}명 표시 중</div>
 
-      <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "8px" }}>
-        {filtered.length}명 표시 중
-      </div>
-
-      {filtered.slice(0, 50).map((a) => (
-        <div key={a.id} style={{
-          ...cardStyle, display: "flex", alignItems: "center", gap: "10px",
-          padding: "12px 14px", cursor: "pointer",
-        }} onClick={() => toggle(a.id)}>
-          {/* Check circle */}
-          <div style={{
-            width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
-            background: a.checked ? T.successBg : "rgba(255,255,255,0.05)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "12px", border: a.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
-            color: a.checked ? T.success : T.textMuted, transition: "all 0.2s",
-          }}>
-            {a.checked ? "\u2713" : ""}
+      {filtered.slice(0, 100).map(a => (
+        <div key={a.id} style={{ ...cardStyle, display: "flex", alignItems: "center", gap: "10px", padding: "12px 14px" }}>
+          {/* 체크 버튼 */}
+          <div
+            onClick={() => toggle(a)}
+            style={{
+              width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0, cursor: "pointer",
+              background: a.checked ? T.successBg : "rgba(255,255,255,0.05)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "14px", border: a.checked ? `2px solid ${T.success}` : `2px solid ${T.border}`,
+              color: a.checked ? T.success : T.textMuted, transition: "all 0.2s",
+            }}>
+            {a.checked ? "✓" : ""}
           </div>
-          {/* Info */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {/* 정보 */}
+          <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => setDetail(a)}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <span style={{ fontWeight: 700, color: T.text, fontSize: "15px" }}>{a.name}</span>
-              <span style={{
-                ...badgeStyle("rgba(255,255,255,0.06)", T.textMuted),
-                fontSize: "11px", padding: "2px 8px",
-              }}>T{a.table}</span>
+              {a.org && <span style={{ fontSize: "12px", color: T.textSec }}>{a.org}</span>}
+              {a.tableNo && (
+                <span style={{ ...badgeStyle("rgba(145,201,192,0.12)", T.accent), fontSize: "11px", padding: "2px 8px" }}>
+                  테이블 {a.tableNo}
+                </span>
+              )}
             </div>
           </div>
-          {/* Status badge */}
-          <span style={badgeStyle(
-            a.checked ? T.successBg : "rgba(255,255,255,0.05)",
-            a.checked ? T.success : T.textMuted,
-          )}>
+          {/* 상태 뱃지 */}
+          <span style={badgeStyle(a.checked ? T.successBg : "rgba(255,255,255,0.05)", a.checked ? T.success : T.textMuted)}>
             {a.checked ? "참석" : "대기"}
           </span>
         </div>
       ))}
-      {filtered.length > 50 && (
+      {filtered.length > 100 && (
         <div style={{ textAlign: "center", padding: "12px", fontSize: "13px", color: T.textSec }}>
-          + {filtered.length - 50}명 더 있음 (검색으로 찾아주세요)
+          + {filtered.length - 100}명 더 있음 (검색으로 찾아주세요)
+        </div>
+      )}
+
+      {/* 상세 모달 */}
+      {detail && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setDetail(null)}>
+          <div style={{ background: T.bgCard, borderRadius: "16px", padding: "28px 24px", maxWidth: "340px", width: "90%", border: `1px solid ${T.border}` }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: "20px", fontWeight: 800, color: T.text, marginBottom: "16px" }}>{detail.name}</div>
+            {[
+              { label: "소속", val: detail.org },
+              { label: "생년월일", val: detail.birthdate },
+              { label: "연락처", val: detail.contact },
+              { label: "테이블", val: detail.tableNo || "미배정" },
+            ].filter(r => r.val).map(r => (
+              <div key={r.label} style={{ display: "flex", gap: "12px", marginBottom: "10px", fontSize: "14px" }}>
+                <span style={{ color: T.textMuted, minWidth: "60px" }}>{r.label}</span>
+                <span style={{ color: r.label === "테이블" && !detail.tableNo ? T.warn : T.text }}>{r.val}</span>
+              </div>
+            ))}
+            {!detail.tableNo && (
+              <div style={{ marginTop: "14px", padding: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: `1px solid ${T.border}` }}>
+                {/* 1단계: 테이블 선택 */}
+                <div style={{ fontSize: "11px", color: T.textMuted, marginBottom: "6px", fontWeight: 600 }}>
+                  {pickTable ? `테이블 ${pickTable} 선택됨 — 좌석을 고르세요` : "테이블 선택"}
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: pickTable ? "10px" : "0" }}>
+                  {tableOptions.map(t => (
+                    <button key={t.id}
+                      onClick={() => { setPickTable(t.id); setPickSeat(null); }}
+                      style={{
+                        padding: "5px 9px", borderRadius: "7px", fontSize: "13px", fontWeight: 700,
+                        background: pickTable === t.id ? T.accentBg : "rgba(255,255,255,0.05)",
+                        border: `1px solid ${pickTable === t.id ? T.accent : T.border}`,
+                        color: pickTable === t.id ? T.accent : T.textSec,
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}>
+                      {t.id}<span style={{ fontSize: "10px", opacity: 0.65, marginLeft: "3px" }}>({t.freeCount})</span>
+                    </button>
+                  ))}
+                </div>
+                {/* 2단계: 좌석 선택 */}
+                {pickTable && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "10px" }}>
+                    {seatsForPickedTable.map(s => (
+                      <button key={s}
+                        onClick={() => setPickSeat(s)}
+                        style={{
+                          width: "38px", height: "38px", borderRadius: "8px", fontSize: "14px", fontWeight: 700,
+                          background: pickSeat === s ? T.accentBg : "rgba(255,255,255,0.05)",
+                          border: `1px solid ${pickSeat === s ? T.accent : T.border}`,
+                          color: pickSeat === s ? T.accent : T.text,
+                          cursor: "pointer", fontFamily: "inherit",
+                        }}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <button
+                  style={{ ...accentBtnStyle, width: "100%", opacity: (pickTable && pickSeat) ? 1 : 0.4 }}
+                  disabled={!pickTable || !pickSeat}
+                  onClick={() => assignSeat(detail)}>
+                  {pickTable && pickSeat ? `${pickTable}-${pickSeat} 배정` : "좌석 배정"}
+                </button>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+              <button style={{ ...ghostBtnStyle, flex: 1 }} onClick={() => setDetail(null)}>닫기</button>
+              <button
+                style={{ ...accentBtnStyle, flex: 1, background: detail.checked ? T.danger : T.success }}
+                onClick={() => { toggle(detail); setDetail(null); }}>
+                {detail.checked ? "참석 취소" : "참석 확인"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -967,9 +809,14 @@ function SeatingTab({ attendees, vipGuests, showToast }) {
       {/* Table Grid — LARGE cards */}
       <div className="seating-grid">
         {tableData.map(t => {
-          const borderColor = t.isVip ? (t.config?.color || T.accent) : (t.isFull ? T.success : T.border);
-          const pct = t.total > 0 ? Math.round((t.checked / t.total) * 100) : 0;
+          const CAPACITY = 10;
+          const vipColor = t.config?.color || T.accent;
+          const baseColor = t.isVip ? vipColor : T.accent;
           const isSelected = selectedTable === t.id;
+          const assignPct = Math.min(100, Math.round((t.total / CAPACITY) * 100));
+          const checkPct = Math.min(100, Math.round((t.checked / CAPACITY) * 100));
+          const hasAssigned = t.total > 0;
+          const borderColor = t.isVip ? vipColor : (t.isFull ? T.success : (hasAssigned ? T.accent : T.border));
 
           return (
             <button
@@ -980,10 +827,12 @@ function SeatingTab({ attendees, vipGuests, showToast }) {
                   ? "rgba(145,201,192,0.12)"
                   : t.isFull
                     ? "rgba(60,179,113,0.08)"
-                    : T.bgCard,
+                    : hasAssigned
+                      ? "rgba(145,201,192,0.04)"
+                      : T.bgCard,
                 border: `2px solid ${isSelected ? T.accent : borderColor}`,
                 borderRadius: "16px",
-                padding: "20px 16px",
+                padding: "16px 14px",
                 cursor: "pointer",
                 textAlign: "center",
                 fontFamily: T.font,
@@ -991,51 +840,54 @@ function SeatingTab({ attendees, vipGuests, showToast }) {
                 animation: t.isFull ? "seatFillGlow 3s ease-in-out infinite" : "none",
               }}
             >
-              {/* Table Number — LARGE */}
+              {/* Table Number */}
               <div style={{
-                fontSize: "36px", fontWeight: 900,
-                color: t.isVip ? (t.config?.color || T.accent) : (t.isFull ? T.success : T.text),
-                lineHeight: 1, marginBottom: "8px",
+                fontSize: "32px", fontWeight: 900,
+                color: t.isVip ? vipColor : (t.isFull ? T.success : (hasAssigned ? T.accent : T.text)),
+                lineHeight: 1, marginBottom: "6px",
               }}>
                 {t.id}
               </div>
 
               {/* Label */}
-              <div style={{
-                fontSize: "11px", fontWeight: 600,
-                color: t.isVip ? (t.config?.color || T.accent) : T.textSec,
-                marginBottom: "8px",
-              }}>
+              <div style={{ fontSize: "10px", fontWeight: 600, color: t.isVip ? vipColor : T.textSec, marginBottom: "8px" }}>
                 {t.isVip ? (t.config?.label || "내빈석") : `테이블 ${t.id}`}
               </div>
 
-              {/* Count */}
-              <div style={{
-                fontSize: "18px", fontWeight: 800,
-                color: t.isFull ? T.success : T.text,
-              }}>
-                {t.checked}/{t.total}
+              {/* Counts: 착석 / 배정 */}
+              <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "8px", fontSize: "11px" }}>
+                <span style={{ color: T.success, fontWeight: 700 }}>
+                  착석 {t.checked}
+                </span>
+                <span style={{ color: T.textMuted }}>/</span>
+                <span style={{ color: hasAssigned ? T.accent : T.textMuted, fontWeight: 700 }}>
+                  배정 {t.total}
+                </span>
               </div>
 
-              {/* Progress bar */}
-              <div style={{
-                height: "4px", borderRadius: "2px",
-                background: "rgba(255,255,255,0.08)",
-                marginTop: "8px", overflow: "hidden",
-              }}>
+              {/* 2단 진행 바: 뒤=배정, 앞=착석 */}
+              <div style={{ position: "relative", height: "6px", borderRadius: "3px", background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                {/* 배정 바 (dim) */}
                 <div style={{
-                  height: "100%", width: `${pct}%`,
-                  background: t.isFull ? T.success : (t.isVip ? (t.config?.color || T.accent) : T.accent),
-                  borderRadius: "2px", transition: "width 0.3s",
+                  position: "absolute", inset: 0, width: `${assignPct}%`,
+                  background: t.isVip ? `${vipColor}50` : "rgba(145,201,192,0.35)",
+                  borderRadius: "3px", transition: "width 0.4s",
+                }} />
+                {/* 착석 바 (bright) */}
+                <div style={{
+                  position: "absolute", inset: 0, width: `${checkPct}%`,
+                  background: t.isFull ? T.success : baseColor,
+                  borderRadius: "3px", transition: "width 0.4s",
                 }} />
               </div>
 
-              {/* Full badge */}
+              {/* 배정/용량 표시 */}
+              <div style={{ marginTop: "5px", fontSize: "10px", color: T.textMuted, textAlign: "right" }}>
+                {t.total}/{CAPACITY}석
+              </div>
+
               {t.isFull && (
-                <div style={{
-                  marginTop: "6px", fontSize: "11px", fontWeight: 700,
-                  color: T.success, letterSpacing: "1px",
-                }}>
+                <div style={{ marginTop: "4px", fontSize: "10px", fontWeight: 700, color: T.success, letterSpacing: "1px" }}>
                   ✓ 완료
                 </div>
               )}
@@ -1350,12 +1202,24 @@ function AwardsTab() {
 function SeatingMapTab({ attendees, vipGuests }) {
   const [selectedTable, setSelectedTable] = useState(null);
 
-  // 테이블별 착석 맵 생성: { tableId: Set<seatNumber> }
-  const checkedSeatMap = useMemo(() => {
+  // 테이블별 좌석 상태 맵: { tableId: { seatNum: 'checked' | 'assigned' } }
+  const seatStateMap = useMemo(() => {
     const map = {};
-    ALL_TABLE_IDS.forEach(id => { map[id] = new Set(); });
-    attendees.forEach(a => { if (a.checked) map[a.table]?.add(a.seat); });
-    vipGuests.forEach(v => { if (v.checked) map[v.table]?.add(v.seat); });
+    ALL_TABLE_IDS.forEach(id => { map[id] = {}; });
+    attendees.forEach(a => {
+      if (a.table && a.seat) {
+        map[a.table] = map[a.table] || {};
+        if (a.checked) map[a.table][a.seat] = "checked";
+        else if (!map[a.table][a.seat]) map[a.table][a.seat] = "assigned";
+      }
+    });
+    vipGuests.forEach(v => {
+      if (v.table && v.seat) {
+        map[v.table] = map[v.table] || {};
+        if (v.checked) map[v.table][v.seat] = "checked";
+        else if (!map[v.table][v.seat]) map[v.table][v.seat] = "assigned";
+      }
+    });
     return map;
   }, [attendees, vipGuests]);
 
@@ -1378,7 +1242,7 @@ function SeatingMapTab({ attendees, vipGuests }) {
     const stat = tableStats[tableId] || { total: 0, checked: 0 };
     const isFull = stat.total > 0 && stat.checked === stat.total;
     const finalColor = isFull ? T.success : color;
-    const checkedSeats = checkedSeatMap[tableId] || new Set();
+    const seatStates = seatStateMap[tableId] || {};
 
     const label = isVip ? (cfg?.label || "내빈") : `T${tableId}`;
     const isSelected = selectedTable === tableId;
@@ -1421,14 +1285,14 @@ function SeatingMapTab({ attendees, vipGuests }) {
           {/* 외각 좌석 점 10개 */}
           {SEAT_DOTS.map(([cx, cy], dotIdx) => {
             const seatNum = dotIdx + 1;
-            const isOccupied = checkedSeats.has(seatNum);
+            const state = seatStates[seatNum]; // 'checked' | 'assigned' | undefined
             return (
               <circle
                 key={dotIdx}
                 cx={cx} cy={cy}
-                r={isOccupied ? "7" : "6"}
-                fill={isOccupied ? finalColor : `${finalColor}18`}
-                stroke={isOccupied ? finalColor : `${finalColor}50`}
+                r={state === "checked" ? "7" : state === "assigned" ? "6.5" : "6"}
+                fill={state === "checked" ? finalColor : state === "assigned" ? `${finalColor}bb` : `${finalColor}18`}
+                stroke={state === "checked" ? finalColor : state === "assigned" ? finalColor : `${finalColor}40`}
                 strokeWidth="1.5"
               />
             );
@@ -1931,28 +1795,41 @@ function CheckInModal({ isOpen, onClose, attendees, setAttendees, vipGuests, set
 // ============================================================
 // GOOGLE SHEETS HELPER
 // ============================================================
-const SHEET_ID = "1kUcjAtwyK85_ZWeRdOQ_UlyXhFCm0bah";
+const SHEET_ID = "1GRS_Rcn6Eio8cragiB7WNKrZ6udabNwvS_joo-LhS4M";
 const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+const ATTENDEE_API_URL = "https://script.google.com/macros/s/AKfycbxEb1DHX5PVOl2d-vm_Mz4X1PKptfhwTZQi5qWKP5J4ZnsTt8JaJlM30w2VPhG9Cqtm/exec";
+const GUEST_API_URL = "https://script.google.com/macros/s/AKfycbwZpNXgMKALCOKN1fJIu-Mp75TBaY2i_S6632hCPSQbGU9YCkVEYy52K-uOy22I0WhAzg/exec";
+
+function parseCSVRow(line) {
+  const row = [];
+  let inQuote = false, field = "";
+  for (let j = 0; j < line.length; j++) {
+    const ch = line[j];
+    if (ch === '"') { inQuote = !inQuote; continue; }
+    if (ch === ',' && !inQuote) { row.push(field.trim()); field = ""; continue; }
+    field += ch;
+  }
+  row.push(field.trim());
+  return row;
+}
 
 function parseCSV(text) {
   const lines = text.split("\n").filter(l => l.trim());
   if (lines.length < 2) return [];
   const results = [];
   for (let i = 1; i < lines.length; i++) {
-    const row = [];
-    let inQuote = false, field = "";
-    for (let j = 0; j < lines[i].length; j++) {
-      const ch = lines[i][j];
-      if (ch === '"') { inQuote = !inQuote; continue; }
-      if (ch === ',' && !inQuote) { row.push(field.trim()); field = ""; continue; }
-      field += ch;
-    }
-    row.push(field.trim());
-    if (row.length >= 3 && row[1]) {
-      // 내빈으로 표시된 참석자는 VIP_GUESTS에서 별도 관리하므로 제외
-      if (row.length > 8 && row[8] && row[8].trim() === "내빈") continue;
-      results.push({ name: row[1], org: row[2] || "" });
-    }
+    const row = parseCSVRow(lines[i]);
+    // 컬럼: A=연번 B=성함 C=소속 D=생년월일 E=연락처 F=이메일 G=편의제공조사 H=좌석배정 I=참석여부
+    if (!row[1]) continue;
+    const attended = row[8] === "O" || row[8] === "Y" || row[8] === "참석" || row[8] === "✓";
+    results.push({
+      name: row[1] || "",
+      org: row[2] || "",
+      birthdate: row[3] || "",
+      contact: row[4] || "",
+      tableNo: row[7] || "",
+      checked: attended,
+    });
   }
   return results;
 }
@@ -2001,16 +1878,30 @@ export default function App() {
       const text = await res.text();
       const parsed = parseCSV(text);
       if (parsed.length > 0) {
-        const mapped = parsed.map((p, i) => ({
-          id: i + 1,
-          name: p.name,
-          org: p.org,
-          table: ATTENDEE_TABLES[Math.min(Math.floor(i / 10), ATTENDEE_TABLES.length - 1)]?.id || ATTENDEE_TABLES[0].id,
-          checked: false,
-          birthdate: null,
-          checkedAt: null,
+        setAttendees(prev => parsed.map((p, i) => {
+          const existing = prev.find(x => x.name === p.name && x.org === p.org);
+          const parts = (p.tableNo || "").split("-");
+          const table = parseInt(parts[0]) || 0;
+          const seat = parseInt(parts[1]) || 0;
+          // 스프레드시트에 tableNo 없으면 로컬 배정 유지 (API 저장 지연 대비)
+          const exTableNo = existing && /** @type {any} */(existing).tableNo;
+          const finalTableNo = p.tableNo || exTableNo || "";
+          const finalTable = p.tableNo ? table : (existing?.table || 0);
+          const finalSeat = p.tableNo ? seat : (existing?.seat || 0);
+          return {
+            id: i + 1,
+            name: p.name,
+            org: p.org,
+            birthdate: p.birthdate,
+            contact: p.contact,
+            rowIndex: existing?.rowIndex ?? null,
+            tableNo: finalTableNo,
+            table: finalTable,
+            seat: finalSeat,
+            checked: existing ? existing.checked : p.checked,
+            checkedAt: existing ? existing.checkedAt : (p.checked ? Date.now() : null),
+          };
         }));
-        setAttendees(mapped);
         setSheetCount(parsed.length);
         setSheetStatus("loaded");
         showToast(`참석자 ${parsed.length}명 불러오기 완료`);
@@ -2020,12 +1911,41 @@ export default function App() {
       }
     } catch (err) {
       setSheetStatus("error");
-      showToast("스프레드시트 연결 실패 — 기본 데이터 사용");
+      showToast("스프레드시트 연결 실패");
     }
   }, [showToast]);
 
+  // VIP 좌석 현황을 GuestCode.gs seat map에서 주기적으로 동기화
+  const fetchVipSeating = useCallback(async () => {
+    try {
+      const res = await fetch(GUEST_API_URL + "?action=getSeatMap");
+      const r = await res.json();
+      if (!r.success) return;
+      const seatMap = {};
+      (r.data || []).forEach(s => { seatMap[s.좌석번호] = s; });
+      setVipGuests(prev => prev.map(v => {
+        const key = `${v.table}-${v.seat}`;
+        const s = seatMap[key];
+        if (!s) return v;
+        return {
+          ...v,
+          name: s.이름 || v.name,
+          org: s.소속 || v.org,
+          checked: s.상태 === "착석" || s.상태 === "입장",
+        };
+      }));
+    } catch (_) { /* 조용히 실패 */ }
+  }, []);
+
   // Auto-fetch on mount
   useEffect(() => { fetchAttendees(); }, []);
+
+  // VIP 좌석 주기적 동기화 (8초)
+  useEffect(() => {
+    fetchVipSeating();
+    const t = setInterval(fetchVipSeating, 8000);
+    return () => clearInterval(t);
+  }, [fetchVipSeating]);
 
   useEffect(() => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
@@ -2059,7 +1979,7 @@ export default function App() {
       <div ref={contentRef} className="app-content">
         {tab === "dashboard" && <DashboardTab vipGuests={vipGuests} attendees={attendees} notices={notices} emergencies={emergencies} program={PROGRAM} setTab={setTab} />}
         {tab === "vip" && <VipTab guests={vipGuests} setGuests={setVipGuests} />}
-        {tab === "guestbook" && <GuestbookTab showToast={showToast} />}
+        {tab === "guestbook" && <GuestbookTab />}
         {tab === "attendees" && (
           <div>
             {/* Sheet status bar */}
@@ -2081,7 +2001,7 @@ export default function App() {
                 새로고침
               </button>
             </div>
-            <AttendeesTab attendees={attendees} setAttendees={setAttendees} />
+            <AttendeesTab attendees={attendees} setAttendees={setAttendees} showToast={showToast} />
           </div>
         )}
         {tab === "seating" && <SeatingTab attendees={attendees} vipGuests={vipGuests} showToast={showToast} />}

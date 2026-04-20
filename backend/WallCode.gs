@@ -3,8 +3,8 @@
 // Original idea by SkyStar
 // ============================================================
 
-var WALL_SPREADSHEET_ID = '1Rq5q6ISaj4YxhHAajSkpeavOlJ8ETAb7szSGxZDHOaE';
-var WALL_FOLDER_ID      = '';   // ← Google Drive 폴더 ID 입력 필요
+var WALL_SPREADSHEET_ID = '16aMF3MHX6fcFAvOPKsS6M4QAAAlU6ya9jGxKV1c01WE';
+var WALL_FOLDER_ID      = '1ZSGgp2tK84KdmAEkcj8Gu-S51GMasCkT';   // ← Google Drive 폴더 ID 입력 필요
 var WALL_SHEET_NAME     = 'messages';
 var WALL_COLOR_SHEET    = '색상설정';
 var WALL_EVENT_SHEET    = '이벤트설정';

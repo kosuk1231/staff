@@ -5,12 +5,12 @@
  * ═══════════════════════════════════════════════════════════ */
 
 // ─── 환경 상수 ────────────────────────────────────────────
-var DATA_SPREADSHEET_ID = '1hklkC3zUYFyD7CjF-_-yBNXVHnB5XRndPzN96g7vPEc';
+var DATA_SPREADSHEET_ID = '1QPNziN0O-SX6EN6C9Qt34iFhXPRdkXVoI9IUvvmiN3c';
 var GUEST_SHEET = '01_내빈명단';
 var SEAT_SHEET = '02_좌석세팅';
 var OPTION_SHEET = '00_옵션';
 var COUNCIL_SHEET = '03_주요내빈';
-var PHOTO_FOLDER_ID = ''; // 사진 폴더 ID (필요시 입력)
+var PHOTO_FOLDER_ID = '17T6sxrrRWF3Bh16u5BxyvCBRpmf7LWsB';
 
 // ─── 스프레드시트 접근 ────────────────────────────────────
 function getDataSS() {
@@ -36,6 +36,9 @@ function doGet(e) {
       case 'getOptions':
         result = { success: true, data: getOptions() };
         break;
+      case 'getCouncilData':
+        result = { success: true, data: getCouncilData() };
+        break;
       case 'getCouncilList':
         result = { success: true, data: getCouncilList() };
         break;
@@ -50,7 +53,7 @@ function doGet(e) {
             seats: getSeatMap(),
             photoMap: getPhotoMap(),
             options: getOptions(),
-            councilIds: getCouncilList()
+            councilData: getCouncilData()
           }
         };
         break;
@@ -73,19 +76,19 @@ function doPost(e) {
 
     switch (action) {
       case 'processEntry':
-        result = processEntry(body.guestId);
+        result = processEntry(body.guestId, body.rowIndex);
         break;
       case 'cancelEntry':
-        result = cancelEntry(body.guestId);
+        result = cancelEntry(body.guestId, body.rowIndex);
         break;
       case 'processAbsent':
-        result = processAbsent(body.guestId);
+        result = processAbsent(body.guestId, body.rowIndex);
         break;
       case 'cancelAbsent':
-        result = cancelAbsent(body.guestId);
+        result = cancelAbsent(body.guestId, body.rowIndex);
         break;
       case 'processSeat':
-        result = processSeat(body.guestId, body.seatNumber);
+        result = processSeat(body.guestId, body.seatNumber, body.rowIndex);
         break;
       case 'cancelSeat':
         result = cancelSeat(body.seatNumber);
@@ -123,6 +126,13 @@ function safeStr(v) {
   return String(v === null || v === undefined ? '' : v).trim();
 }
 
+// 좌석번호용: "3-4"가 날짜(3월4일)로 저장될 때 복원
+function safeStrSeat(v) {
+  if (!v) return '';
+  if (v instanceof Date) return (v.getMonth() + 1) + '-' + v.getDate();
+  return String(v).trim();
+}
+
 // ─── 옵션 읽기 ────────────────────────────────────────────
 function getOptions() {
   try {
@@ -139,22 +149,59 @@ function getOptions() {
   }
 }
 
-// ─── 주요내빈 목록 (내빈ID 목록) ────────────────────────────
-function getCouncilList() {
+// ─── 주요내빈 전체 데이터 (03_주요내빈 시트) ────────────────
+// 컬럼: A=번호 B=이름 C=구분 D=소속 E=소속정당
+function getCouncilData() {
   try {
     var ss = getDataSS(), sheet = ss.getSheetByName(COUNCIL_SHEET);
     if (!sheet) return [];
     var lr = sheet.getLastRow();
     if (lr <= 1) return [];
-    var data = sheet.getRange(2, 1, lr - 1, 1).getValues();
-    var ids = [];
+    var data = sheet.getRange(2, 1, lr - 1, 5).getValues();
+    var namePhotoMap = getPhotoMapByName();
+    var members = [];
     for (var i = 0; i < data.length; i++) {
-      var id = safeStr(data[i][0]);
-      if (id) ids.push(id);
+      var row = data[i];
+      var name = safeStr(row[1]);
+      if (!name) continue;
+      members.push({
+        번호: Number(row[0]) || (i + 1),
+        이름: name,
+        구분: safeStr(row[2]),
+        소속: safeStr(row[3]),
+        소속정당: safeStr(row[4]),
+        photoFileId: namePhotoMap[name] || ''
+      });
     }
-    return ids;
+    return members;
   } catch (e) {
     return [];
+  }
+}
+
+// 하위호환용 ID 목록 (더이상 사용 안 함, 유지만)
+function getCouncilList() {
+  return getCouncilData().map(function(m) { return m.이름; });
+}
+
+// ─── 이름 기반 사진 맵 (이름 → fileId) ──────────────────
+function getPhotoMapByName() {
+  if (!PHOTO_FOLDER_ID) return {};
+  try {
+    var folder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
+    var files = folder.getFiles();
+    var map = {};
+    while (files.hasNext()) {
+      var file = files.next();
+      var raw = file.getName().replace(/\.[^.]+$/, ''); // 확장자 제거
+      // "1_오세훈", "오세훈" 등 이름 추출
+      var match = raw.match(/_(.+)$/);
+      var key = match ? match[1].trim() : raw.trim();
+      if (key) map[key] = file.getId();
+    }
+    return map;
+  } catch (e) {
+    return {};
   }
 }
 
@@ -204,8 +251,8 @@ function getGuestList() {
         직함: safeStr(row[3]),
         이름: safeStr(row[4]),
         상태: safeStr(row[5]) || '대기',
-        지정좌석: safeStr(row[6]),
-        실제좌석: safeStr(row[7]),
+        지정좌석: safeStrSeat(row[6]),
+        실제좌석: safeStrSeat(row[7]),
         입장시간: fmtTime(row[8]),
         착석시간: fmtTime(row[9]),
         비고: safeStr(row[10])
@@ -231,7 +278,7 @@ function getSeatMap() {
       if (!row[0]) continue;
       seats.push({
         rowIndex: i + 1,
-        좌석번호: safeStr(row[0]),
+        좌석번호: safeStrSeat(row[0]),
         열구분: safeStr(row[1]),
         순번: Number(row[2] || 0),
         상태: safeStr(row[3]) || '공석',
@@ -278,11 +325,20 @@ function testConnection() {
 }
 
 // ─── 입장 처리 ────────────────────────────────────────────
-function processEntry(guestId) {
+function processEntry(guestId, rowIndex) {
   try {
     var ss = getDataSS(), sheet = ss.getSheetByName(GUEST_SHEET);
     if (!sheet) throw new Error('시트 없음');
-    var data = sheet.getDataRange().getValues(), now = getNow();
+    var now = getNow();
+    // rowIndex가 있으면 행 직접 접근 (ID 매칭 오류 방지)
+    if (rowIndex > 1) {
+      var row = sheet.getRange(rowIndex, 1, 1, 11).getValues()[0];
+      if (safeStr(row[5]) === '착석') return { success: false, message: '이미 착석 상태입니다.' };
+      sheet.getRange(rowIndex, 6).setValue('입장');
+      sheet.getRange(rowIndex, 9).setValue(now);
+      return { success: true, message: safeStr(row[4]) + ' 님 입장 처리 완료' };
+    }
+    var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
       if (safeStr(data[i][0]) === String(guestId)) {
         if (safeStr(data[i][5]) === '착석') return { success: false, message: '이미 착석 상태입니다.' };
@@ -296,10 +352,17 @@ function processEntry(guestId) {
 }
 
 // ─── 입장 취소 ────────────────────────────────────────────
-function cancelEntry(guestId) {
+function cancelEntry(guestId, rowIndex) {
   try {
     var ss = getDataSS(), sheet = ss.getSheetByName(GUEST_SHEET);
     if (!sheet) throw new Error('시트 없음');
+    if (rowIndex > 1) {
+      var row = sheet.getRange(rowIndex, 1, 1, 11).getValues()[0];
+      if (safeStr(row[5]) !== '입장') return { success: false, message: '입장 상태가 아닙니다.' };
+      sheet.getRange(rowIndex, 6).setValue('대기');
+      sheet.getRange(rowIndex, 9).setValue('');
+      return { success: true, message: safeStr(row[4]) + ' 님 입장 취소' };
+    }
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
       if (safeStr(data[i][0]) === String(guestId)) {
@@ -314,10 +377,17 @@ function cancelEntry(guestId) {
 }
 
 // ─── 불참 처리 ────────────────────────────────────────────
-function processAbsent(guestId) {
+function processAbsent(guestId, rowIndex) {
   try {
     var ss = getDataSS(), sheet = ss.getSheetByName(GUEST_SHEET);
     if (!sheet) throw new Error('시트 없음');
+    if (rowIndex > 1) {
+      var row = sheet.getRange(rowIndex, 1, 1, 11).getValues()[0];
+      if (safeStr(row[5]) === '착석') return { success: false, message: '착석 상태에서는 불참 처리 불가' };
+      sheet.getRange(rowIndex, 6).setValue('불참');
+      sheet.getRange(rowIndex, 9).setValue('');
+      return { success: true, message: safeStr(row[4]) + ' 님 불참 처리 완료' };
+    }
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
       if (safeStr(data[i][0]) === String(guestId)) {
@@ -332,10 +402,16 @@ function processAbsent(guestId) {
 }
 
 // ─── 불참 취소 ────────────────────────────────────────────
-function cancelAbsent(guestId) {
+function cancelAbsent(guestId, rowIndex) {
   try {
     var ss = getDataSS(), sheet = ss.getSheetByName(GUEST_SHEET);
     if (!sheet) throw new Error('시트 없음');
+    if (rowIndex > 1) {
+      var row = sheet.getRange(rowIndex, 1, 1, 11).getValues()[0];
+      if (safeStr(row[5]) !== '불참') return { success: false, message: '불참 상태가 아닙니다.' };
+      sheet.getRange(rowIndex, 6).setValue('대기');
+      return { success: true, message: safeStr(row[4]) + ' 님 불참 취소 → 대기' };
+    }
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
       if (safeStr(data[i][0]) === String(guestId)) {
@@ -349,17 +425,24 @@ function cancelAbsent(guestId) {
 }
 
 // ─── 착석 처리 ────────────────────────────────────────────
-function processSeat(guestId, seatNumber) {
+function processSeat(guestId, seatNumber, rowIndex) {
   try {
     var ss = getDataSS(), gs = ss.getSheetByName(GUEST_SHEET), ss2 = ss.getSheetByName(SEAT_SHEET);
     if (!gs || !ss2) throw new Error('시트 없음');
-    var now = getNow(), gd = gs.getDataRange().getValues(), sd = ss2.getDataRange().getValues();
+    var now = getNow(), sd = ss2.getDataRange().getValues();
     var gr = -1, gi = null;
-    for (var i = 1; i < gd.length; i++) {
-      if (safeStr(gd[i][0]) === String(guestId)) {
-        gr = i + 1;
-        gi = { id: safeStr(gd[i][0]), nm: safeStr(gd[i][4]), org: safeStr(gd[i][2]), title: safeStr(gd[i][3]), prev: safeStr(gd[i][7]) };
-        break;
+    if (rowIndex > 1) {
+      var rv = gs.getRange(rowIndex, 1, 1, 11).getValues()[0];
+      gr = rowIndex;
+      gi = { id: safeStr(rv[0]), nm: safeStr(rv[4]), org: safeStr(rv[2]), title: safeStr(rv[3]), prev: safeStrSeat(rv[7]) };
+    } else {
+      var gd = gs.getDataRange().getValues();
+      for (var i = 1; i < gd.length; i++) {
+        if (safeStr(gd[i][0]) === String(guestId)) {
+          gr = i + 1;
+          gi = { id: safeStr(gd[i][0]), nm: safeStr(gd[i][4]), org: safeStr(gd[i][2]), title: safeStr(gd[i][3]), prev: safeStrSeat(gd[i][7]) };
+          break;
+        }
       }
     }
     if (gr === -1) return { success: false, message: '내빈 없음' };
@@ -394,7 +477,9 @@ function processSeat(guestId, seatNumber) {
       }
     }
     gs.getRange(gr, 6).setValue('착석');
-    gs.getRange(gr, 8).setValue(seatNumber);
+    var seatCell = gs.getRange(gr, 8);
+    seatCell.setNumberFormat('@');
+    seatCell.setValue(seatNumber);
     gs.getRange(gr, 10).setValue(now);
     return { success: true, message: gi.nm + ' → ' + seatNumber + ' 착석 완료' };
   } catch (e) { return { success: false, message: '오류: ' + e.message }; }

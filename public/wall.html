@@ -250,6 +250,81 @@ html, body {
   #canvas-side { padding: 12px; flex: 1; }
   #control-side { width: 100%; padding: 12px 16px; overflow-y: auto; max-height: 50vh; }
 }
+
+/* ── 갤러리 ── */
+#gallery-screen {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: #0a0a14; flex-direction: column;
+}
+#gallery-screen.active { display: flex; }
+.gallery-header-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px); flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.gallery-title { font-size: 16px; font-weight: 700; color: #fff; flex: 1; }
+.gallery-count-badge { font-size: 12px; color: rgba(255,255,255,0.4); }
+.gallery-close-btn {
+  padding: 7px 16px; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 20px;
+  color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.gallery-area {
+  flex: 1; position: relative; overflow: hidden;
+}
+.gallery-card {
+  position: absolute; cursor: pointer;
+  border-radius: 10px; overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+  border: 2px solid rgba(255,255,255,0.08);
+  transition: transform 0.2s, box-shadow 0.2s, z-index 0s;
+  background: #1e293b;
+}
+.gallery-card:hover {
+  transform: scale(1.08) rotate(0deg) !important;
+  box-shadow: 0 12px 40px rgba(139,92,246,0.4);
+  z-index: 100 !important; border-color: rgba(139,92,246,0.5);
+}
+.gallery-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.gallery-card .g-nick {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 4px 8px; background: rgba(0,0,0,0.65);
+  font-size: 11px; color: rgba(255,255,255,0.8); text-align: center;
+}
+.gallery-empty {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  text-align: center; color: rgba(255,255,255,0.3);
+}
+.gallery-empty .ge-icon { font-size: 52px; margin-bottom: 14px; }
+.gallery-empty .ge-text { font-size: 15px; }
+#gallery-zoom-overlay {
+  display: none; position: fixed; inset: 0; z-index: 600;
+  background: rgba(0,0,0,0.88); align-items: center; justify-content: center;
+  cursor: pointer;
+}
+#gallery-zoom-overlay.show { display: flex; }
+#gallery-zoom-overlay .gz-inner {
+  position: relative; max-width: 92vw; max-height: 88vh;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+#gallery-zoom-overlay img {
+  max-width: 100%; max-height: 80vh;
+  border-radius: 12px; object-fit: contain;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+}
+#gallery-zoom-overlay .gz-nick {
+  color: rgba(255,255,255,0.7); font-size: 15px; font-weight: 600;
+}
+.gallery-toggle-btn {
+  position: fixed; bottom: 80px; right: 18px; z-index: 400;
+  padding: 10px 18px; background: linear-gradient(135deg,#3b82f6,#8b5cf6);
+  color: #fff; border: none; border-radius: 24px;
+  font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+  box-shadow: 0 4px 16px rgba(139,92,246,0.4);
+}
 </style>
 </head>
 <body>
@@ -368,6 +443,24 @@ html, body {
   </div>
 </div>
 
+<!-- 갤러리 화면 -->
+<div id="gallery-screen">
+  <div class="gallery-header-bar">
+    <span class="gallery-title">📸 방명록 갤러리</span>
+    <span class="gallery-count-badge" id="gallery-count">0개</span>
+    <button class="gallery-close-btn" onclick="closeGallery()">✕ 닫기</button>
+  </div>
+  <div class="gallery-area" id="gallery-area"></div>
+</div>
+
+<!-- 갤러리 확대 오버레이 -->
+<div id="gallery-zoom-overlay" onclick="closeGalleryOverlay()">
+  <div class="gz-inner"></div>
+</div>
+
+<!-- 갤러리 토글 버튼 -->
+<button class="gallery-toggle-btn" onclick="openGallery()">🖼️ 갤러리 보기</button>
+
 <!-- 성공 화면 -->
 <div id="success-screen">
   <div class="success-circle">✅</div>
@@ -379,7 +472,7 @@ html, body {
 
 <script>
 // ── API 설정 ─────────────────────────────────────────────
-var API_URL = localStorage.getItem('wall_api_url') || 'https://script.google.com/macros/s/AKfycbyUEmU4PDX20BUsRZMjpfE-F0vth8JyOeBpabu_QCdBdSyj90eOXlj4lh_3co6xuOHfIA/exec';
+var API_URL = localStorage.getItem('wall_api_url') || 'https://script.google.com/macros/s/AKfycbxmCCx1AUqLM_DQeDqAmBvv8ngHQXyHeIt6EV2p3l-2vMJpy6IRRP6ZO50HQB5GWV6MaQ/exec';
 
 function openConfig() {
   document.getElementById('apiUrlInput').value = API_URL;
@@ -718,6 +811,94 @@ function loadEventSettings() {
       }
     })
     .catch(function() { /* 무시 */ });
+}
+
+// ── 갤러리 ──────────────────────────────────────────────────
+var galleryLoading = false;
+
+function openGallery() {
+  document.getElementById('gallery-screen').classList.add('active');
+  loadGallery();
+}
+
+function closeGallery() {
+  document.getElementById('gallery-screen').classList.remove('active');
+}
+
+function loadGallery() {
+  if (galleryLoading) return;
+  if (!API_URL) return;
+  galleryLoading = true;
+  var area = document.getElementById('gallery-area');
+  area.innerHTML = '<div class="gallery-empty"><div class="ge-icon">⏳</div><div class="ge-text">불러오는 중...</div></div>';
+  apiGet('getMessages')
+    .then(function(data) {
+      galleryLoading = false;
+      renderGallery(data || []);
+    })
+    .catch(function() {
+      galleryLoading = false;
+      var area2 = document.getElementById('gallery-area');
+      area2.innerHTML = '<div class="gallery-empty"><div class="ge-icon">⚠️</div><div class="ge-text">불러오기 실패</div></div>';
+    });
+}
+
+function renderGallery(msgs) {
+  var area = document.getElementById('gallery-area');
+  area.innerHTML = '';
+  document.getElementById('gallery-count').textContent = msgs.length + '개';
+
+  if (!msgs.length) {
+    area.innerHTML = '<div class="gallery-empty"><div class="ge-icon">🖼️</div><div class="ge-text">아직 방명록이 없습니다</div></div>';
+    return;
+  }
+
+  var W = area.clientWidth, H = area.clientHeight;
+  msgs.forEach(function(msg, i) {
+    var card = document.createElement('div');
+    card.className = 'gallery-card';
+
+    var ax  = Math.sin(i * 127.1 + 311.7) * 43758.5453;
+    var ay  = Math.sin(i * 269.5 + 183.3) * 43758.5453;
+    var ar  = Math.sin(i * 93.7  + 47.3)  * 43758.5453;
+    var rx  = ax - Math.floor(ax);
+    var ry  = ay - Math.floor(ay);
+    var rot = (ar - Math.floor(ar)) * 12 - 6;
+
+    var cW = 140, cH = 140;
+    card.style.left      = Math.round(rx * (W - cW - 20) + 10) + 'px';
+    card.style.top       = Math.round(ry * (H - cH - 20) + 10) + 'px';
+    card.style.width     = cW + 'px';
+    card.style.height    = cH + 'px';
+    card.style.transform = 'rotate(' + rot.toFixed(1) + 'deg)';
+    card.style.zIndex    = i + 1;
+
+    var img = document.createElement('img');
+    img.src     = 'https://drive.google.com/thumbnail?id=' + msg.fileId + '&sz=w300';
+    img.alt     = msg.nickname || '익명';
+    img.loading = 'lazy';
+
+    var nick = document.createElement('div');
+    nick.className   = 'g-nick';
+    nick.textContent = msg.nickname || '익명';
+
+    card.appendChild(img);
+    card.appendChild(nick);
+    card.addEventListener('click', function() { openGalleryOverlay(msg.fileId, msg.nickname); });
+    area.appendChild(card);
+  });
+}
+
+function openGalleryOverlay(fileId, nick) {
+  var overlay = document.getElementById('gallery-zoom-overlay');
+  var inner   = overlay.querySelector('.gz-inner');
+  var n = nick || '익명';
+  inner.innerHTML = '<img src="https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1000" alt="' + n + '"><div class="gz-nick">' + n + '</div>';
+  overlay.classList.add('show');
+}
+
+function closeGalleryOverlay() {
+  document.getElementById('gallery-zoom-overlay').classList.remove('show');
 }
 
 // ── 리사이즈 ─────────────────────────────────────────────
