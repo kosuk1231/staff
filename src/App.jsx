@@ -4,24 +4,27 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 // DATA
 // ============================================================
 const PROGRAM = [
+  // 준비
   { id: "p0_1", time: "13:00", end: "14:00", title: "행사장 세팅", part: "준비", type: "setup" },
   { id: "p0_2", time: "14:00", end: "14:30", title: "시상식 리허설", part: "준비", type: "rehearsal" },
   { id: "p0_3", time: "14:00", end: "15:00", title: "참여자 접수 / 포토존 운영", part: "접수", type: "reception" },
-  { id: "p1_1", time: "15:00", end: "15:02", title: "1부 개회 및 안내", part: "1부", type: "opening" },
-  { id: "p1_2", time: "15:02", end: "15:04", title: "사회복지사 선서", part: "1부", type: "ceremony" },
-  { id: "p1_3", time: "15:04", end: "15:07", title: "창립 40주년 기념 영상", part: "1부", type: "video" },
-  { id: "p1_4", time: "15:07", end: "15:22", title: "특별강연 1", speaker: "김아래미 교수", part: "1부", type: "lecture" },
-  { id: "p1_5", time: "15:22", end: "15:37", title: "특별강연 2", speaker: "윤석원 대표", part: "1부", type: "lecture" },
-  { id: "p1_6", time: "15:37", end: "15:52", title: "특별강연 3", speaker: "황흥기 대표", part: "1부", type: "lecture" },
-  { id: "p1_7", time: "15:52", end: "15:59", title: "비전발표", speaker: "강현덕 수석부회장", part: "1부", type: "summary" },
-  { id: "p1_8", time: "15:59", end: "16:00", title: "1부 클로징 및 안내", part: "1부", type: "closing" },
-  { id: "p2_1", time: "16:00", end: "16:10", title: "내빈접수 및 응대", part: "2부", type: "reception" },
-  { id: "p2_2", time: "16:10", end: "16:11", title: "2부 개회 및 안내", part: "2부", type: "opening" },
-  { id: "p2_3", time: "16:11", end: "16:14", title: "내빈 소개", part: "2부", type: "intro" },
-  { id: "p2_4", time: "16:14", end: "16:19", title: "기념사", speaker: "곽경인 회장", part: "2부", type: "speech" },
-  { id: "p2_5", time: "16:19", end: "16:39", title: "내빈 축사", speaker: "주요내빈", part: "2부", type: "speech" },
-  { id: "p2_6", time: "16:39", end: "16:59", title: "시상 (특별상, 미래인재상 외)", part: "2부", type: "award" },
-  { id: "p2_7", time: "16:59", end: "17:00", title: "폐회 및 사진촬영", part: "2부", type: "closing" },
+  // 1부 기념특강
+  { id: "p1_1", time: "15:00", end: "15:05", title: "1부 개회", part: "1부", type: "opening" },
+  { id: "p1_2", time: "15:05", end: "15:20", title: "특별강연1 사회복지40년, 전문성의 역사와 미래 비전", speaker: "김아래미 정책위원장/서울여자대학교 교수", part: "1부", type: "lecture" },
+  { id: "p1_3", time: "15:20", end: "15:35", title: "특별강연2 디지털 전환 시대, 그럼에도 사람", speaker: "윤석원 대표/(주)에이아이웍스", part: "1부", type: "lecture" },
+  { id: "p1_4", time: "15:35", end: "15:50", title: "특별강연3 AI 시대, 사회복지의 기준을 다시 세우다", speaker: "황흥기 대표/넥스트임팩트", part: "1부", type: "lecture" },
+  { id: "p1_5", time: "15:50", end: "16:00", title: "1부 클로징 및 안내", part: "1부", type: "closing" },
+  // 2부 기념식 및 시상식
+  { id: "p2_1", time: "16:00", end: "16:10", title: "내빈접수", part: "2부", type: "reception" },
+  { id: "p2_2", time: "16:10", end: "16:12", title: "2부 개회", part: "2부", type: "opening" },
+  { id: "p2_3", time: "16:12", end: "16:17", title: "내빈 소개", part: "2부", type: "intro" },
+  { id: "p2_4", time: "16:17", end: "16:19", title: "사회복지사 선서", part: "2부", type: "ceremony" },
+  { id: "p2_5", time: "16:19", end: "16:22", title: "활동브리핑(동영상)", part: "2부", type: "video" },
+  { id: "p2_6", time: "16:22", end: "16:27", title: "기념사", speaker: "곽경인 서울시사회복지사협회 회장", part: "2부", type: "speech" },
+  { id: "p2_7", time: "16:27", end: "16:47", title: "내빈 축사", speaker: "오세훈 서울시장 외 주요내빈", part: "2부", type: "speech" },
+  { id: "p2_8", time: "16:47", end: "17:07", title: "시상 (감사패·미래인재상·미래리더상·비전리더상)", part: "2부", type: "award" },
+  { id: "p2_9", time: "17:07", end: "17:12", title: "비전발표 사회복지 4.0, 다음 10년의 방향", speaker: "강현덕 기획위원장/영등포구가족센터 센터장", part: "2부", type: "summary" },
+  { id: "p2_10", time: "17:12", end: "17:15", title: "기념사진 촬영 및 폐회", part: "2부", type: "closing" },
 ];
 
 const VIP_GUESTS = [
