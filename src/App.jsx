@@ -27,62 +27,23 @@ const PROGRAM = [
   { id: "p2_10", time: "17:12", end: "17:15", title: "기념사진 촬영 및 폐회", part: "2부", type: "closing" },
 ];
 
-const VIP_GUESTS = [
-  // 테이블 3: 주요 내빈석
-  { id: 1, name: "오세훈", org: "서울특별시", role: "서울시장", table: 3, seat: 1, checked: false },
-  { id: 2, name: "곽경인", org: "서울시사회복지사협회", role: "회장", table: 3, seat: 2, checked: false },
-  { id: 3, name: "남인순", org: "국회의원", role: "의원", table: 3, seat: 3, checked: false },
-  { id: 4, name: "김연은", org: "연대회의", role: "상임대표", table: 3, seat: 4, checked: false },
-  { id: 5, name: "조석영", org: "한국장애인복지관협회", role: "회장", table: 3, seat: 5, checked: false },
-  { id: 6, name: "김태수", org: "서울시의회", role: "보건복지위원장", table: 3, seat: 6, checked: false },
-  { id: 7, name: "이영실", org: "서울시의회", role: "의원", table: 3, seat: 7, checked: false },
-  { id: 8, name: "김상철", org: "서울복지재단", role: "대표이사", table: 3, seat: 8, checked: false },
-  { id: 9, name: "박미경", org: "한국사회복지사협회", role: "부회장", table: 3, seat: 9, checked: false },
-  { id: 10, name: "이재완", org: "사회복지공동모금회", role: "사무총장", table: 3, seat: 10, checked: false },
 
-  // 테이블 2: 전현직 회장단 및 위원장단
-  { id: 11, name: "이천규", org: "역삼주간보호센터", role: "전현직 회장단", table: 2, seat: 1, checked: false },
-  { id: 12, name: "이은주", org: "도봉노인종합복지관", role: "전현직 회장단", table: 2, seat: 2, checked: false },
-  { id: 13, name: "김익환", org: "동작노인종합복지관", role: "전현직 회장단", table: 2, seat: 3, checked: false },
-  { id: 14, name: "신철민", org: "장위종합사회복지관", role: "전현직 회장단", table: 2, seat: 4, checked: false },
-  { id: 15, name: "성미선", org: "웰라이프백세인사회적협동조합", role: "전현직 회장단", table: 2, seat: 5, checked: false },
-  { id: 16, name: "김광제", org: "신목종합사회복지관", role: "전현직 회장단", table: 2, seat: 6, checked: false },
-  { id: 17, name: "강현덕", org: "영등포구가족센터", role: "수석부회장", table: 2, seat: 7, checked: false },
-  { id: 18, name: "김아래미", org: "서울여자대학교", role: "정책위원장", table: 2, seat: 8, checked: false },
-  { id: 19, name: "변소현", org: "서부장애인종합복지관", role: "교육위원장", table: 2, seat: 9, checked: false },
-  { id: 20, name: "임명연", org: "마포영유아지원센터", role: "복지시민위원장", table: 2, seat: 10, checked: false },
-
-  // 테이블 4: 단체장 및 위원장단
-  { id: 21, name: "권현수", org: "사당융합형우리동네키움센터", role: "키움센터 회장", table: 4, seat: 1, checked: false },
-  { id: 22, name: "김은영", org: "서울시지역아동센터협의회", role: "지역아동센터 회장", table: 4, seat: 2, checked: false },
-  { id: 23, name: "이봉원", org: "대한사회복지회", role: "대한사회복지회 회장", table: 4, seat: 3, checked: false },
-  { id: 24, name: "서동명", org: "동덕여자대학교", role: "교수", table: 4, seat: 4, checked: false },
-  { id: 25, name: "홍준호", org: "가슴뛰는연대공생", role: "미래세대위원장", table: 4, seat: 5, checked: false },
-  { id: 26, name: "김일용", org: "즐거운사회복지궁리소", role: "선관위원장", table: 4, seat: 6, checked: false },
-  { id: 27, name: "서정화", org: "열린여성센터", role: "소장", table: 4, seat: 7, checked: false },
-  { id: 28, name: "이소영", org: "서울시아동복지협회", role: "회장", table: 4, seat: 8, checked: false },
-  { id: 29, name: "백윤미", org: "서울시정신요양시설협회", role: "회장", table: 4, seat: 9, checked: false },
-  { id: 30, name: "임형균", org: "장애인복지관협회", role: "회장", table: 4, seat: 10, checked: false },
-
-  // 테이블 5: 단체장 및 전직 임원
-  { id: 31, name: "권소현", org: "마포장애인종합복지관", role: "회장", table: 5, seat: 1, checked: false },
-  { id: 32, name: "신영숙", org: "여성폭력피해지원시설협회", role: "회장", table: 5, seat: 2, checked: false },
-  { id: 33, name: "정보영", org: "서울정신재활시설협회", role: "회장", table: 5, seat: 3, checked: false },
-  { id: 34, name: "한철수", org: "서울시노인복지협회", role: "회장", table: 5, seat: 4, checked: false },
-  { id: 35, name: "허곤", org: "장애인복지시설협회", role: "회장", table: 5, seat: 5, checked: false },
-  { id: 36, name: "정진모", org: "한국노인복지중앙회", role: "전)제8대 회장", table: 5, seat: 6, checked: false },
-  { id: 37, name: "이천규", org: "서울은평노인복지관", role: "회원소통위원장", table: 5, seat: 7, checked: false },
-  { id: 38, name: "정재훈", org: "서울여자대학교", role: "교수", table: 5, seat: 8, checked: false },
-  { id: 39, name: "최은영", org: "한국도시연구소", role: "소장", table: 5, seat: 9, checked: false },
-  { id: 40, name: "윤민석", org: "서울연구원", role: "부연구위원", table: 5, seat: 10, checked: false },
-];
-
+// 내빈 테이블 설정 (실제 내빈명단 기준)
 const TABLE_CONFIG = {
-  2: { seats: 10, label: "내빈석", color: "#8B5CF6" },
-  3: { seats: 10, label: "주요 내빈석", color: "#C8A44E" },
-  4: { seats: 10, label: "주요 내빈석", color: "#10B981" },
-  5: { seats: 10, label: "내빈석", color: "#F59E0B" },
+  2:  { seats: 10, label: "전현직 회장단", color: "#8B5CF6" },
+  3:  { seats: 10, label: "주빈석",       color: "#C8A44E" },
+  4:  { seats: 10, label: "연대회의",     color: "#10B981" },
+  5:  { seats: 10, label: "연대회의",     color: "#06B6D4" },
+  8:  { seats: 10, label: "감사·재단법인", color: "#F97316" },
+  10: { seats: 10, label: "서울시청",     color: "#EC4899" },
+  12: { seats: 10, label: "전현직",       color: "#A78BFA" },
 };
+
+const VIP_COLORS = ["#C8A44E","#8B5CF6","#10B981","#06B6D4","#F97316","#EC4899","#A78BFA","#F59E0B","#84CC16","#EF4444"];
+function getVipColor(tableId) {
+  if (TABLE_CONFIG[tableId]) return TABLE_CONFIG[tableId].color;
+  return VIP_COLORS[(tableId - 1) % VIP_COLORS.length];
+}
 
 // 10개 좌석 외각 점 좌표 (SVG viewBox 130×130 기준, 중심 65,65, 반지름 52)
 const SEAT_DOTS = [
@@ -98,7 +59,8 @@ const SEAT_DOTS = [
   [34.3,  23.4 ],  // seat 10 — 10~11시
 ];
 
-const VIP_TABLE_IDS = [2, 3, 4, 5];
+// 순수 내빈 전용 테이블 (참석자 좌석 배정 제외 대상)
+const VIP_TABLE_IDS = [3, 4, 10];
 const ALL_TABLE_IDS = Array.from({ length: 30 }, (_, i) => i + 1);
 
 const ATTENDEE_TABLES = ALL_TABLE_IDS.filter(id => !VIP_TABLE_IDS.includes(id)).map(id => ({
@@ -114,37 +76,6 @@ const MAP_ROWS = [
   [27, 28, 29, 30],
 ];
 
-const generateAttendees = () => {
-  const lastNames = ["김","이","박","최","정","강","조","윤","장","임","한","오","서","신","권","황","안","송","류","홍"];
-  const firstNames = ["민지","서연","지우","하은","수빈","지현","예진","유진","서영","민서","도윤","하준","시우","주원","지호","예준","건우","현우","도현","준서"];
-  const orgs = ["종합사회복지관","노인복지관","장애인복지관","지역아동센터","건강가정지원센터","자활센터","정신건강복지센터","다문화가족지원센터","청소년상담복지센터","사회복지협의회"];
-  const districts = ["강남","강동","강북","강서","관악","광진","구로","금천","노원","도봉","동대문","동작","마포","서대문","서초","성동","성북","송파","양천","영등포","용산","은평","종로","중구","중랑"];
-  const arr = [];
-  for (let i = 1; i <= 260; i++) {
-    const ln = lastNames[Math.floor(Math.random() * lastNames.length)];
-    const fn = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const dist = districts[Math.floor(Math.random() * districts.length)];
-    const org = orgs[Math.floor(Math.random() * orgs.length)];
-    const tableIdx = Math.floor((i - 1) / 10);
-    const tableId = ATTENDEE_TABLES[tableIdx] ? ATTENDEE_TABLES[tableIdx].id : ATTENDEE_TABLES[ATTENDEE_TABLES.length - 1].id;
-    const seatId = ((i - 1) % 10) + 1;
-    // Generate random birthdate for demo (1960~2000)
-    const year = 1960 + Math.floor(Math.random() * 40);
-    const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, "0");
-    const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, "0");
-    arr.push({
-      id: i,
-      name: ln + fn,
-      org: `${dist}구 ${org}`,
-      table: tableId,
-      seat: seatId,
-      checked: false,
-      birthdate: `${year}-${month}-${day}`,
-      checkedAt: null,
-    });
-  }
-  return arr;
-};
 
 const AWARD_CATEGORIES = [
   { id: "a1", name: "미래인재상", icon: "\u{1F331}", recipients: [
@@ -613,7 +544,7 @@ function AddAttendeeModal({ isOpen, onClose, onAdd }) {
 // ============================================================
 // TAB: ATTENDEES — Simplified (name + checked status only)
 // ============================================================
-function AttendeesTab({ attendees, setAttendees, showToast }) {
+function AttendeesTab({ attendees, setAttendees, vipGuests, showToast }) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [detail, setDetail] = useState(null);
@@ -680,11 +611,11 @@ function AttendeesTab({ attendees, setAttendees, showToast }) {
     showToast(`${a.name} 님 좌석 ${tableNo} 배정 완료`);
   };
 
-  // 이미 배정된 좌석 Set (예: "10-1")
-  const occupiedSeats = useMemo(
-    () => new Set(attendees.filter(a => a.tableNo).map(a => a.tableNo)),
-    [attendees]
-  );
+  // 이미 배정된 좌석 Set — 참석자 + 내빈 모두 포함 (예: "10-1")
+  const occupiedSeats = useMemo(() => new Set([
+    ...attendees.filter(a => a.tableNo).map(a => a.tableNo),
+    ...(vipGuests || []).filter(v => v.table > 0 && v.seat > 0).map(v => `${v.table}-${v.seat}`),
+  ]), [attendees, vipGuests]);
 
   // 테이블별 잔여 좌석 정보 (테이블 6~30)
   const tableOptions = useMemo(() => ATTENDEE_TABLES.map(t => {
@@ -858,21 +789,27 @@ function AttendeesTab({ attendees, setAttendees, showToast }) {
 function SeatingTab({ attendees, vipGuests, showToast }) {
   const [selectedTable, setSelectedTable] = useState(null);
 
-  // Compute per-table stats
+  const vipTableIds = useMemo(
+    () => [...new Set(vipGuests.filter(v => v.table > 0).map(v => v.table))],
+    [vipGuests]
+  );
+
+  // Compute per-table stats (내빈 + 참석자 통합)
   const tableData = useMemo(() => {
     const result = [];
     ALL_TABLE_IDS.forEach(id => {
-      const isVip = VIP_TABLE_IDS.includes(id);
-      const members = isVip
-        ? vipGuests.filter(v => v.table === id)
-        : attendees.filter(a => a.table === id);
+      const isVip = vipTableIds.includes(id);
+      const members = [
+        ...vipGuests.filter(v => v.table === id),
+        ...attendees.filter(a => a.table === id),
+      ];
       const checked = members.filter(m => m.checked).length;
       const total = members.length;
       const isFull = total > 0 && checked === total;
       result.push({ id, isVip, members, checked, total, isFull, config: TABLE_CONFIG[id] });
     });
     return result;
-  }, [attendees, vipGuests]);
+  }, [attendees, vipGuests, vipTableIds]);
 
   const selectedData = selectedTable ? tableData.find(t => t.id === selectedTable) : null;
 
@@ -881,7 +818,7 @@ function SeatingTab({ attendees, vipGuests, showToast }) {
       {/* Summary stats */}
       <div className="stat-grid">
         <StatCard icon="🪑" label="전체 테이블" value={ALL_TABLE_IDS.length} accent={T.accent} />
-        <StatCard icon="⭐" label="내빈 테이블" value={VIP_TABLE_IDS.length} accent="#C8A44E" />
+        <StatCard icon="⭐" label="내빈 테이블" value={vipTableIds.length} accent="#C8A44E" />
         <StatCard
           icon="✅"
           label="배석 완료"
@@ -894,7 +831,7 @@ function SeatingTab({ attendees, vipGuests, showToast }) {
       <div className="seating-grid">
         {tableData.map(t => {
           const CAPACITY = 10;
-          const vipColor = t.config?.color || T.accent;
+          const vipColor = t.isVip ? getVipColor(t.id) : T.accent;
           const baseColor = t.isVip ? vipColor : T.accent;
           const isSelected = selectedTable === t.id;
           const assignPct = Math.min(100, Math.round((t.total / CAPACITY) * 100));
@@ -984,11 +921,11 @@ function SeatingTab({ attendees, vipGuests, showToast }) {
       {selectedData && (
         <div style={{
           ...cardStyle, marginTop: "16px", padding: "18px",
-          borderTop: `3px solid ${selectedData.isVip ? (selectedData.config?.color || T.accent) : T.accent}`,
+          borderTop: `3px solid ${selectedData.isVip ? getVipColor(selectedData.id) : T.accent}`,
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-            <span style={{ fontSize: "18px", fontWeight: 800, color: selectedData.isVip ? (selectedData.config?.color || T.accent) : T.accent }}>
-              테이블 {selectedData.id} {selectedData.isVip && `(${selectedData.config?.label})`}
+            <span style={{ fontSize: "18px", fontWeight: 800, color: selectedData.isVip ? getVipColor(selectedData.id) : T.accent }}>
+              테이블 {selectedData.id} {selectedData.isVip && `(${selectedData.config?.label || "내빈석"})`}
             </span>
             <span style={badgeStyle(
               selectedData.isFull ? T.successBg : T.accentBg,
@@ -998,7 +935,7 @@ function SeatingTab({ attendees, vipGuests, showToast }) {
             </span>
           </div>
 
-          {selectedData.members.map((m, idx) => (
+          {selectedData.members.slice().sort((a, b) => (a.seat || 0) - (b.seat || 0)).map((m, idx) => (
             <div key={m.id || idx} style={{
               display: "flex", justifyContent: "space-between", alignItems: "center",
               padding: "8px 4px", borderBottom: idx < selectedData.members.length - 1 ? `1px solid ${T.border}` : "none",
@@ -1286,6 +1223,11 @@ function AwardsTab() {
 function SeatingMapTab({ attendees, vipGuests }) {
   const [selectedTable, setSelectedTable] = useState(null);
 
+  const vipTableIds = useMemo(
+    () => [...new Set(vipGuests.filter(v => v.table > 0).map(v => v.table))],
+    [vipGuests]
+  );
+
   // 테이블별 좌석 상태 맵: { tableId: { seatNum: 'checked' | 'assigned' } }
   const seatStateMap = useMemo(() => {
     const map = {};
@@ -1307,22 +1249,25 @@ function SeatingMapTab({ attendees, vipGuests }) {
     return map;
   }, [attendees, vipGuests]);
 
-  // 테이블별 전체/착석 수
+  // 테이블별 전체/착석 수 (내빈 + 참석자 통합)
   const tableStats = useMemo(() => {
     const stats = {};
     ALL_TABLE_IDS.forEach(id => {
-      const isVip = VIP_TABLE_IDS.includes(id);
-      const members = isVip ? vipGuests.filter(v => v.table === id) : attendees.filter(a => a.table === id);
+      const isVip = vipTableIds.includes(id);
+      const members = [
+        ...vipGuests.filter(v => v.table === id),
+        ...attendees.filter(a => a.table === id),
+      ];
       const checked = members.filter(m => m.checked).length;
       stats[id] = { total: members.length, checked, members, isVip };
     });
     return stats;
-  }, [attendees, vipGuests]);
+  }, [attendees, vipGuests, vipTableIds]);
 
   const renderTableSVG = (tableId, svgSize) => {
-    const isVip = VIP_TABLE_IDS.includes(tableId);
+    const isVip = vipTableIds.includes(tableId);
     const cfg = TABLE_CONFIG[tableId];
-    const color = isVip ? (cfg?.color || T.accent) : T.accent;
+    const color = isVip ? getVipColor(tableId) : T.accent;
     const stat = tableStats[tableId] || { total: 0, checked: 0 };
     const isFull = stat.total > 0 && stat.checked === stat.total;
     const finalColor = isFull ? T.success : color;
@@ -1436,12 +1381,12 @@ function SeatingMapTab({ attendees, vipGuests }) {
       {selectedTable && selectedStat && (
         <div style={{
           ...cardStyle, marginTop: "16px", padding: "16px",
-          borderTop: `3px solid ${VIP_TABLE_IDS.includes(selectedTable) ? (TABLE_CONFIG[selectedTable]?.color || T.accent) : T.accent}`,
+          borderTop: `3px solid ${vipTableIds.includes(selectedTable) ? getVipColor(selectedTable) : T.accent}`,
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
             <span style={{ fontSize: "16px", fontWeight: 800, color: T.accent }}>
               테이블 {selectedTable}
-              {VIP_TABLE_IDS.includes(selectedTable) && ` (${TABLE_CONFIG[selectedTable]?.label})`}
+              {vipTableIds.includes(selectedTable) && ` (${TABLE_CONFIG[selectedTable]?.label || "내빈석"})`}
             </span>
             <span style={badgeStyle(
               selectedStat.checked === selectedStat.total && selectedStat.total > 0 ? T.successBg : T.accentBg,
@@ -1455,7 +1400,7 @@ function SeatingMapTab({ attendees, vipGuests }) {
               배정된 인원이 없습니다
             </div>
           ) : (
-            selectedStat.members.map((m, idx) => (
+            selectedStat.members.slice().sort((a, b) => (a.seat || 0) - (b.seat || 0)).map((m, idx) => (
               <div key={m.id || idx} style={{
                 display: "flex", justifyContent: "space-between", alignItems: "center",
                 padding: "8px 0", borderBottom: idx < selectedStat.members.length - 1 ? `1px solid ${T.border}` : "none",
@@ -1746,8 +1691,11 @@ function CheckInModal({ isOpen, onClose, attendees, setAttendees, vipGuests, set
     ? allPeople.filter(p => p.name.includes(search) || (p.org || "").includes(search))
     : [];
 
-  // 잔여 좌석 계산 (미배정 참석자용)
-  const occupiedSeats = new Set(attendees.filter(a => a.tableNo).map(a => a.tableNo));
+  // 잔여 좌석 계산 — 참석자 + 내빈 모두 제외
+  const occupiedSeats = new Set([
+    ...attendees.filter(a => a.tableNo).map(a => a.tableNo),
+    ...(vipGuests || []).filter(v => v.table > 0 && v.seat > 0).map(v => `${v.table}-${v.seat}`),
+  ]);
   const tableOptions = ATTENDEE_TABLES.map(t => {
     const freeSeats = [];
     for (let s = 1; s <= 10; s++) {
@@ -1978,8 +1926,8 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState("dashboard");
-  const [vipGuests, setVipGuests] = useState(VIP_GUESTS);
-  const [attendees, setAttendees] = useState(() => generateAttendees());
+  const [vipGuests, setVipGuests] = useState([]);
+  const [attendees, setAttendees] = useState([]);
   const [notices, setNotices] = useState([]);
   const [emergencies, setEmergencies] = useState([]);
   const [staffTeams, setStaffTeams] = useState(["등록팀", "안내팀", "무대팀", "포상팀", "다과팀"]);
@@ -2040,23 +1988,27 @@ export default function App() {
     }
   }, [showToast]);
 
-  // VIP 좌석 현황을 GuestCode.gs seat map에서 주기적으로 동기화
+  // VIP 좌석 현황을 GuestCode.gs getGuestList에서 주기적으로 동기화
   const fetchVipSeating = useCallback(async () => {
+    if (!GUEST_API_URL) return;
     try {
-      const res = await fetch(GUEST_API_URL + "?action=getSeatMap");
+      const res = await fetch(GUEST_API_URL + "?action=getGuestList");
       const r = await res.json();
       if (!r.success) return;
-      const seatMap = {};
-      (r.data || []).forEach(s => { seatMap[s.좌석번호] = s; });
-      setVipGuests(prev => prev.map(v => {
-        const key = `${v.table}-${v.seat}`;
-        const s = seatMap[key];
-        if (!s) return v;
+      const guests = (r.data || []).filter(g => g.지정좌석);
+      setVipGuests(guests.map((g, idx) => {
+        const parts = (g.지정좌석 || "").split("-");
+        const table = parseInt(parts[0]) || 0;
+        const seat = parseInt(parts[1]) || 0;
         return {
-          ...v,
-          name: s.이름 || v.name,
-          org: s.소속 || v.org,
-          checked: s.상태 === "착석" || s.상태 === "입장",
+          id: g.내빈ID || (idx + 1),
+          name: g.이름 || "",
+          org: g.소속 || "",
+          role: g.구분 || "",
+          table,
+          seat,
+          checked: g.상태 === "착석" || g.상태 === "입장",
+          checkedAt: null,
         };
       }));
     } catch (_) { /* 조용히 실패 */ }
@@ -2126,7 +2078,7 @@ export default function App() {
                 새로고침
               </button>
             </div>
-            <AttendeesTab attendees={attendees} setAttendees={setAttendees} showToast={showToast} />
+            <AttendeesTab attendees={attendees} setAttendees={setAttendees} vipGuests={vipGuests} showToast={showToast} />
           </div>
         )}
         {tab === "seating" && <SeatingTab attendees={attendees} vipGuests={vipGuests} showToast={showToast} />}

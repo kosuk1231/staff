@@ -149,7 +149,7 @@
 <div class="screen" id="seatingScreen"><div class="app-header"><button class="back-btn" onclick="switchScreen('role')">← 역할선택</button><div class="title-area"><h2>좌석안내</h2><div class="subtitle" id="seatingSubtitle">내빈을 선택한 뒤 좌석을 터치하세요</div></div><div class="status-badge"><div class="dot"></div>실시간</div></div><div class="stats-bar" id="statsBar2"></div><div class="seating-body"><div class="seating-left"><div class="seating-left-header"><span>입장 대기 명단</span><span id="enteredCount" style="color:var(--text-muted);font-weight:400">0명</span></div><div class="entered-list" id="enteredList"><div class="loading-state"><div class="spinner"></div></div></div></div><div class="seating-right"><div class="seat-grid-container" id="seatGrid"><div class="loading-state"><div class="spinner"></div></div></div><div class="seat-stage">▼ 무 대 ▼</div></div></div></div>
 
 <div class="screen" id="mcScreen"><div class="app-header"><button class="back-btn" onclick="switchScreen('role')">← 역할선택</button><div class="title-area"><h2>사회자석</h2><div class="subtitle">착석 완료 내빈 확인</div></div><div class="status-badge"><div class="dot"></div>자동갱신</div></div><div class="stats-bar" id="statsBar3"></div>
-<div class="mc-toolbar"><div class="mc-slider-wrap"><label>글씨</label><input type="range" class="mc-slider" id="mcFontSlider" min="5" max="60" value="28" oninput="mcSliderChange()"><span class="mc-slider-val" id="mcFontVal">28</span></div><div class="mc-slider-wrap"><label>줄간격</label><input type="range" class="mc-slider" id="mcLineSlider" min="1" max="60" value="16" oninput="mcSliderChange()"><span class="mc-slider-val" id="mcLineVal">16</span></div><div class="mc-sep"></div><button class="tbtn active" id="mcModeListBtn" onclick="mcSetMode('list')">목록</button><button class="tbtn" id="mcModeSingleBtn" onclick="mcSetMode('single')">한명씩</button><div class="mc-sep"></div><button class="tbtn active" onclick="mcSetOrder('otn',this)">소속·직함·이름</button><button class="tbtn" onclick="mcSetOrder('ont',this)">소속·이름·직함</button><button class="tbtn" onclick="mcSetOrder('nto',this)">이름·직함·소속</button><button class="tbtn" onclick="mcSetOrder('bont',this)">비고·소속·이름·직함</button><button class="tbtn" onclick="mcSetOrder('n',this)">이름만</button></div>
+<div class="mc-toolbar"><div class="mc-slider-wrap"><label>글씨</label><input type="range" class="mc-slider" id="mcFontSlider" min="5" max="60" value="28" oninput="mcSliderChange()"><span class="mc-slider-val" id="mcFontVal">28</span></div><div class="mc-slider-wrap"><label>줄간격</label><input type="range" class="mc-slider" id="mcLineSlider" min="1" max="60" value="16" oninput="mcSliderChange()"><span class="mc-slider-val" id="mcLineVal">16</span></div><div class="mc-sep"></div><button class="tbtn active" id="mcModeListBtn" onclick="mcSetMode('list')">목록</button><button class="tbtn" id="mcModeSingleBtn" onclick="mcSetMode('single')">한명씩</button><div class="mc-sep"></div><button class="tbtn active" onclick="mcSetOrder('n',this)">이름·소속</button><button class="tbtn" onclick="mcSetOrder('nt',this)">이름·직함</button><button class="tbtn" onclick="mcSetOrder('otn',this)">소속·직함·이름</button><button class="tbtn" onclick="mcSetOrder('ont',this)">소속·이름·직함</button><button class="tbtn" onclick="mcSetOrder('nto',this)">이름·직함·소속</button><button class="tbtn" onclick="mcSetOrder('bont',this)">비고·소속·이름·직함</button></div>
 <div class="mc-body" id="mcBody"><div class="loading-state"><div class="spinner"></div></div></div>
 <div class="mc-footer"><span id="mcCount">착석 0명</span><span id="mcTime"></span></div></div>
 
@@ -205,7 +205,7 @@ var TABLE_LABELS = { '2': '전현직 회장단', '3': '주요내빈석', '4': '�
 var selectedTableGroup = null;
 var currentScreen = 'role', currentSort = 'name', councilSort = 'name';
 var selectedGuestId = null, selectedGuestRowIndex = null, confirmCallback = null, pollTimer = null;
-var mcMode = 'list', mcFontPx = 28, mcLinePx = 16, mcSingleIndex = 0, prevMcHash = '', mcOrder = 'otn';
+var mcMode = 'list', mcFontPx = 28, mcLinePx = 16, mcSingleIndex = 0, prevMcHash = '', mcOrder = 'n';
 var introducedMap = {}; // 로컬 소개완료 상태
 
 // ─── 유틸 ─────────────────────────────────────────────────
@@ -222,7 +222,7 @@ function getSeatConflicts() { var c = {}, occ = getSeatOccupantMap(); guests.for
 function isUrgent(g) { return g.비고 === '현장추가'; }
 function statusOrder(s) { return s === '대기' ? 0 : s === '입장' ? 1 : s === '착석' ? 2 : s === '불참' ? 3 : 4; }
 function photoUrl(gid) { var fid = photoMap[gid]; return fid ? 'https://drive.google.com/thumbnail?id=' + fid + '&sz=w200' : ''; }
-function mcFmt(g) { var o = '<span class="mc-sub">' + g.소속 + '</span>', t = '<span class="mc-sub">' + (g.구분 || '') + '</span>', n = '<span class="mc-name">' + g.이름 + '</span>', b = g.비고 ? '<span class="mc-note">' + g.비고 + '</span>' : ''; if (mcOrder === 'ont') return o + '&nbsp;' + n + '&nbsp;' + t; if (mcOrder === 'nto') return n + '&nbsp;' + t + '&nbsp;' + o; if (mcOrder === 'bont') return (b ? b + '&nbsp;' : '') + o + '&nbsp;' + n + '&nbsp;' + t; if (mcOrder === 'n') return n; return o + '&nbsp;' + t + '&nbsp;' + n; }
+function mcFmt(g) { var cd = councilData.length ? councilData.find(function(c){return c.이름===g.이름;}) : null; var orgStr = cd ? cd.소속 : g.소속; var o = '<span class="mc-sub">' + orgStr + '</span>', t = '<span class="mc-sub">' + (g.구분 || '') + '</span>', n = '<span class="mc-name">' + g.이름 + '</span>', b = g.비고 ? '<span class="mc-note">' + g.비고 + '</span>' : ''; if (mcOrder === 'ont') return o + '&nbsp;' + n + '&nbsp;' + t; if (mcOrder === 'nto') return n + '&nbsp;' + t + '&nbsp;' + o; if (mcOrder === 'bont') return (b ? b + '&nbsp;' : '') + o + '&nbsp;' + n + '&nbsp;' + t; if (mcOrder === 'nt') return n + '&nbsp;' + t; if (mcOrder === 'n') return n + ' ' + o; return o + '&nbsp;' + t + '&nbsp;' + n; }
 function countByStatus(list) { var w = 0, e = 0, s = 0, a = 0; list.forEach(function(g) { if (g.상태 === '대기') w++; else if (g.상태 === '입장') e++; else if (g.상태 === '착석') s++; else if (g.상태 === '불참') a++; }); return { w: w, e: e, s: s, a: a }; }
 
 function renderStatsAll() {
@@ -249,10 +249,36 @@ function switchScreen(s, preSelectRowIndex) {
 }
 
 // ─── 데이터 로드 ──────────────────────────────────────────
+function generateSeatsFromGuests() {
+  var seatMap = {};
+  guests.forEach(function(g) {
+    if (!g.지정좌석) return;
+    var sn = g.지정좌석;
+    var parts = sn.split('-');
+    var 열 = parts[0] || '1';
+    var 순 = parseInt(parts[1]) || 1;
+    if (!seatMap[sn]) {
+      seatMap[sn] = { rowIndex: 0, 좌석번호: sn, 열구분: 열, 순번: 순,
+        상태: '공석', 내빈ID: '', 이름: '', 소속: '', 직함: '', 최종변경시간: '' };
+    }
+    // 이미 착석한 경우 실제좌석으로 상태 반영
+    if ((g.상태 === '착석') && g.실제좌석 === sn) {
+      seatMap[sn].상태 = '착석';
+      seatMap[sn].내빈ID = g.내빈ID;
+      seatMap[sn].이름 = g.이름;
+      seatMap[sn].소속 = g.소속;
+    }
+  });
+  return Object.values(seatMap).sort(function(a, b) {
+    var na = parseInt(a.열구분) || 0, nb = parseInt(b.열구분) || 0;
+    return na !== nb ? na - nb : a.순번 - b.순번;
+  });
+}
 function loadData() {
   apiGet('getAllData').then(function(d) {
     guests = d.guests || [];
     seats = d.seats || [];
+    if (!seats.length && guests.length) seats = generateSeatsFromGuests();
     photoMap = d.photoMap || {};
     councilData = d.councilData || [];
     options = d.options || {};

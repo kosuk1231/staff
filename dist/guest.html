@@ -31,9 +31,9 @@
 .add-btn{padding:8px 16px;font-size:13px;font-weight:600;background:var(--status-urgent-bg);color:var(--status-urgent);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius-sm);cursor:pointer;font-family:inherit;white-space:nowrap}
 .chk-label{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary);cursor:pointer;white-space:nowrap;user-select:none}.chk-label input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px;cursor:pointer}
 
-.guest-list{flex:1;overflow-y:auto;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;align-content:start}
-.guest-card{padding:12px 16px;background:var(--bg-card);border:1px solid rgba(255,255,255,.04);border-radius:var(--radius-md);cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:12px;position:relative;overflow:hidden}.guest-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--status-wait)}.guest-card[data-status="입장"]::after{background:var(--status-enter)}.guest-card[data-status="착석"]::after{background:var(--status-seat)}.guest-card[data-status="불참"]::after{background:var(--status-absent)}.guest-card:hover{background:var(--bg-card-hover);transform:translateX(2px)}.guest-card[data-status="착석"]{opacity:.6}.guest-card[data-status="불참"]{opacity:.35}.guest-card[data-status="불참"] .gc-name{text-decoration:line-through}.guest-card.urgent{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.06)}.guest-card.urgent::after{background:var(--status-urgent)}
-.gc-left{flex:1;min-width:0}.gc-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.gc-name{font-size:17px;font-weight:600}.gc-warn{font-size:10px;color:var(--status-warn);font-weight:600;white-space:nowrap}.gc-urgent-tag{font-size:10px;color:var(--status-urgent);font-weight:700;white-space:nowrap}.gc-org{font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.gc-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}.badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}.badge-wait{background:var(--status-wait-bg);color:var(--status-wait)}.badge-enter{background:var(--status-enter-bg);color:var(--status-enter)}.badge-seat{background:var(--status-seat-bg);color:var(--status-seat)}.badge-absent{background:var(--status-absent-bg);color:var(--status-absent)}.gc-time{font-size:10px;color:var(--text-muted)}
+.guest-list{flex:1;overflow-y:auto;padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:8px;align-content:start}
+.guest-card{padding:20px 20px;min-height:120px;background:var(--bg-card);border:1px solid rgba(255,255,255,.04);border-radius:var(--radius-md);cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:10px;position:relative;overflow:hidden}.guest-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--status-wait)}.guest-card[data-status="입장"]::after{background:var(--status-enter)}.guest-card[data-status="착석"]::after{background:var(--status-seat)}.guest-card[data-status="불참"]::after{background:var(--status-absent)}.guest-card:hover{background:var(--bg-card-hover);transform:translateX(2px)}.guest-card[data-status="착석"]{opacity:.6}.guest-card[data-status="불참"]{opacity:.35}.guest-card[data-status="불참"] .gc-name{text-decoration:line-through}.guest-card.urgent{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.06)}.guest-card.urgent::after{background:var(--status-urgent)}
+.gc-left{flex:1;min-width:0}.gc-name-row{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden}.gc-name{font-size:20px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gc-warn{font-size:9px;color:var(--status-warn);font-weight:600;white-space:nowrap;flex-shrink:0}.gc-urgent-tag{font-size:9px;color:var(--status-urgent);font-weight:700;white-space:nowrap;flex-shrink:0}.gc-org{font-size:16px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}.gc-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}.badge{padding:3px 9px;border-radius:20px;font-size:13px;font-weight:600}.badge-wait{background:var(--status-wait-bg);color:var(--status-wait)}.badge-enter{background:var(--status-enter-bg);color:var(--status-enter)}.badge-seat{background:var(--status-seat-bg);color:var(--status-seat)}.badge-absent{background:var(--status-absent-bg);color:var(--status-absent)}.gc-time{font-size:10px;color:var(--text-muted)}
 
 .council-list{flex:1;overflow-y:auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;align-content:start}
 .council-card{background:var(--bg-card);border:3px solid rgba(255,255,255,.06);border-radius:var(--radius-md);cursor:pointer;transition:var(--transition);overflow:hidden;display:flex;flex-direction:column;position:relative}
@@ -106,6 +106,13 @@
 .config-dialog input:focus{border-color:var(--gold)}
 .config-dialog .config-btns{display:flex;gap:10px;justify-content:flex-end}
 .config-dialog .config-btns button{padding:10px 24px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;border:none}
+/* 입장+좌석배정 버튼 */
+.act-seat{background:var(--status-seat-bg);color:var(--status-seat);border:1px solid rgba(92,224,160,.3)!important}
+/* 좌석안내 개선 */
+.quick-seat-btn{padding:6px 12px;background:var(--status-seat-bg);color:var(--status-seat);border:1px solid rgba(92,224,160,.35);border-radius:var(--radius-sm);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;transition:var(--transition)}.quick-seat-btn:hover{background:rgba(92,224,160,.25)}
+.ei-section{font-size:10px;font-weight:700;color:var(--text-muted);padding:10px 14px 4px;letter-spacing:1px}.ei-section:first-child{padding-top:4px}
+.no-seat-guide{text-align:center;padding:32px 16px;color:var(--text-muted)}.no-seat-guide .ns-icon{font-size:32px;margin-bottom:8px}.no-seat-guide p{font-size:13px;line-height:1.6}
+.avail-seat-header{font-size:13px;font-weight:700;color:var(--gold);padding:12px 4px 6px}.avail-seat-item{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--bg-surface);border:1px solid rgba(255,255,255,.04);border-radius:var(--radius-sm);margin-bottom:5px;cursor:pointer;transition:all .2s}.avail-seat-item:hover{background:var(--bg-elevated);border-color:var(--gold-dim)}.avail-seat-item .as-num{font-size:15px;font-weight:700;color:var(--gold);min-width:40px}.avail-seat-item .as-label{font-size:12px;color:var(--text-secondary)}
 </style>
 </head>
 <body>
@@ -125,7 +132,7 @@
 </div>
 
 <div class="overlay" id="confirmOverlay"><div class="dialog"><h3 id="confirmTitle"></h3><p id="confirmMsg"></p><div class="dialog-btns"><button class="btn-cancel" onclick="closeConfirm()">취소</button><button class="btn-confirm" onclick="doConfirm()">확인</button></div></div></div>
-<div class="action-overlay" id="actionOverlay"><div class="action-dialog"><h3 id="actionName"></h3><p id="actionDesc"></p><div class="action-btns"><button class="act-entry" id="actionEntryBtn">입장 처리</button><button class="act-absent" id="actionAbsentBtn">불참 처리</button><button class="act-cancel" onclick="closeAction()">취소</button></div></div></div>
+<div class="action-overlay" id="actionOverlay"><div class="action-dialog"><h3 id="actionName"></h3><p id="actionDesc"></p><div class="action-btns"><button class="act-entry" id="actionEntryBtn">입장 처리</button><button class="act-seat" id="actionEntrySeatBtn">입장 + 좌석배정</button><button class="act-absent" id="actionAbsentBtn">불참 처리</button><button class="act-cancel" onclick="closeAction()">취소</button></div></div></div>
 <div class="add-form-overlay" id="addFormOverlay"><div class="add-form"><h3>＋ 내빈 현장 추가</h3><div class="af-row"><label>이름 *</label><input id="af_name" placeholder="성명"></div><div class="af-row"><label>소속</label><input id="af_org" placeholder="기관/단체"></div><div class="af-row"><label>직함</label><input id="af_title" placeholder="직책"></div><div class="af-row"><label>지정좌석</label><input id="af_seat" placeholder="예: A1 (비워도 됨)"></div><div class="af-btns"><button class="btn-cancel" onclick="closeAddForm()">취소</button><button style="background:var(--status-urgent);color:#fff;border:none;padding:10px 24px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit" onclick="submitAddGuest()">추가</button></div></div></div>
 
 <div class="screen active" id="roleScreen"><div class="role-header"><div class="logo-line">VIP Protocol</div><h1>내빈 의전 시스템</h1><div class="divider"></div></div><div class="role-grid"><div class="role-col-left"><div class="role-btn-top" onclick="switchScreen('reception')"><div class="icon">📋</div><div class="label">접수대</div><div class="desc">도착 확인 및<br>입장 처리</div></div><div class="role-btn-gap"></div><div class="role-btn-bottom" onclick="switchScreen('council')"><div class="icon">🏛️</div><div class="label">주요내빈 접수대</div><div class="desc">주요내빈 접수 · 사진</div></div></div><div class="role-btn" onclick="switchScreen('seating')"><div class="icon">💺</div><div class="label">좌석안내</div><div class="desc">착석 배정 및<br>자리 이동</div></div><div class="role-btn" onclick="switchScreen('mc')"><div class="icon">🎤</div><div class="label">사회자석</div><div class="desc">착석 내빈<br>소개 확인</div></div></div>
@@ -142,9 +149,10 @@
 <div class="screen" id="seatingScreen"><div class="app-header"><button class="back-btn" onclick="switchScreen('role')">← 역할선택</button><div class="title-area"><h2>좌석안내</h2><div class="subtitle" id="seatingSubtitle">내빈을 선택한 뒤 좌석을 터치하세요</div></div><div class="status-badge"><div class="dot"></div>실시간</div></div><div class="stats-bar" id="statsBar2"></div><div class="seating-body"><div class="seating-left"><div class="seating-left-header"><span>입장 대기 명단</span><span id="enteredCount" style="color:var(--text-muted);font-weight:400">0명</span></div><div class="entered-list" id="enteredList"><div class="loading-state"><div class="spinner"></div></div></div></div><div class="seating-right"><div class="seat-grid-container" id="seatGrid"><div class="loading-state"><div class="spinner"></div></div></div><div class="seat-stage">▼ 무 대 ▼</div></div></div></div>
 
 <div class="screen" id="mcScreen"><div class="app-header"><button class="back-btn" onclick="switchScreen('role')">← 역할선택</button><div class="title-area"><h2>사회자석</h2><div class="subtitle">착석 완료 내빈 확인</div></div><div class="status-badge"><div class="dot"></div>자동갱신</div></div><div class="stats-bar" id="statsBar3"></div>
-<div class="mc-toolbar"><div class="mc-slider-wrap"><label>글씨</label><input type="range" class="mc-slider" id="mcFontSlider" min="5" max="60" value="28" oninput="mcSliderChange()"><span class="mc-slider-val" id="mcFontVal">28</span></div><div class="mc-slider-wrap"><label>줄간격</label><input type="range" class="mc-slider" id="mcLineSlider" min="1" max="60" value="16" oninput="mcSliderChange()"><span class="mc-slider-val" id="mcLineVal">16</span></div><div class="mc-sep"></div><button class="tbtn active" id="mcModeListBtn" onclick="mcSetMode('list')">목록</button><button class="tbtn" id="mcModeSingleBtn" onclick="mcSetMode('single')">한명씩</button><div class="mc-sep"></div><button class="tbtn active" onclick="mcSetOrder('otn',this)">소속·직함·이름</button><button class="tbtn" onclick="mcSetOrder('ont',this)">소속·이름·직함</button><button class="tbtn" onclick="mcSetOrder('nto',this)">이름·직함·소속</button><button class="tbtn" onclick="mcSetOrder('bont',this)">비고·소속·이름·직함</button><button class="tbtn" onclick="mcSetOrder('n',this)">이름만</button></div>
+<div class="mc-toolbar"><div class="mc-slider-wrap"><label>글씨</label><input type="range" class="mc-slider" id="mcFontSlider" min="5" max="60" value="28" oninput="mcSliderChange()"><span class="mc-slider-val" id="mcFontVal">28</span></div><div class="mc-slider-wrap"><label>줄간격</label><input type="range" class="mc-slider" id="mcLineSlider" min="1" max="60" value="16" oninput="mcSliderChange()"><span class="mc-slider-val" id="mcLineVal">16</span></div><div class="mc-sep"></div><button class="tbtn active" id="mcModeListBtn" onclick="mcSetMode('list')">목록</button><button class="tbtn" id="mcModeSingleBtn" onclick="mcSetMode('single')">한명씩</button><div class="mc-sep"></div><button class="tbtn active" onclick="mcSetOrder('n',this)">이름·소속</button><button class="tbtn" onclick="mcSetOrder('nt',this)">이름·직함</button><button class="tbtn" onclick="mcSetOrder('otn',this)">소속·직함·이름</button><button class="tbtn" onclick="mcSetOrder('ont',this)">소속·이름·직함</button><button class="tbtn" onclick="mcSetOrder('nto',this)">이름·직함·소속</button><button class="tbtn" onclick="mcSetOrder('bont',this)">비고·소속·이름·직함</button></div>
 <div class="mc-body" id="mcBody"><div class="loading-state"><div class="spinner"></div></div></div>
 <div class="mc-footer"><span id="mcCount">착석 0명</span><span id="mcTime"></span></div></div>
+
 
 <script>
 /* ═══════════════════════════════════════════════════════════
@@ -153,7 +161,7 @@
  * ═══════════════════════════════════════════════════════════ */
 
 // ─── API 설정 ─────────────────────────────────────────────
-var API_URL = localStorage.getItem('guest_api_url') || 'https://script.google.com/macros/s/AKfycbwyoz4ruQA0iKv5D_XmRf2yFEAo0qA6Z5GqJlLsSbE1ptCl1OcB1RxnZwZamXgm10nRiQ/exec';
+var API_URL = localStorage.getItem('guest_api_url') || 'https://script.google.com/macros/s/AKfycbwZpNXgMKALCOKN1fJIu-Mp75TBaY2i_S6632hCPSQbGU9YCkVEYy52K-uOy22I0WhAzg/exec';
 
 function openConfig() {
   document.getElementById('apiUrlInput').value = API_URL;
@@ -192,18 +200,20 @@ function apiPost(action, data) {
 }
 
 // ─── 상태 변수 ────────────────────────────────────────────
-var guests = [], seats = [], photoMap = {}, councilIds = [], options = {};
+var guests = [], seats = [], photoMap = {}, councilData = [], options = {};
 var TABLE_LABELS = { '2': '전현직 회장단', '3': '주요내빈석', '4': '단체장석', '5': '단체장석2' };
 var selectedTableGroup = null;
 var currentScreen = 'role', currentSort = 'name', councilSort = 'name';
-var selectedGuestId = null, confirmCallback = null, pollTimer = null;
-var mcMode = 'list', mcFontPx = 28, mcLinePx = 16, mcSingleIndex = 0, prevMcHash = '', mcOrder = 'otn';
+var selectedGuestId = null, selectedGuestRowIndex = null, confirmCallback = null, pollTimer = null;
+var mcMode = 'list', mcFontPx = 28, mcLinePx = 16, mcSingleIndex = 0, prevMcHash = '', mcOrder = 'n';
 var introducedMap = {}; // 로컬 소개완료 상태
 
 // ─── 유틸 ─────────────────────────────────────────────────
 function isCouncil(g) {
-  // 03_주요내빈 시트의 ID 목록 또는 사진 맵에 있는 내빈
-  return councilIds.indexOf(g.내빈ID) >= 0 || !!photoMap[g.내빈ID];
+  return councilData.some(function(c) { return c.이름 === g.이름; }) || !!photoMap[g.내빈ID];
+}
+function getCouncilMember(name) {
+  return councilData.find(function(c) { return c.이름 === name; }) || null;
 }
 function getAssignedToSeat() { var m = {}; guests.forEach(function(g) { if (g.지정좌석) m[g.지정좌석] = g; }); return m; }
 function getActualSeatMap() { var m = {}; guests.forEach(function(g) { if (g.상태 === '착석' && g.실제좌석 && g.실제좌석 !== '') m[g.내빈ID] = g.실제좌석; }); return m; }
@@ -212,34 +222,65 @@ function getSeatConflicts() { var c = {}, occ = getSeatOccupantMap(); guests.for
 function isUrgent(g) { return g.비고 === '현장추가'; }
 function statusOrder(s) { return s === '대기' ? 0 : s === '입장' ? 1 : s === '착석' ? 2 : s === '불참' ? 3 : 4; }
 function photoUrl(gid) { var fid = photoMap[gid]; return fid ? 'https://drive.google.com/thumbnail?id=' + fid + '&sz=w200' : ''; }
-function mcFmt(g) { var o = '<span class="mc-sub">' + g.소속 + '</span>', t = '<span class="mc-sub">' + g.직함 + '</span>', n = '<span class="mc-name">' + g.이름 + '</span>', b = g.비고 ? '<span class="mc-note">' + g.비고 + '</span>' : ''; if (mcOrder === 'ont') return o + '&nbsp;' + n + '&nbsp;' + t; if (mcOrder === 'nto') return n + '&nbsp;' + t + '&nbsp;' + o; if (mcOrder === 'bont') return (b ? b + '&nbsp;' : '') + o + '&nbsp;' + n + '&nbsp;' + t; if (mcOrder === 'n') return n; return o + '&nbsp;' + t + '&nbsp;' + n; }
+function mcFmt(g) { var cd = councilData.length ? councilData.find(function(c){return c.이름===g.이름;}) : null; var orgStr = cd ? cd.소속 : g.소속; var o = '<span class="mc-sub">' + orgStr + '</span>', t = '<span class="mc-sub">' + (g.구분 || '') + '</span>', n = '<span class="mc-name">' + g.이름 + '</span>', b = g.비고 ? '<span class="mc-note">' + g.비고 + '</span>' : ''; if (mcOrder === 'ont') return o + '&nbsp;' + n + '&nbsp;' + t; if (mcOrder === 'nto') return n + '&nbsp;' + t + '&nbsp;' + o; if (mcOrder === 'bont') return (b ? b + '&nbsp;' : '') + o + '&nbsp;' + n + '&nbsp;' + t; if (mcOrder === 'nt') return n + '&nbsp;' + t; if (mcOrder === 'n') return n + ' ' + o; return o + '&nbsp;' + t + '&nbsp;' + n; }
 function countByStatus(list) { var w = 0, e = 0, s = 0, a = 0; list.forEach(function(g) { if (g.상태 === '대기') w++; else if (g.상태 === '입장') e++; else if (g.상태 === '착석') s++; else if (g.상태 === '불참') a++; }); return { w: w, e: e, s: s, a: a }; }
 
 function renderStatsAll() {
   var tot = guests.length, all = countByStatus(guests);
-  var cG = guests.filter(isCouncil), cTot = cG.length, cv = countByStatus(cG);
+  var cTot = councilData.length;
+  // 주요내빈 입장 현황: guests 중 이름이 councilData에 있는 것
+  var cG = guests.filter(isCouncil), cv = countByStatus(cG);
   var r1 = '<span class="sb-label">등록자</span> <span class="sb-num" style="color:var(--gold)">' + tot + '</span><span style="margin-left:8px" class="sb-label">현재인원</span><span class="sb-paren">(</span><span>대기 </span><span class="sb-num" style="color:var(--status-urgent)">' + all.w + '</span><span style="margin-left:6px">입장 </span><span class="sb-num" style="color:var(--status-enter)">' + all.e + '</span><span style="margin-left:6px">착석 </span><span class="sb-num" style="color:var(--status-seat)">' + all.s + '</span><span style="margin-left:6px">불참 </span><span class="sb-num" style="color:var(--status-absent)">' + all.a + '</span><span class="sb-paren">)</span>';
-  var r2 = '🏛️ 주요내빈 <span class="sb-num" style="color:var(--gold)">' + cTot + '</span><span class="sb-paren"> (</span>대기 <span class="sb-num" style="color:var(--status-urgent)">' + cv.w + '</span><span style="margin-left:4px">입장 </span><span class="sb-num" style="color:var(--status-enter)">' + cv.e + '</span><span style="margin-left:4px">착석 </span><span class="sb-num" style="color:var(--status-seat)">' + cv.s + '</span><span style="margin-left:4px">불참 </span><span class="sb-num" style="color:var(--status-absent)">' + cv.a + '</span><span class="sb-paren">)</span>';
+  var r2 = '🏛️ 주요내빈 <span class="sb-num" style="color:var(--gold)">' + cTot + '</span><span class="sb-paren"> (</span>입장 <span class="sb-num" style="color:var(--status-enter)">' + cv.e + '</span><span style="margin-left:4px">착석 </span><span class="sb-num" style="color:var(--status-seat)">' + cv.s + '</span><span style="margin-left:4px">불참 </span><span class="sb-num" style="color:var(--status-absent)">' + cv.a + '</span><span class="sb-paren">)</span>';
   var h = '<div class="stats-row">' + r1 + '</div><div class="stats-row2">' + r2 + '</div>';
   ['statsBar1', 'statsBar2', 'statsBar3', 'statsBar4'].forEach(function(id) { var el = document.getElementById(id); if (el) el.innerHTML = h; });
 }
 
 // ─── 화면 전환 ────────────────────────────────────────────
-function switchScreen(s) {
+function switchScreen(s, preSelectRowIndex) {
   document.querySelectorAll('.screen').forEach(function(x) { x.classList.remove('active'); });
   document.getElementById({ role: 'roleScreen', reception: 'receptionScreen', council: 'councilScreen', seating: 'seatingScreen', mc: 'mcScreen' }[s]).classList.add('active');
   currentScreen = s;
-  selectedGuestId = null;
-  if (s !== 'role') { loadData(); startPolling(); } else stopPolling();
+  selectedGuestId = null; selectedGuestRowIndex = null;
+  if (s !== 'role') {
+    if (preSelectRowIndex) { selectedGuestRowIndex = preSelectRowIndex; }
+    loadData(); startPolling();
+  } else { stopPolling(); }
 }
 
 // ─── 데이터 로드 ──────────────────────────────────────────
+function generateSeatsFromGuests() {
+  var seatMap = {};
+  guests.forEach(function(g) {
+    if (!g.지정좌석) return;
+    var sn = g.지정좌석;
+    var parts = sn.split('-');
+    var 열 = parts[0] || '1';
+    var 순 = parseInt(parts[1]) || 1;
+    if (!seatMap[sn]) {
+      seatMap[sn] = { rowIndex: 0, 좌석번호: sn, 열구분: 열, 순번: 순,
+        상태: '공석', 내빈ID: '', 이름: '', 소속: '', 직함: '', 최종변경시간: '' };
+    }
+    // 이미 착석한 경우 실제좌석으로 상태 반영
+    if ((g.상태 === '착석') && g.실제좌석 === sn) {
+      seatMap[sn].상태 = '착석';
+      seatMap[sn].내빈ID = g.내빈ID;
+      seatMap[sn].이름 = g.이름;
+      seatMap[sn].소속 = g.소속;
+    }
+  });
+  return Object.values(seatMap).sort(function(a, b) {
+    var na = parseInt(a.열구분) || 0, nb = parseInt(b.열구분) || 0;
+    return na !== nb ? na - nb : a.순번 - b.순번;
+  });
+}
 function loadData() {
   apiGet('getAllData').then(function(d) {
     guests = d.guests || [];
     seats = d.seats || [];
+    if (!seats.length && guests.length) seats = generateSeatsFromGuests();
     photoMap = d.photoMap || {};
-    councilIds = d.councilIds || [];
+    councilData = d.councilData || [];
     options = d.options || {};
     renderStatsAll();
     renderCurrentScreen();
@@ -277,7 +318,7 @@ function closeAddForm() { document.getElementById('addFormOverlay').classList.re
 function submitAddGuest() {
   var nm = document.getElementById('af_name').value.trim();
   if (!nm) { showToast('이름을 입력해주세요', true); return; }
-  var info = { 이름: nm, 소속: document.getElementById('af_org').value.trim(), 직함: document.getElementById('af_title').value.trim(), 지정좌석: document.getElementById('af_seat').value.trim() };
+  var info = { 이름: nm, 소속: document.getElementById('af_org').value.trim(), 구분: document.getElementById('af_title').value.trim() || '현장', 지정좌석: document.getElementById('af_seat').value.trim() };
   apiPost('addGuest', { info: info }).then(function(r) {
     if (r.success) { showToast(r.message); closeAddForm(); loadData(); }
     else showToast(r.message, true);
@@ -286,21 +327,30 @@ function submitAddGuest() {
 
 // ─── 다이얼로그 ───────────────────────────────────────────
 function closeAction() { document.getElementById('actionOverlay').classList.remove('show'); }
-function showAction(id, name) {
+function showAction(id, name, rowIndex) {
   document.getElementById('actionName').textContent = name + ' 님';
   document.getElementById('actionDesc').textContent = '처리 방식을 선택하세요';
   document.getElementById('actionEntryBtn').onclick = function() {
     closeAction();
     showConfirm('입장 처리', '<strong>' + name + '</strong> 님을 입장 처리하시겠습니까?', function() {
-      apiPost('processEntry', { guestId: id }).then(function(r) {
+      apiPost('processEntry', { guestId: id, rowIndex: rowIndex }).then(function(r) {
         if (r.success) { showToast(r.message); loadData(); } else showToast(r.message, true);
+      }).catch(function(e) { showToast('오류: ' + e.message, true); });
+    });
+  };
+  document.getElementById('actionEntrySeatBtn').onclick = function() {
+    closeAction();
+    showConfirm('입장 + 좌석배정', '<strong>' + name + '</strong> 님을 입장 처리 후<br>좌석안내 화면으로 이동합니다.', function() {
+      apiPost('processEntry', { guestId: id, rowIndex: rowIndex }).then(function(r) {
+        if (r.success) { showToast(r.message); switchScreen('seating', rowIndex); }
+        else showToast(r.message, true);
       }).catch(function(e) { showToast('오류: ' + e.message, true); });
     });
   };
   document.getElementById('actionAbsentBtn').onclick = function() {
     closeAction();
     showConfirm('불참 처리', '<strong>' + name + '</strong> 님을 불참 처리하시겠습니까?', function() {
-      apiPost('processAbsent', { guestId: id }).then(function(r) {
+      apiPost('processAbsent', { guestId: id, rowIndex: rowIndex }).then(function(r) {
         if (r.success) { showToast(r.message); loadData(); } else showToast(r.message, true);
       }).catch(function(e) { showToast('오류: ' + e.message, true); });
     });
@@ -308,11 +358,11 @@ function showAction(id, name) {
   document.getElementById('actionOverlay').classList.add('show');
 }
 
-function handleEntry(id, name, status) {
+function handleEntry(id, name, status, rowIndex) {
   if (status === '착석') { showToast('이미 착석 상태입니다', true); return; }
   if (status === '입장') {
     showConfirm('입장 취소', '<strong>' + name + '</strong> 님의 입장을 취소하시겠습니까?', function() {
-      apiPost('cancelEntry', { guestId: id }).then(function(r) {
+      apiPost('cancelEntry', { guestId: id, rowIndex: rowIndex }).then(function(r) {
         if (r.success) { showToast(r.message); loadData(); } else showToast(r.message, true);
       }).catch(function(e) { showToast('오류: ' + e.message, true); });
     });
@@ -320,13 +370,23 @@ function handleEntry(id, name, status) {
   }
   if (status === '불참') {
     showConfirm('불참 취소', '<strong>' + name + '</strong> 님의 불참을 취소하시겠습니까?<br>(대기 상태로 복귀)', function() {
-      apiPost('cancelAbsent', { guestId: id }).then(function(r) {
+      apiPost('cancelAbsent', { guestId: id, rowIndex: rowIndex }).then(function(r) {
         if (r.success) { showToast(r.message); loadData(); } else showToast(r.message, true);
       }).catch(function(e) { showToast('오류: ' + e.message, true); });
     });
     return;
   }
-  showAction(id, name);
+  showAction(id, name, rowIndex);
+}
+
+// ─── 시간 포맷 헬퍼 (날짜 전체 문자열 → HH:mm) ──────────
+function fmtT(v) {
+  if (!v) return '';
+  var s = String(v);
+  var m = s.match(/\b(\d{1,2}:\d{2})\b/);
+  if (m) return m[1];
+  try { var d = new Date(s); if (!isNaN(d.getTime())) { var h = d.getHours(), mn = d.getMinutes(); return (h<10?'0':'')+h+':'+(mn<10?'0':'')+mn; } } catch(e) {}
+  return '';
 }
 
 // ─── 접수대 ───────────────────────────────────────────────
@@ -343,8 +403,10 @@ function renderReception() {
     var bc = g.상태 === '대기' ? 'badge-wait' : g.상태 === '입장' ? 'badge-enter' : g.상태 === '착석' ? 'badge-seat' : 'badge-absent';
     var urg = isUrgent(g); var hw = conflicts[g.내빈ID];
     var ne = ''; if (hw) ne = '<span class="gc-warn">⚠ 지정석 변경됨</span>'; if (urg) ne += '<span class="gc-urgent-tag">현장추가</span>';
-    var re = ''; if (g.입장시간) re = '<div class="gc-time">' + g.입장시간 + ' 입장</div>';
-    return '<div class="guest-card ' + (urg ? 'urgent' : '') + '" data-status="' + g.상태 + '" onclick="handleEntry(\'' + g.내빈ID + '\',\'' + g.이름.replace(/'/g, "\\'") + '\',\'' + g.상태 + '\')"><div class="gc-left"><div class="gc-name-row"><span class="gc-name">' + g.이름 + '</span>' + ne + '</div><div class="gc-org">' + g.소속 + ' ' + g.직함 + '</div></div><div class="gc-right"><div class="badge ' + bc + '">' + g.상태 + '</div>' + re + '</div></div>';
+    var t = fmtT(g.입장시간); var re = t ? '<div class="gc-time">' + t + ' 입장</div>' : '';
+    var seatStr = g.실제좌석 || g.지정좌석;
+    var seatHtml = seatStr ? '<div style="font-size:11px;color:var(--gold);font-weight:600;margin-top:3px">💺 ' + seatStr + '</div>' : '';
+    return '<div class="guest-card ' + (urg ? 'urgent' : '') + '" data-status="' + g.상태 + '" onclick="handleEntry(\'' + g.내빈ID + '\',\'' + g.이름.replace(/'/g, "\\'") + '\',\'' + g.상태 + '\',' + g.rowIndex + ')"><div class="gc-left"><div class="gc-name-row"><span class="gc-name">' + g.이름 + '</span>' + ne + '</div><div class="gc-org">' + g.소속 + '</div>' + seatHtml + '</div><div class="gc-right"><div class="badge ' + bc + '">' + g.상태 + '</div>' + re + '</div></div>';
   }).join('');
 }
 
@@ -353,51 +415,155 @@ function setCouncilSort(m, btn) { councilSort = m; document.querySelectorAll('#c
 
 function renderCouncil() {
   var q = (document.getElementById('councilSearchInput').value || '').trim().toLowerCase();
-  var f = guests.filter(function(g) { return isCouncil(g); }).filter(function(g) { return !q || g.이름.toLowerCase().indexOf(q) >= 0 || g.소속.toLowerCase().indexOf(q) >= 0; });
-  f.sort(function(a, b) { var sa = statusOrder(a.상태), sb = statusOrder(b.상태); if (sa !== sb) return sa - sb; if (councilSort === 'name') return a.이름.localeCompare(b.이름, 'ko'); if (councilSort === 'org') return a.소속.localeCompare(b.소속, 'ko') || a.이름.localeCompare(b.이름, 'ko'); return (a.우선순위 - b.우선순위) || a.이름.localeCompare(b.이름, 'ko'); });
-  var conflicts = getSeatConflicts(), list = document.getElementById('councilList');
-  if (!f.length) { list.innerHTML = '<div class="loading-state"><span>주요내빈으로 등록된 내빈이 없습니다.<br>03_주요내빈 시트에 내빈ID를 입력하세요.</span></div>'; return; }
-  list.innerHTML = f.map(function(g) {
-    var bc = g.상태 === '대기' ? 'badge-wait' : g.상태 === '입장' ? 'badge-enter' : g.상태 === '착석' ? 'badge-seat' : 'badge-absent';
-    var purl = photoUrl(g.내빈ID); var hw = conflicts[g.내빈ID];
+  var list = document.getElementById('councilList');
+
+  if (!councilData.length) {
+    list.innerHTML = '<div class="loading-state"><span>주요내빈으로 등록된 내빈이 없습니다.<br>03_주요내빈 시트에 데이터를 입력하세요.</span></div>';
+    return;
+  }
+
+  // councilData 기반으로 렌더링, guests에서 입장 상태 조회
+  var members = councilData.filter(function(c) {
+    return !q || c.이름.indexOf(q) >= 0 || c.소속.indexOf(q) >= 0 || c.구분.indexOf(q) >= 0;
+  });
+
+  if (councilSort === 'name') members.sort(function(a,b) { return a.이름.localeCompare(b.이름,'ko'); });
+  else if (councilSort === 'org') members.sort(function(a,b) { return a.소속.localeCompare(b.소속,'ko') || a.이름.localeCompare(b.이름,'ko'); });
+  else members.sort(function(a,b) { return a.번호 - b.번호; });
+
+  var conflicts = getSeatConflicts();
+
+  list.innerHTML = members.map(function(c) {
+    // guests에서 동명 매칭
+    var g = guests.find(function(x) { return x.이름 === c.이름; });
+    var status = g ? g.상태 : '대기';
+    var bc = status === '대기' ? 'badge-wait' : status === '입장' ? 'badge-enter' : status === '착석' ? 'badge-seat' : 'badge-absent';
+    var purl = c.photoFileId ? 'https://drive.google.com/thumbnail?id=' + c.photoFileId + '&sz=w200' : (g ? photoUrl(g.내빈ID) : '');
+    var hw = g && conflicts[g.내빈ID];
     var warnTag = hw ? '<div class="cc-warn">지정석변경</div>' : '';
-    var timeStr = g.입장시간 ? '<span class="cc-time-inline">' + g.입장시간 + '</span>' : '';
-    return '<div class="council-card" data-status="' + g.상태 + '" onclick="handleEntry(\'' + g.내빈ID + '\',\'' + g.이름.replace(/'/g, "\\'") + '\',\'' + g.상태 + '\')">' + warnTag + '<div class="cc-photo">' + (purl ? '<img src="' + purl + '" alt="' + g.이름 + '">' : '<div class="cc-no-photo">👤</div>') + '</div><div class="cc-info"><div class="cc-row1"><span class="cc-name">' + g.이름 + '</span><div class="badge ' + bc + '">' + g.상태 + '</div>' + timeStr + '</div><div class="cc-org">' + g.소속 + ' ' + g.직함 + '</div></div></div>';
+    var ct = fmtT(g && g.입장시간); var timeStr = ct ? '<span class="cc-time-inline">' + ct + '</span>' : '';
+    var seatStr = g ? (g.실제좌석 || g.지정좌석) : '';
+    var ccSeat = seatStr ? '<div style="font-size:10px;color:var(--gold);font-weight:600;margin-top:2px">💺 ' + seatStr + '</div>' : '';
+    var party = c.소속정당 ? '<div style="font-size:10px;color:var(--text-muted);margin-top:1px">' + c.소속정당 + '</div>' : '';
+    var guestId = g ? g.내빈ID : '';
+    var gRowIndex = g ? g.rowIndex : 0;
+    var onclick = g ? 'handleEntry(\'' + guestId + '\',\'' + c.이름.replace(/'/g,"\\'") + '\',\'' + status + '\',' + gRowIndex + ')' : '';
+    return '<div class="council-card" data-status="' + status + '"' + (onclick ? ' onclick="' + onclick + '"' : '') + '>' +
+      warnTag +
+      '<div class="cc-photo">' + (purl ? '<img src="' + purl + '" alt="' + c.이름 + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' : '') + '<div class="cc-no-photo" style="' + (purl ? 'display:none' : '') + '">👤</div></div>' +
+      '<div class="cc-info">' +
+        '<div class="cc-row1"><span class="cc-name">' + c.이름 + '</span><div class="badge ' + bc + '">' + status + '</div>' + timeStr + '</div>' +
+        '<div class="cc-org">' + c.소속 + (c.구분 ? ' · ' + c.구분 : '') + '</div>' +
+        party + ccSeat +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
 // ─── 좌석안내 ─────────────────────────────────────────────
 function renderSeating() {
-  var entered = guests.filter(function(g) { return g.상태 === '입장'; }), conflicts = getSeatConflicts();
+  var entered = guests.filter(function(g) { return g.상태 === '입장'; });
+  var conflicts = getSeatConflicts();
   document.getElementById('enteredCount').textContent = entered.length + '명';
   var list = document.getElementById('enteredList');
-  if (!entered.length) { list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:14px">입장 대기자 없음</div>'; }
-  else {
-    list.innerHTML = entered.map(function(g) {
-      var sel = selectedGuestId === g.내빈ID ? 'selected' : '';
+
+  if (!entered.length) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:14px">입장 대기자 없음</div>';
+    renderSeatGrid(); return;
+  }
+
+  var withSeat = entered.filter(function(g) { return g.지정좌석; });
+  var noSeat   = entered.filter(function(g) { return !g.지정좌석; });
+  var html = '';
+
+  // ① 지정석 있는 내빈 — 한 번에 착석 확인
+  if (withSeat.length) {
+    html += '<div class="ei-section">💺 지정석 배정</div>';
+    html += withSeat.map(function(g) {
       var urg = isUrgent(g) ? 'urgent-item' : '';
-      var hint = g.지정좌석 ? '지정석: ' + g.지정좌석 : '';
       var warn = conflicts[g.내빈ID] ? '<span class="ei-warn"> ⚠ 지정석 변경됨</span>' : '';
       var urgTag = isUrgent(g) ? '<span class="ei-urgent"> 현장추가</span>' : '';
-      return '<div class="entered-item ' + sel + ' ' + urg + '" onclick="selectGuest(\'' + g.내빈ID + '\')"><div class="ei-name-row"><span class="ei-name">' + g.이름 + '</span>' + warn + urgTag + '</div><div class="ei-meta">' + g.소속 + ' ' + g.직함 + '</div>' + (hint ? '<div class="ei-seat-hint">' + hint + '</div>' : '') + '</div>';
+      return '<div class="entered-item ' + urg + '" style="display:flex;align-items:center;gap:8px">' +
+        '<div style="flex:1;min-width:0">' +
+        '<div class="ei-name-row"><span class="ei-name">' + g.이름 + '</span>' + warn + urgTag + '</div>' +
+        '<div class="ei-meta">' + g.소속 + '</div>' +
+        '<div class="ei-seat-hint">💺 ' + g.지정좌석 + '</div>' +
+        '</div>' +
+        '<button class="quick-seat-btn" onclick="event.stopPropagation();quickSeat(\'' + g.내빈ID + '\',' + g.rowIndex + ',\'' + g.지정좌석 + '\')">착석 확인</button>' +
+        '</div>';
     }).join('');
   }
+
+  // ② 지정석 없는 내빈 — 선택 후 공석 배정
+  if (noSeat.length) {
+    html += '<div class="ei-section">📌 좌석 미배정</div>';
+    html += noSeat.map(function(g) {
+      var sel = selectedGuestRowIndex === g.rowIndex ? 'selected' : '';
+      var urg = isUrgent(g) ? 'urgent-item' : '';
+      var warn = conflicts[g.내빈ID] ? '<span class="ei-warn"> ⚠ 지정석 변경됨</span>' : '';
+      var urgTag = isUrgent(g) ? '<span class="ei-urgent"> 현장추가</span>' : '';
+      return '<div class="entered-item ' + sel + ' ' + urg + '" onclick="selectGuest(\'' + g.내빈ID + '\',' + g.rowIndex + ')">' +
+        '<div class="ei-name-row"><span class="ei-name">' + g.이름 + '</span>' + warn + urgTag + '</div>' +
+        '<div class="ei-meta">' + g.소속 + '</div>' +
+        '<div class="ei-seat-hint" style="color:var(--status-warn)">터치하여 좌석 선택</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  list.innerHTML = html;
   renderSeatGrid();
 }
 
-function selectGuest(id) {
-  selectedGuestId = selectedGuestId === id ? null : id;
-  var g = guests.find(function(x) { return x.내빈ID === id; });
-  document.getElementById('seatingSubtitle').textContent = selectedGuestId && g ? g.이름 + ' 님의 좌석을 선택하세요' : '내빈을 선택한 뒤 좌석을 터치하세요';
+function selectGuest(id, rowIndex) {
+  var toggle = selectedGuestRowIndex === rowIndex;
+  selectedGuestId = toggle ? null : id;
+  selectedGuestRowIndex = toggle ? null : rowIndex;
+  var g = guests.find(function(x) { return x.rowIndex === rowIndex; });
+  document.getElementById('seatingSubtitle').textContent = selectedGuestRowIndex !== null && g ? g.이름 + ' 님의 좌석을 선택하세요' : '내빈을 선택한 뒤 좌석을 터치하세요';
   renderSeating();
+}
+
+// 지정석 바로 착석 확인
+function quickSeat(id, rowIndex, seatNo) {
+  var g = guests.find(function(x) { return x.rowIndex === rowIndex; });
+  if (!g) return;
+  var target = seats.find(function(s) { return s.좌석번호 === seatNo; });
+  if (target && target.상태 === '착석' && target.내빈ID !== id) {
+    showToast('지정석(' + seatNo + ')이 이미 다른 분으로 착석되어 있습니다', true);
+    return;
+  }
+  showConfirm('착석 확인',
+    '<strong>' + g.이름 + '</strong> 님을<br>지정석 <strong>' + seatNo + '</strong>에 착석 처리하시겠습니까?',
+    function() {
+      apiPost('processSeat', { guestId: id, rowIndex: rowIndex, seatNumber: seatNo }).then(function(r) {
+        if (r.success) { showToast(r.message); loadData(); }
+        else showToast(r.message, true);
+      }).catch(function(e) { showToast('오류: ' + e.message, true); });
+    }
+  );
 }
 
 function renderSeatGrid() {
   var c = document.getElementById('seatGrid');
   if (!seats.length) { c.innerHTML = '<div class="empty-guide"><div class="eg-icon">📌</div><div class="eg-title">좌석이 배치되지 않았습니다</div><div class="eg-desc">구글 시트 <strong>\'02_좌석세팅\'</strong>에 좌석번호, 열구분, 순번을 입력해주세요.</div></div>'; return; }
+
+  // 미배정 내빈이 선택된 경우 → 공석 목록만 표시
+  if (selectedGuestRowIndex !== null) {
+    var sg = guests.find(function(x) { return x.rowIndex === selectedGuestRowIndex; });
+    if (sg && !sg.지정좌석) {
+      renderAvailableSeats(sg); return;
+    }
+  }
+
+  // 선택된 내빈이 없거나 지정석 있는 내빈인 경우 → 일반 좌석 현황 표시 (선택 불가)
+  if (selectedGuestRowIndex === null) {
+    renderSeatStatus(); return;
+  }
+
+  // 지정석 있는 내빈이 선택됨 → 해당 좌석 강조 표시
   var asgn = getAssignedToSeat(), actMap = getActualSeatMap();
   var targetSeat = '';
-  if (selectedGuestId) { var g = guests.find(function(x) { return x.내빈ID === selectedGuestId; }); if (g) targetSeat = g.지정좌석; }
+  if (selectedGuestRowIndex !== null) { var g = guests.find(function(x) { return x.rowIndex === selectedGuestRowIndex; }); if (g) targetSeat = g.지정좌석; }
   
   var rows = {};
   seats.forEach(function(s) { 
@@ -456,13 +622,86 @@ function renderSeatGrid() {
   c.innerHTML = html;
 }
 
+// 공석만 보여주는 뷰 (지정석 없는 내빈 선택 시)
+function renderAvailableSeats(sg) {
+  var c = document.getElementById('seatGrid');
+  var avail = seats.filter(function(s) { return s.상태 !== '착석'; });
+  if (!avail.length) {
+    c.innerHTML = '<div class="no-seat-guide"><div class="ns-icon">😅</div><p>현재 배정 가능한 공석이 없습니다</p></div>';
+    return;
+  }
+  var groups = {};
+  avail.forEach(function(s) {
+    var k = s.열구분;
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(s);
+  });
+  var html = '<div style="padding:4px 0 8px;font-size:13px;color:var(--text-secondary)"><strong style="color:var(--gold)">' + sg.이름 + '</strong> 님의 좌석을 선택하세요 (' + avail.length + '석 가능)</div>';
+  Object.keys(groups).sort().forEach(function(rk) {
+    var label = TABLE_LABELS[rk] || (rk === '3' || rk.indexOf('주요') >= 0 ? '주요내빈석' : '내빈석');
+    var disp = rk.indexOf('열') >= 0 ? rk.replace('열','') : rk;
+    html += '<div class="avail-seat-header">' + label + ' (' + disp + ')</div>';
+    groups[rk].sort(function(a,b){ return a.순번 - b.순번; }).forEach(function(s) {
+      var asgn = guests.find(function(g) { return g.지정좌석 === s.좌석번호 && g.상태 !== '불참'; });
+      var sub = asgn ? '<span class="as-label">예정: ' + asgn.이름 + '</span>' : '<span class="as-label" style="color:var(--text-muted)">공석</span>';
+      html += '<div class="avail-seat-item" onclick="handleSeat(\'' + s.좌석번호 + '\',\'' + s.상태 + '\',\'' + (s.내빈ID||'') + '\',\'' + (s.이름||'').replace(/'/g,"\\'") + '\')">' +
+        '<span class="as-num">' + s.좌석번호 + '</span>' + sub +
+        '<span style="font-size:11px;color:var(--status-seat);font-weight:600">선택 →</span></div>';
+    });
+  });
+  c.innerHTML = html;
+}
+
+// 내빈 미선택 시 전체 좌석 현황 표시 (읽기 전용)
+function renderSeatStatus() {
+  var c = document.getElementById('seatGrid');
+  var rows = {};
+  seats.forEach(function(s) {
+    if (!rows[s.열구분]) rows[s.열구분] = { total:0, seated:0, items:[] };
+    rows[s.열구분].items.push(s);
+    rows[s.열구분].total++;
+    if (s.상태 === '착석') rows[s.열구분].seated++;
+  });
+  var html = '<div class="table-circle-container">';
+  Object.keys(rows).sort().forEach(function(rk) {
+    var tbl = rows[rk];
+    var isVIP = rk === '3' || rk.indexOf('주요') >= 0;
+    var isSelected = selectedTableGroup === rk;
+    var cls = 'table-circle-btn' + (isVIP ? ' vip' : '') + (isSelected ? ' selected' : '');
+    var label = TABLE_LABELS[rk] || (isVIP ? '주요내빈석' : '내빈석');
+    var disp = rk.indexOf('열') >= 0 ? rk.replace('열','') : rk;
+    html += '<button class="' + cls + '" onclick="selectTableGroup(\'' + rk + '\')"><span class="tc-label">' + label + ' (' + disp + ')</span><span class="tc-count">' + tbl.seated + '/' + tbl.total + '</span></button>';
+  });
+  html += '</div>';
+  if (!selectedTableGroup && Object.keys(rows).length > 0) selectedTableGroup = Object.keys(rows).sort()[0];
+  if (selectedTableGroup && rows[selectedTableGroup]) {
+    var rs = rows[selectedTableGroup].items.sort(function(a,b){ return a.순번-b.순번; });
+    var asgn = getAssignedToSeat();
+    var tbLabel = TABLE_LABELS[selectedTableGroup] || '내빈석';
+    var disp = selectedTableGroup.indexOf('열') >= 0 ? selectedTableGroup.replace('열','') : selectedTableGroup;
+    html += '<div class="table-seat-list"><div class="table-seat-header">' + tbLabel + ' (' + disp + ') 좌석 현황</div>';
+    rs.forEach(function(s) {
+      var isSeated = s.상태 === '착석';
+      var assigned = asgn[s.좌석번호];
+      var nm = isSeated ? '<span class="s-curr">' + s.이름 + (s.소속 ? ' (' + s.소속 + ')' : '') + '</span>'
+        : (assigned ? '<span class="s-orig">' + assigned.이름 + '</span>' : '<span class="s-orig" style="color:var(--text-muted)">공석</span>');
+      var badge = isSeated ? '<span class="ts-badge bg-seat">착석</span>' : '<span class="ts-badge bg-wait">대기</span>';
+      // 미선택 상태에서 착석된 좌석만 취소 가능
+      html += '<div class="ts-item" data-state="' + s.상태 + '" onclick="handleSeat(\'' + s.좌석번호 + '\',\'' + s.상태 + '\',\'' + (s.내빈ID||'') + '\',\'' + (s.이름||'').replace(/'/g,"\\'") + '\')">' +
+        '<div class="ts-num">' + s.좌석번호 + '</div><div class="ts-info">' + nm + '</div>' + badge + '</div>';
+    });
+    html += '</div>';
+  }
+  c.innerHTML = html;
+}
+
 function selectTableGroup(rk) {
   selectedTableGroup = rk;
   renderSeatGrid();
 }
 
 function handleSeat(sn, ss, oid, onm) {
-  if (!selectedGuestId && ss === '착석' && oid) {
+  if (selectedGuestRowIndex === null && ss === '착석' && oid) {
     showConfirm('착석 취소', '<strong>' + onm + '</strong> 님 착석 취소?<br>(' + sn + ' → 공석)', function() {
       apiPost('cancelSeat', { seatNumber: sn }).then(function(r) {
         if (r.success) { showToast(r.message); loadData(); } else showToast(r.message, true);
@@ -470,13 +709,13 @@ function handleSeat(sn, ss, oid, onm) {
     });
     return;
   }
-  if (!selectedGuestId) { showToast('먼저 좌측에서 내빈을 선택하세요', true); return; }
-  if (ss === '착석' && oid && oid !== selectedGuestId) { showToast('이미 다른 내빈이 착석', true); return; }
-  var g = guests.find(function(x) { return x.내빈ID === selectedGuestId; });
+  if (selectedGuestRowIndex === null) { showToast('먼저 좌측에서 내빈을 선택하세요', true); return; }
+  var g = guests.find(function(x) { return x.rowIndex === selectedGuestRowIndex; });
   if (!g) return;
+  if (ss === '착석' && oid && oid !== g.내빈ID) { showToast('이미 다른 내빈이 착석', true); return; }
   showConfirm('착석 처리', '<strong>' + g.이름 + '</strong> 님을<br><strong>' + sn + '</strong>에 배정?', function() {
-    apiPost('processSeat', { guestId: selectedGuestId, seatNumber: sn }).then(function(r) {
-      if (r.success) { showToast(r.message); selectedGuestId = null; document.getElementById('seatingSubtitle').textContent = '내빈을 선택한 뒤 좌석을 터치하세요'; loadData(); }
+    apiPost('processSeat', { guestId: g.내빈ID, rowIndex: g.rowIndex, seatNumber: sn }).then(function(r) {
+      if (r.success) { showToast(r.message); selectedGuestId = null; selectedGuestRowIndex = null; document.getElementById('seatingSubtitle').textContent = '내빈을 선택한 뒤 좌석을 터치하세요'; loadData(); }
       else showToast(r.message, true);
     }).catch(function(e) { showToast('오류: ' + e.message, true); });
   });
@@ -487,9 +726,9 @@ function mcSliderChange() { mcFontPx = +document.getElementById('mcFontSlider').
 function mcSetMode(m) { mcMode = m; mcSingleIndex = 0; document.getElementById('mcModeListBtn').className = 'tbtn' + (m === 'list' ? ' active' : ''); document.getElementById('mcModeSingleBtn').className = 'tbtn' + (m === 'single' ? ' active' : ''); renderMC(true); }
 function mcSetOrder(o, btn) { mcOrder = o; var tb = btn.parentElement; var sep = 0; tb.childNodes.forEach(function(n) { if (n.classList && n.classList.contains('mc-sep')) sep++; if (sep >= 2 && n.classList && n.classList.contains('tbtn')) n.classList.remove('active'); }); btn.classList.add('active'); renderMC(true); }
 
-function mcToggleCheck(id) {
-  // 로컬 상태로 소개완료 관리
-  introducedMap[id] = !introducedMap[id];
+function mcToggleCheck(rowIndex) {
+  // rowIndex 기준으로 소개완료 관리 (내빈ID가 빈 값일 때 공유 방지)
+  introducedMap[rowIndex] = !introducedMap[rowIndex];
   renderMC(true);
 }
 
@@ -498,7 +737,7 @@ function mcGo(d) { var s = guests.filter(function(g) { return g.상태 === '착�
 function renderMC(force) {
   var seated = guests.filter(function(g) { return g.상태 === '착석'; }).sort(function(a, b) { return a.우선순위 - b.우선순위; });
   var body = document.getElementById('mcBody');
-  var hash = JSON.stringify(seated.map(function(g) { return g.내빈ID + (introducedMap[g.내빈ID] ? '1' : '0'); })) + mcMode + mcFontPx + mcLinePx + mcSingleIndex + mcOrder;
+  var hash = JSON.stringify(seated.map(function(g) { return g.rowIndex + (introducedMap[g.rowIndex] ? '1' : '0'); })) + mcMode + mcFontPx + mcLinePx + mcSingleIndex + mcOrder;
   if (!force && hash === prevMcHash) { updateMcFoot(seated); return; }
   prevMcHash = hash;
   if (!seated.length) { body.innerHTML = '<div class="mc-empty">착석 완료된 내빈이 없습니다</div>'; updateMcFoot(seated); return; }
@@ -509,8 +748,8 @@ function renderMC(force) {
     body.innerHTML = '<div class="mc-single-view"><div class="mc-single-line" style="font-size:' + Math.min(mcFontPx * 1.5, 72) + 'px;line-height:1.4">' + mcFmt(g) + '</div><div class="mc-nav"><button class="mc-nav-btn" onclick="mcGo(-1)" ' + (mcSingleIndex <= 0 ? 'disabled' : '') + '>◀ 이전</button><span class="mc-nav-counter">' + (mcSingleIndex + 1) + '/' + seated.length + '</span><button class="mc-nav-btn" onclick="mcGo(1)" ' + (mcSingleIndex >= seated.length - 1 ? 'disabled' : '') + '>다음 ▶</button></div></div>';
   } else {
     body.innerHTML = seated.map(function(g) {
-      var chk = !!introducedMap[g.내빈ID];
-      return '<div class="mc-item ' + (chk ? 'checked' : '') + '" style="' + pad + '"><button class="mc-check-btn ' + (chk ? 'done' : '') + '" onclick="mcToggleCheck(\'' + g.내빈ID + '\')">✓</button><div class="mc-line" style="font-size:' + mcFontPx + 'px;line-height:1.4">' + mcFmt(g) + '</div></div>';
+      var chk = !!introducedMap[g.rowIndex];
+      return '<div class="mc-item ' + (chk ? 'checked' : '') + '" style="' + pad + '"><button class="mc-check-btn ' + (chk ? 'done' : '') + '" onclick="mcToggleCheck(' + g.rowIndex + ')">✓</button><div class="mc-line" style="font-size:' + mcFontPx + 'px;line-height:1.4">' + mcFmt(g) + '</div></div>';
     }).join('');
   }
   updateMcFoot(seated);

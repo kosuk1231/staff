@@ -79,19 +79,19 @@ function doPost(e) {
 
 // ─── 참석자 목록 읽기 ─────────────────────────────────────
 // A=연번(0) B=성함(1) C=소속(2) D=생년월일(3) E=연락처(4)
-// F=이메일(5) G=편의제공조사(6) H=좌석배정(7) I=참석여부(8)
+// F=이메일(5) G=비고(6) H=좌석배정(7) I=(예비)(8) J=참석여부(9)
 function getAttendeeList() {
   var sheet = getSheet();
   var lr = sheet.getLastRow();
   if (lr <= 1) return [];
-  var lc = Math.max(sheet.getLastColumn(), 9);
+  var lc = Math.max(sheet.getLastColumn(), 10);
   var data = sheet.getRange(2, 1, lr - 1, lc).getValues();
 
   // filter 후 map하면 빈 행 때문에 rowIndex가 틀어지므로 reduce로 처리
   return data.reduce(function(acc, row, i) {
     if (!row[1]) return acc; // 성함(B열) 없으면 제외
       var tableRaw = safeStrSeat(row[7]); // H열: 좌석배정
-      var attended = row[8] === 'O' || row[8] === 'Y' || row[8] === '참석' || row[8] === '✓';
+      var attended = row[9] === 'O' || row[9] === 'Y' || row[9] === '참석' || row[9] === '✓'; // J열: 참석여부
       acc.push({
         rowIndex: i + 2, // i는 원본 배열 기준 0-indexed, 헤더 1행 포함해서 +2
         seq: Number(row[0]) || (acc.length + 1),
@@ -115,7 +115,7 @@ function getStats() {
   return { total: list.length, checked: checked, unchecked: list.length - checked };
 }
 
-// ─── 참석 여부 토글 (I열에 저장) ─────────────────────────
+// ─── 참석 여부 토글 (J열에 저장) ─────────────────────────
 function toggleAttendance(name, org, rowIndex, checked) {
   if (!name) return { success: false, message: '이름이 필요합니다.' };
   var sheet = getSheet();
@@ -123,7 +123,7 @@ function toggleAttendance(name, org, rowIndex, checked) {
 
   // rowIndex 직접 접근 (빠르고 정확)
   if (rowIndex > 1) {
-    sheet.getRange(rowIndex, 9).setValue(value); // I열
+    sheet.getRange(rowIndex, 10).setValue(value); // J열: 참석여부
     return { success: true, message: name + ' 님 참석 ' + (checked ? '확인' : '취소') };
   }
 
@@ -133,7 +133,7 @@ function toggleAttendance(name, org, rowIndex, checked) {
     var rowName = String(data[i][1] || '').trim(); // B열
     var rowOrg  = String(data[i][2] || '').trim(); // C열
     if (rowName === name && (!org || rowOrg === org)) {
-      sheet.getRange(i + 1, 9).setValue(value); // I열
+      sheet.getRange(i + 1, 10).setValue(value); // J열: 참석여부
       return { success: true, message: name + ' 님 참석 ' + (checked ? '확인' : '취소') };
     }
   }
