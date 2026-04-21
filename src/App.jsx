@@ -558,6 +558,59 @@ function GuestbookTab() {
 }
 
 // ============================================================
+// ADD ATTENDEE MODAL
+// ============================================================
+function AddAttendeeModal({ isOpen, onClose, onAdd }) {
+  const [name, setName] = useState("");
+  const [org, setOrg] = useState("");
+  const [contact, setContact] = useState("");
+
+  if (!isOpen) return null;
+
+  const handleSubmit = () => {
+    if (!name.trim()) return;
+    onAdd({ name: name.trim(), org: org.trim(), contact: contact.trim() });
+    setName(""); setOrg(""); setContact("");
+    onClose();
+  };
+
+  const handleKey = (e) => { if (e.key === "Enter") handleSubmit(); };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 9100, display: "flex", alignItems: "center", justifyContent: "center" }}
+      onClick={onClose}>
+      <div style={{ background: T.bgCard, borderRadius: "16px", padding: "28px 24px", maxWidth: "340px", width: "90%", border: `1px solid rgba(226,75,74,0.25)` }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ fontSize: "17px", fontWeight: 700, color: T.danger, marginBottom: "20px" }}>+ 참석자 현장 추가</div>
+        <div style={{ marginBottom: "12px" }}>
+          <div style={{ fontSize: "12px", color: T.textSec, marginBottom: "4px" }}>이름 *</div>
+          <input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={handleKey}
+            placeholder="성명" style={{ ...inputStyle, boxSizing: "border-box" }} />
+        </div>
+        <div style={{ marginBottom: "12px" }}>
+          <div style={{ fontSize: "12px", color: T.textSec, marginBottom: "4px" }}>소속</div>
+          <input value={org} onChange={e => setOrg(e.target.value)} onKeyDown={handleKey}
+            placeholder="기관/단체" style={{ ...inputStyle, boxSizing: "border-box" }} />
+        </div>
+        <div style={{ marginBottom: "20px" }}>
+          <div style={{ fontSize: "12px", color: T.textSec, marginBottom: "4px" }}>연락처</div>
+          <input value={contact} onChange={e => setContact(e.target.value)} onKeyDown={handleKey}
+            placeholder="010-0000-0000" style={{ ...inputStyle, boxSizing: "border-box" }} />
+        </div>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button style={{ ...ghostBtnStyle, flex: 1 }} onClick={onClose}>취소</button>
+          <button
+            style={{ ...accentBtnStyle, flex: 1, background: T.danger, opacity: name.trim() ? 1 : 0.4 }}
+            disabled={!name.trim()} onClick={handleSubmit}>
+            추가
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // TAB: ATTENDEES — Simplified (name + checked status only)
 // ============================================================
 function AttendeesTab({ attendees, setAttendees, showToast }) {
@@ -566,6 +619,7 @@ function AttendeesTab({ attendees, setAttendees, showToast }) {
   const [detail, setDetail] = useState(null);
   const [pickTable, setPickTable] = useState(null);
   const [pickSeat, setPickSeat] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => { setPickTable(null); setPickSeat(null); }, [detail]);
 
@@ -584,6 +638,29 @@ function AttendeesTab({ attendees, setAttendees, showToast }) {
       } catch (e) { /* silent */ }
     }
     showToast(newChecked ? `${a.name} 님 참석 확인` : `${a.name} 님 참석 취소`);
+  };
+
+  const handleAdd = async ({ name, org, contact }) => {
+    const tmpId = Date.now();
+    const newAttendee = {
+      id: tmpId, name, org, contact, birthdate: "", email: "",
+      rowIndex: null, tableNo: "", table: 0, seat: 0, checked: false, checkedAt: null,
+    };
+    setAttendees(prev => [...prev, newAttendee]);
+    showToast(`${name} 님 현장 추가 완료`);
+    if (ATTENDEE_API_URL) {
+      try {
+        const res = await fetch(ATTENDEE_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "addAttendee", name, org, contact }),
+        });
+        const json = await res.json();
+        if (json.success && json.rowIndex) {
+          setAttendees(prev => prev.map(a => a.id === tmpId ? { ...a, rowIndex: json.rowIndex } : a));
+        }
+      } catch (e) { /* silent */ }
+    }
   };
 
   const assignSeat = async (a) => {
@@ -651,7 +728,15 @@ function AttendeesTab({ attendees, setAttendees, showToast }) {
         options={[{ value: "all", label: "전체" }, { value: "checked", label: "참석" }, { value: "unchecked", label: "미참석" }]}
         value={filterStatus} onChange={setFilterStatus}
       />
-      <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "8px" }}>{filtered.length}명 표시 중</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+        <div style={{ fontSize: "13px", color: T.textSec }}>{filtered.length}명 표시 중</div>
+        <button style={{ ...accentBtnStyle, background: T.danger, padding: "7px 14px", fontSize: "13px" }}
+          onClick={() => setShowAddModal(true)}>
+          + 현장 추가
+        </button>
+      </div>
+
+      <AddAttendeeModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onAdd={handleAdd} />
 
       {filtered.map(a => (
         <div key={a.id} style={{ ...cardStyle, display: "flex", alignItems: "center", gap: "10px", padding: "12px 14px" }}>

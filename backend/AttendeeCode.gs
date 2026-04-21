@@ -64,6 +64,9 @@ function doPost(e) {
       case 'assignSeat':
         result = assignSeat(body.name, body.org, body.rowIndex, body.tableNo);
         break;
+      case 'addAttendee':
+        result = addAttendee(body.name, body.org, body.contact);
+        break;
       default:
         result = { success: false, message: '알 수 없는 action: ' + action };
     }
@@ -158,6 +161,17 @@ function assignSeat(name, org, rowIndex, tableNo) {
     }
   }
   return { success: false, message: '참석자를 찾을 수 없습니다: ' + name };
+}
+
+// ─── 현장 참석자 추가 (행 append) ────────────────────────
+function addAttendee(name, org, contact) {
+  if (!name) return { success: false, message: '이름이 필요합니다.' };
+  var sheet = getSheet();
+  var lr = sheet.getLastRow();
+  var newSeq = lr; // 헤더 포함 lr행이 마지막, 새 행 번호 = lr (데이터 기준)
+  // A=연번 B=성함 C=소속 D=생년월일 E=연락처 F=이메일 G=편의제공조사 H=좌석배정 I=참석여부
+  sheet.appendRow([newSeq, name, org || '', '', contact || '', '', '', '', '']);
+  return { success: true, message: name + ' 님 현장 추가 완료', rowIndex: lr + 1 };
 }
 
 // ─── 연결 테스트 ──────────────────────────────────────────
