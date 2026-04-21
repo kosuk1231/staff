@@ -653,7 +653,7 @@ function AttendeesTab({ attendees, setAttendees, showToast }) {
       />
       <div style={{ fontSize: "13px", color: T.textSec, marginBottom: "8px" }}>{filtered.length}명 표시 중</div>
 
-      {filtered.slice(0, 100).map(a => (
+      {filtered.map(a => (
         <div key={a.id} style={{ ...cardStyle, display: "flex", alignItems: "center", gap: "10px", padding: "12px 14px" }}>
           {/* 체크 버튼: tableNo 없으면 모달 오픈, 있으면 바로 토글 */}
           <div
