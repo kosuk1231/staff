@@ -1871,47 +1871,8 @@ function CheckInModal({ isOpen, onClose, attendees, setAttendees, vipGuests, set
 // ============================================================
 // GOOGLE SHEETS HELPER
 // ============================================================
-const SHEET_ID = "1GRS_Rcn6Eio8cragiB7WNKrZ6udabNwvS_joo-LhS4M";
-const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
 const ATTENDEE_API_URL = "https://script.google.com/macros/s/AKfycbxEb1DHX5PVOl2d-vm_Mz4X1PKptfhwTZQi5qWKP5J4ZnsTt8JaJlM30w2VPhG9Cqtm/exec";
 const GUEST_API_URL = "https://script.google.com/macros/s/AKfycbwZpNXgMKALCOKN1fJIu-Mp75TBaY2i_S6632hCPSQbGU9YCkVEYy52K-uOy22I0WhAzg/exec";
-
-function parseCSVRow(line) {
-  const row = [];
-  let inQuote = false, field = "";
-  for (let j = 0; j < line.length; j++) {
-    const ch = line[j];
-    if (ch === '"') { inQuote = !inQuote; continue; }
-    if (ch === ',' && !inQuote) { row.push(field.trim()); field = ""; continue; }
-    field += ch;
-  }
-  row.push(field.trim());
-  return row;
-}
-
-function parseCSV(text) {
-  const lines = text.split("\n").filter(l => l.trim());
-  if (lines.length < 2) return [];
-  const results = [];
-  for (let i = 1; i < lines.length; i++) {
-    const row = parseCSVRow(lines[i]);
-    // 컬럼: A=연번 B=성함 C=소속 D=생년월일 E=연락처 F=이메일 G=편의제공조사 H=좌석배정 I=참석여부
-    if (!row[1]) continue;
-    const attended = row[8] === "O" || row[8] === "Y" || row[8] === "참석" || row[8] === "✓";
-    // 연번(A열)이 1-indexed이므로 rowIndex = 연번 + 1 (헤더 행 고려)
-    const seqNum = parseInt(row[0]) || 0;
-    results.push({
-      rowIndex: seqNum > 0 ? seqNum + 1 : null,
-      name: row[1] || "",
-      org: row[2] || "",
-      birthdate: row[3] || "",
-      contact: row[4] || "",
-      tableNo: row[7] || "",
-      checked: attended,
-    });
-  }
-  return results;
-}
 
 // ============================================================
 // MAIN APP
@@ -1948,21 +1909,21 @@ export default function App() {
     setTimeout(() => setToast(""), 2000);
   }, []);
 
-  // Google Sheets fetch
+  // Google Sheets fetch — AttendeeCode.gs API 사용 (rowIndex 포함)
   const fetchAttendees = useCallback(async () => {
     setSheetStatus("loading");
     try {
-      const res = await fetch(SHEET_CSV_URL);
-      if (!res.ok) throw new Error("Fetch failed");
-      const text = await res.text();
-      const parsed = parseCSV(text);
+      const res = await fetch(ATTENDEE_API_URL + "?action=getList");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || "API 오류");
+      const parsed = json.data || [];
       if (parsed.length > 0) {
         setAttendees(prev => parsed.map((p, i) => {
           const existing = prev.find(x => x.name === p.name && x.org === p.org);
           const parts = (p.tableNo || "").split("-");
           const table = parseInt(parts[0]) || 0;
           const seat = parseInt(parts[1]) || 0;
-          // 스프레드시트에 tableNo 없으면 로컬 배정 유지 (API 저장 지연 대비)
           const exTableNo = existing && /** @type {any} */(existing).tableNo;
           const finalTableNo = p.tableNo || exTableNo || "";
           const finalTable = p.tableNo ? table : (existing?.table || 0);
@@ -1971,13 +1932,12 @@ export default function App() {
             id: i + 1,
             name: p.name,
             org: p.org,
-            birthdate: p.birthdate,
-            contact: p.contact,
-            rowIndex: p.rowIndex ?? existing?.rowIndex ?? null,
+            birthdate: p.birthdate || "",
+            contact: p.contact || "",
+            rowIndex: p.rowIndex ?? null,
             tableNo: finalTableNo,
             table: finalTable,
             seat: finalSeat,
-            // 이 세션에서 로컬 확인된 경우 우선, 그 외 스프레드시트 값 사용
             checked: (existing?.checkedAt ? existing.checked : null) ?? p.checked,
             checkedAt: existing?.checkedAt ?? (p.checked ? Date.now() : null),
           };
@@ -1991,7 +1951,7 @@ export default function App() {
       }
     } catch (err) {
       setSheetStatus("error");
-      showToast("스프레드시트 연결 실패");
+      showToast(`참석자 로드 실패: ${err.message}`);
     }
   }, [showToast]);
 
