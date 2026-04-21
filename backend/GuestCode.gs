@@ -229,33 +229,36 @@ function getPhotoMap() {
   }
 }
 
-// ─── 내빈 명단 읽기 (11열 구조) ──────────────────────────
-// A:내빈ID B:우선순위 C:소속 D:직함 E:이름 F:상태
-// G:지정좌석 H:실제좌석 I:입장시간 J:착석시간 K:비고
+// ─── 내빈 명단 읽기 (14열 구조) ──────────────────────────
+// A:내빈ID B:우선순위 C:구분 D:성함 E:소속 F:연락처 G:이메일
+// H:상태 I:지정좌석 J:실제좌석 K:입장시간 L:착석시간 M:비고 N:소개완료
 function getGuestList() {
   try {
     var ss = getDataSS(), sheet = ss.getSheetByName(GUEST_SHEET);
     if (!sheet) throw new Error('"' + GUEST_SHEET + '" 시트 없음');
     var lr = sheet.getLastRow(), lc = sheet.getLastColumn();
     if (lr <= 1 || lc === 0) return [];
-    var data = sheet.getRange(1, 1, lr, Math.min(lc, 11)).getValues();
+    var data = sheet.getRange(1, 1, lr, Math.min(lc, 14)).getValues();
     var guests = [];
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
-      if (!row[0] && !row[4]) continue;
+      if (!row[0] && !row[3]) continue; // 내빈ID·성함 둘 다 없으면 제외
       guests.push({
         rowIndex: i + 1,
         내빈ID: safeStr(row[0]),
         우선순위: (row[1] === '' || row[1] === null || row[1] === undefined) ? 999 : Number(row[1]),
-        소속: safeStr(row[2]),
-        직함: safeStr(row[3]),
-        이름: safeStr(row[4]),
-        상태: safeStr(row[5]) || '대기',
-        지정좌석: safeStrSeat(row[6]),
-        실제좌석: safeStrSeat(row[7]),
-        입장시간: fmtTime(row[8]),
-        착석시간: fmtTime(row[9]),
-        비고: safeStr(row[10])
+        구분: safeStr(row[2]),
+        이름: safeStr(row[3]),      // D열: 성함
+        소속: safeStr(row[4]),      // E열: 소속
+        연락처: safeStr(row[5]),    // F열: 연락처
+        이메일: safeStr(row[6]),    // G열: 이메일
+        상태: safeStr(row[7]) || '대기',  // H열: 상태
+        지정좌석: safeStrSeat(row[8]),    // I열: 지정좌석
+        실제좌석: safeStrSeat(row[9]),    // J열: 실제좌석
+        입장시간: fmtTime(row[10]),       // K열: 입장시간
+        착석시간: fmtTime(row[11]),       // L열: 착석시간
+        비고: safeStr(row[12]),           // M열: 비고
+        소개완료: safeStr(row[13])        // N열: 소개완료
       });
     }
     return guests;
@@ -330,21 +333,20 @@ function processEntry(guestId, rowIndex) {
     var ss = getDataSS(), sheet = ss.getSheetByName(GUEST_SHEET);
     if (!sheet) throw new Error('시트 없음');
     var now = getNow();
-    // rowIndex가 있으면 행 직접 접근 (ID 매칭 오류 방지)
     if (rowIndex > 1) {
-      var row = sheet.getRange(rowIndex, 1, 1, 11).getValues()[0];
-      if (safeStr(row[5]) === '착석') return { success: false, message: '이미 착석 상태입니다.' };
-      sheet.getRange(rowIndex, 6).setValue('입장');
-      sheet.getRange(rowIndex, 9).setValue(now);
-      return { success: true, message: safeStr(row[4]) + ' 님 입장 처리 완료' };
+      var row = sheet.getRange(rowIndex, 1, 1, 14).getValues()[0];
+      if (safeStr(row[7]) === '착석') return { success: false, message: '이미 착석 상태입니다.' };
+      sheet.getRange(rowIndex, 8).setValue('입장');   // H열: 상태
+      sheet.getRange(rowIndex, 11).setValue(now);     // K열: 입장시간
+      return { success: true, message: safeStr(row[3]) + ' 님 입장 처리 완료' };
     }
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
       if (safeStr(data[i][0]) === String(guestId)) {
-        if (safeStr(data[i][5]) === '착석') return { success: false, message: '이미 착석 상태입니다.' };
-        sheet.getRange(i + 1, 6).setValue('입장');
-        sheet.getRange(i + 1, 9).setValue(now);
-        return { success: true, message: data[i][4] + ' 님 입장 처리 완료' };
+        if (safeStr(data[i][7]) === '착석') return { success: false, message: '이미 착석 상태입니다.' };
+        sheet.getRange(i + 1, 8).setValue('입장');
+        sheet.getRange(i + 1, 11).setValue(now);
+        return { success: true, message: data[i][3] + ' 님 입장 처리 완료' };
       }
     }
     return { success: false, message: '내빈을 찾을 수 없습니다.' };
@@ -357,19 +359,19 @@ function cancelEntry(guestId, rowIndex) {
     var ss = getDataSS(), sheet = ss.getSheetByName(GUEST_SHEET);
     if (!sheet) throw new Error('시트 없음');
     if (rowIndex > 1) {
-      var row = sheet.getRange(rowIndex, 1, 1, 11).getValues()[0];
-      if (safeStr(row[5]) !== '입장') return { success: false, message: '입장 상태가 아닙니다.' };
-      sheet.getRange(rowIndex, 6).setValue('대기');
-      sheet.getRange(rowIndex, 9).setValue('');
-      return { success: true, message: safeStr(row[4]) + ' 님 입장 취소' };
+      var row = sheet.getRange(rowIndex, 1, 1, 14).getValues()[0];
+      if (safeStr(row[7]) !== '입장') return { success: false, message: '입장 상태가 아닙니다.' };
+      sheet.getRange(rowIndex, 8).setValue('대기');   // H열: 상태
+      sheet.getRange(rowIndex, 11).setValue('');      // K열: 입장시간
+      return { success: true, message: safeStr(row[3]) + ' 님 입장 취소' };
     }
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
       if (safeStr(data[i][0]) === String(guestId)) {
-        if (safeStr(data[i][5]) !== '입장') return { success: false, message: '입장 상태가 아닙니다.' };
-        sheet.getRange(i + 1, 6).setValue('대기');
-        sheet.getRange(i + 1, 9).setValue('');
-        return { success: true, message: data[i][4] + ' 님 입장 취소' };
+        if (safeStr(data[i][7]) !== '입장') return { success: false, message: '입장 상태가 아닙니다.' };
+        sheet.getRange(i + 1, 8).setValue('대기');
+        sheet.getRange(i + 1, 11).setValue('');
+        return { success: true, message: data[i][3] + ' 님 입장 취소' };
       }
     }
     return { success: false, message: '내빈을 찾을 수 없습니다.' };
@@ -382,19 +384,19 @@ function processAbsent(guestId, rowIndex) {
     var ss = getDataSS(), sheet = ss.getSheetByName(GUEST_SHEET);
     if (!sheet) throw new Error('시트 없음');
     if (rowIndex > 1) {
-      var row = sheet.getRange(rowIndex, 1, 1, 11).getValues()[0];
-      if (safeStr(row[5]) === '착석') return { success: false, message: '착석 상태에서는 불참 처리 불가' };
-      sheet.getRange(rowIndex, 6).setValue('불참');
-      sheet.getRange(rowIndex, 9).setValue('');
-      return { success: true, message: safeStr(row[4]) + ' 님 불참 처리 완료' };
+      var row = sheet.getRange(rowIndex, 1, 1, 14).getValues()[0];
+      if (safeStr(row[7]) === '착석') return { success: false, message: '착석 상태에서는 불참 처리 불가' };
+      sheet.getRange(rowIndex, 8).setValue('불참');   // H열: 상태
+      sheet.getRange(rowIndex, 11).setValue('');      // K열: 입장시간
+      return { success: true, message: safeStr(row[3]) + ' 님 불참 처리 완료' };
     }
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
       if (safeStr(data[i][0]) === String(guestId)) {
-        if (safeStr(data[i][5]) === '착석') return { success: false, message: '착석 상태에서는 불참 처리 불가' };
-        sheet.getRange(i + 1, 6).setValue('불참');
-        sheet.getRange(i + 1, 9).setValue('');
-        return { success: true, message: data[i][4] + ' 님 불참 처리 완료' };
+        if (safeStr(data[i][7]) === '착석') return { success: false, message: '착석 상태에서는 불참 처리 불가' };
+        sheet.getRange(i + 1, 8).setValue('불참');
+        sheet.getRange(i + 1, 11).setValue('');
+        return { success: true, message: data[i][3] + ' 님 불참 처리 완료' };
       }
     }
     return { success: false, message: '내빈을 찾을 수 없습니다.' };
@@ -407,17 +409,17 @@ function cancelAbsent(guestId, rowIndex) {
     var ss = getDataSS(), sheet = ss.getSheetByName(GUEST_SHEET);
     if (!sheet) throw new Error('시트 없음');
     if (rowIndex > 1) {
-      var row = sheet.getRange(rowIndex, 1, 1, 11).getValues()[0];
-      if (safeStr(row[5]) !== '불참') return { success: false, message: '불참 상태가 아닙니다.' };
-      sheet.getRange(rowIndex, 6).setValue('대기');
-      return { success: true, message: safeStr(row[4]) + ' 님 불참 취소 → 대기' };
+      var row = sheet.getRange(rowIndex, 1, 1, 14).getValues()[0];
+      if (safeStr(row[7]) !== '불참') return { success: false, message: '불참 상태가 아닙니다.' };
+      sheet.getRange(rowIndex, 8).setValue('대기');   // H열: 상태
+      return { success: true, message: safeStr(row[3]) + ' 님 불참 취소 → 대기' };
     }
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
       if (safeStr(data[i][0]) === String(guestId)) {
-        if (safeStr(data[i][5]) !== '불참') return { success: false, message: '불참 상태가 아닙니다.' };
-        sheet.getRange(i + 1, 6).setValue('대기');
-        return { success: true, message: data[i][4] + ' 님 불참 취소 → 대기' };
+        if (safeStr(data[i][7]) !== '불참') return { success: false, message: '불참 상태가 아닙니다.' };
+        sheet.getRange(i + 1, 8).setValue('대기');
+        return { success: true, message: data[i][3] + ' 님 불참 취소 → 대기' };
       }
     }
     return { success: false, message: '내빈을 찾을 수 없습니다.' };
@@ -432,15 +434,15 @@ function processSeat(guestId, seatNumber, rowIndex) {
     var now = getNow(), sd = ss2.getDataRange().getValues();
     var gr = -1, gi = null;
     if (rowIndex > 1) {
-      var rv = gs.getRange(rowIndex, 1, 1, 11).getValues()[0];
+      var rv = gs.getRange(rowIndex, 1, 1, 14).getValues()[0];
       gr = rowIndex;
-      gi = { id: safeStr(rv[0]), nm: safeStr(rv[4]), org: safeStr(rv[2]), title: safeStr(rv[3]), prev: safeStrSeat(rv[7]) };
+      gi = { id: safeStr(rv[0]), nm: safeStr(rv[3]), org: safeStr(rv[4]), prev: safeStrSeat(rv[9]) };
     } else {
       var gd = gs.getDataRange().getValues();
       for (var i = 1; i < gd.length; i++) {
         if (safeStr(gd[i][0]) === String(guestId)) {
           gr = i + 1;
-          gi = { id: safeStr(gd[i][0]), nm: safeStr(gd[i][4]), org: safeStr(gd[i][2]), title: safeStr(gd[i][3]), prev: safeStrSeat(gd[i][7]) };
+          gi = { id: safeStr(gd[i][0]), nm: safeStr(gd[i][3]), org: safeStr(gd[i][4]), prev: safeStrSeat(gd[i][9]) };
           break;
         }
       }
@@ -471,16 +473,16 @@ function processSeat(guestId, seatNumber, rowIndex) {
         ss2.getRange(r, 5).setValue(gi.id);
         ss2.getRange(r, 6).setValue(gi.nm);
         ss2.getRange(r, 7).setValue(gi.org);
-        ss2.getRange(r, 8).setValue(gi.title);
+        ss2.getRange(r, 8).setValue('');   // 직함 없음
         ss2.getRange(r, 9).setValue(now);
         break;
       }
     }
-    gs.getRange(gr, 6).setValue('착석');
-    var seatCell = gs.getRange(gr, 8);
+    gs.getRange(gr, 8).setValue('착석');   // H열: 상태
+    var seatCell = gs.getRange(gr, 10);    // J열: 실제좌석
     seatCell.setNumberFormat('@');
     seatCell.setValue(seatNumber);
-    gs.getRange(gr, 10).setValue(now);
+    gs.getRange(gr, 12).setValue(now);     // L열: 착석시간
     return { success: true, message: gi.nm + ' → ' + seatNumber + ' 착석 완료' };
   } catch (e) { return { success: false, message: '오류: ' + e.message }; }
 }
@@ -510,9 +512,9 @@ function cancelSeat(seatNumber) {
     var gd = gs.getDataRange().getValues();
     for (var i = 1; i < gd.length; i++) {
       if (safeStr(gd[i][0]) === gid) {
-        gs.getRange(i + 1, 6).setValue('입장');
-        gs.getRange(i + 1, 8).setValue('');
-        gs.getRange(i + 1, 10).setValue('');
+        gs.getRange(i + 1, 8).setValue('입장');    // H열: 상태
+        gs.getRange(i + 1, 10).setValue('');       // J열: 실제좌석
+        gs.getRange(i + 1, 12).setValue('');       // L열: 착석시간
         break;
       }
     }
@@ -527,7 +529,8 @@ function addGuest(info) {
     if (!sheet) throw new Error('시트 없음');
     var now = getNow(), lastRow = sheet.getLastRow();
     var newId = '현장' + String(lastRow).padStart(3, '0');
-    sheet.appendRow([newId, 999, info.소속 || '', info.직함 || '', info.이름, '입장', info.지정좌석 || '', '', now, '', '현장추가']);
+    // A:내빈ID B:우선순위 C:구분 D:성함 E:소속 F:연락처 G:이메일 H:상태 I:지정좌석 J:실제좌석 K:입장시간 L:착석시간 M:비고 N:소개완료
+    sheet.appendRow([newId, 999, info.구분 || '현장', info.이름, info.소속 || '', '', '', '입장', info.지정좌석 || '', '', now, '', '현장추가', '']);
     return { success: true, message: info.이름 + ' 님 현장 추가 완료 (자동 입장)', id: newId };
   } catch (e) { return { success: false, message: '추가 오류: ' + e.message }; }
 }
@@ -547,10 +550,10 @@ function resetAllData() {
     var lr = gs.getLastRow();
     if (lr > 1) {
       var r = lr - 1;
-      gs.getRange(2, 6, r, 1).setValue('대기');  // 상태
-      gs.getRange(2, 8, r, 1).setValue('');       // 실제좌석
-      gs.getRange(2, 9, r, 1).setValue('');       // 입장시간
-      gs.getRange(2, 10, r, 1).setValue('');      // 착석시간
+      gs.getRange(2, 8, r, 1).setValue('대기');  // H열: 상태
+      gs.getRange(2, 10, r, 1).setValue('');      // J열: 실제좌석
+      gs.getRange(2, 11, r, 1).setValue('');      // K열: 입장시간
+      gs.getRange(2, 12, r, 1).setValue('');      // L열: 착석시간
     }
   }
   var ss2 = ss.getSheetByName(SEAT_SHEET);
