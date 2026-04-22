@@ -33,7 +33,7 @@ const TABLE_CONFIG = {
   1:  { seats: 10, label: "부회장단",     color: "#3B82F6" },
   2:  { seats: 10, label: "전현직 회장단", color: "#8B5CF6" },
   3:  { seats: 10, label: "주빈석",       color: "#C8A44E" },
-  4:  { seats: 10, label: "연대회의",     color: "#10B981" },
+  4:  { seats: 10, label: "연대회의 외",   color: "#10B981" },
   5:  { seats: 10, label: "연대회의",     color: "#06B6D4" },
   8:  { seats: 10, label: "감사·재단법인", color: "#F97316" },
   10: { seats: 10, label: "서울시청",     color: "#EC4899" },
@@ -62,7 +62,7 @@ const SEAT_DOTS = [
 ];
 
 // 순수 내빈 전용 테이블 (참석자 좌석 배정 제외 대상)
-const VIP_TABLE_IDS = [3, 4];
+const VIP_TABLE_IDS = [3, 4, 5];
 const ALL_TABLE_IDS = Array.from({ length: 30 }, (_, i) => i + 1);
 
 const ATTENDEE_TABLES = ALL_TABLE_IDS.filter(id => !VIP_TABLE_IDS.includes(id)).map(id => ({
@@ -788,7 +788,7 @@ function AttendeesTab({ attendees, setAttendees, vipGuests, showToast }) {
 // ============================================================
 // TAB: SEATING — Large table-focused view
 // ============================================================
-function SeatingTab({ attendees, vipGuests, showToast }) {
+function SeatingTab({ attendees, vipGuests, onRefreshVip }) {
   const [selectedTable, setSelectedTable] = useState(null);
 
   const vipTableIds = useMemo(
@@ -828,6 +828,17 @@ function SeatingTab({ attendees, vipGuests, showToast }) {
           accent={T.success}
         />
       </div>
+      {/* 내빈 데이터 새로 고침 버튼 */}
+      {vipGuests.length === 0 && (
+        <div style={{ textAlign: "center", marginBottom: "8px" }}>
+          <button
+            onClick={() => onRefreshVip && onRefreshVip(false)}
+            style={{ fontSize: "12px", padding: "6px 14px", background: "rgba(200,164,78,0.15)", border: "1px solid #C8A44E", borderRadius: "8px", color: "#C8A44E", cursor: "pointer", fontFamily: T.font }}
+          >
+            ⭐ 내빈 좌석 데이터 불러오기
+          </button>
+        </div>
+      )}
 
       {/* Table Grid — LARGE cards */}
       <div className="seating-grid">
@@ -1222,7 +1233,7 @@ function AwardsTab() {
 // ============================================================
 // TAB: SEATING MAP — Visual floor plan with seat dots
 // ============================================================
-function SeatingMapTab({ attendees, vipGuests }) {
+function SeatingMapTab({ attendees, vipGuests, onRefreshVip }) {
   const [selectedTable, setSelectedTable] = useState(null);
 
   const vipTableIds = useMemo(
@@ -1353,6 +1364,16 @@ function SeatingMapTab({ attendees, vipGuests }) {
         <StatCard icon="✅" label="만석 테이블" value={fullTables} accent={T.success} />
         <StatCard icon="🪑" label="착석 인원" value={`${totalChecked}/${totalSeats}`} accent={T.accent} />
       </div>
+      {vipGuests.length === 0 && (
+        <div style={{ textAlign: "center", marginBottom: "8px" }}>
+          <button
+            onClick={() => onRefreshVip && onRefreshVip(false)}
+            style={{ fontSize: "12px", padding: "6px 14px", background: "rgba(200,164,78,0.15)", border: "1px solid #C8A44E", borderRadius: "8px", color: "#C8A44E", cursor: "pointer", fontFamily: T.font }}
+          >
+            ⭐ 내빈 좌석 데이터 불러오기
+          </button>
+        </div>
+      )}
 
       {/* 무대 */}
       <div style={{
@@ -1991,12 +2012,13 @@ export default function App() {
   }, [showToast]);
 
   // VIP 좌석 현황을 GuestCode.gs getGuestList에서 주기적으로 동기화
-  const fetchVipSeating = useCallback(async () => {
+  const fetchVipSeating = useCallback(async (silent = true) => {
     if (!GUEST_API_URL) return;
     try {
-      const res = await fetch(GUEST_API_URL + "?action=getGuestList");
+      const res = await fetch(GUEST_API_URL + "?action=getGuestList", { cache: "no-cache" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const r = await res.json();
-      if (!r.success) return;
+      if (!r.success) throw new Error(r.message || "API 오류");
       const guests = (r.data || []).filter(g => g.지정좌석);
       setVipGuests(guests.map((g, idx) => {
         const parts = (g.지정좌석 || "").split("-");
@@ -2013,15 +2035,19 @@ export default function App() {
           checkedAt: null,
         };
       }));
-    } catch (_) { /* 조용히 실패 */ }
-  }, []);
+      if (!silent) showToast(`내빈 ${guests.length}명 좌석 현황 갱신`);
+    } catch (err) {
+      console.error("내빈 좌석 로드 실패:", err);
+      if (!silent) showToast(`내빈 로드 실패: ${err.message}`);
+    }
+  }, [showToast]);
 
   // Auto-fetch on mount
   useEffect(() => { fetchAttendees(); }, []);
 
-  // VIP 좌석 주기적 동기화 (8초)
+  // VIP 좌석 주기적 동기화 (8초) — 첫 로드는 toast 표시
   useEffect(() => {
-    fetchVipSeating();
+    fetchVipSeating(false);
     const t = setInterval(fetchVipSeating, 8000);
     return () => clearInterval(t);
   }, [fetchVipSeating]);
@@ -2083,8 +2109,8 @@ export default function App() {
             <AttendeesTab attendees={attendees} setAttendees={setAttendees} vipGuests={vipGuests} showToast={showToast} />
           </div>
         )}
-        {tab === "seating" && <SeatingTab attendees={attendees} vipGuests={vipGuests} showToast={showToast} />}
-        {tab === "seatmap" && <SeatingMapTab attendees={attendees} vipGuests={vipGuests} />}
+        {tab === "seating" && <SeatingTab attendees={attendees} vipGuests={vipGuests} onRefreshVip={fetchVipSeating} />}
+        {tab === "seatmap" && <SeatingMapTab attendees={attendees} vipGuests={vipGuests} onRefreshVip={fetchVipSeating} />}
         {tab === "notices" && <NoticesTab notices={notices} setNotices={setNotices} />}
         {tab === "emergency" && <EmergencyTab emergencies={emergencies} setEmergencies={setEmergencies} staffTeams={staffTeams} />}
         {tab === "awards" && <AwardsTab />}

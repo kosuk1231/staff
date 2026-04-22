@@ -483,6 +483,18 @@ function processSeat(guestId, seatNumber, rowIndex) {
     seatCell.setNumberFormat('@');
     seatCell.setValue(seatNumber);
     gs.getRange(gr, 12).setValue(now);     // L열: 착석시간
+
+    // 이 좌석을 지정좌석으로 가졌던 다른 내빈의 지정좌석 초기화 (자리 양보)
+    var allGd = gs.getDataRange().getValues();
+    for (var k = 1; k < allGd.length; k++) {
+      var kRow = k + 1;
+      if (kRow !== gr && safeStr(allGd[k][0]) && safeStrSeat(allGd[k][8]) === seatNumber) {
+        var dc = gs.getRange(kRow, 9); // I열: 지정좌석
+        dc.setNumberFormat('@');
+        dc.setValue('');
+      }
+    }
+
     return { success: true, message: gi.nm + ' → ' + seatNumber + ' 착석 완료' };
   } catch (e) { return { success: false, message: '오류: ' + e.message }; }
 }
