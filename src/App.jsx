@@ -35,6 +35,7 @@ const TABLE_CONFIG = {
   3:  { seats: 10, label: "주빈석",       color: "#C8A44E" },
   4:  { seats: 10, label: "연대회의 외",   color: "#10B981" },
   5:  { seats: 10, label: "연대회의",     color: "#06B6D4" },
+  6:  { seats: 10, label: "수상자석",     color: "#84CC16" },
   8:  { seats: 10, label: "감사·재단법인", color: "#F97316" },
   10: { seats: 10, label: "서울시청",     color: "#EC4899" },
   11: { seats: 10, label: "공동모금회",   color: "#14B8A6" },
@@ -62,7 +63,7 @@ const SEAT_DOTS = [
 ];
 
 // 순수 내빈 전용 테이블 (참석자 좌석 배정 제외 대상)
-const VIP_TABLE_IDS = [3, 4, 5];
+const VIP_TABLE_IDS = [3, 4, 5, 6];
 const ALL_TABLE_IDS = Array.from({ length: 30 }, (_, i) => i + 1);
 
 const ATTENDEE_TABLES = ALL_TABLE_IDS.filter(id => !VIP_TABLE_IDS.includes(id)).map(id => ({
@@ -2015,7 +2016,8 @@ export default function App() {
   const fetchVipSeating = useCallback(async (silent = true) => {
     if (!GUEST_API_URL) return;
     try {
-      const res = await fetch(GUEST_API_URL + "?action=getGuestList", { cache: "no-cache" });
+      // cache 옵션 없이 호출 — 헤더 추가 시 CORS preflight 발생하여 Apps Script 차단됨
+      const res = await fetch(GUEST_API_URL + "?action=getGuestList&_t=" + Date.now());
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const r = await res.json();
       if (!r.success) throw new Error(r.message || "API 오류");
