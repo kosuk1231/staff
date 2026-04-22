@@ -30,13 +30,15 @@ const PROGRAM = [
 
 // 내빈 테이블 설정 (실제 내빈명단 기준)
 const TABLE_CONFIG = {
+  1:  { seats: 10, label: "부회장단",     color: "#3B82F6" },
   2:  { seats: 10, label: "전현직 회장단", color: "#8B5CF6" },
   3:  { seats: 10, label: "주빈석",       color: "#C8A44E" },
   4:  { seats: 10, label: "연대회의",     color: "#10B981" },
   5:  { seats: 10, label: "연대회의",     color: "#06B6D4" },
   8:  { seats: 10, label: "감사·재단법인", color: "#F97316" },
   10: { seats: 10, label: "서울시청",     color: "#EC4899" },
-  12: { seats: 10, label: "전현직",       color: "#A78BFA" },
+  11: { seats: 10, label: "공동모금회",   color: "#14B8A6" },
+  12: { seats: 10, label: "내빈혼합",     color: "#A78BFA" },
 };
 
 const VIP_COLORS = ["#C8A44E","#8B5CF6","#10B981","#06B6D4","#F97316","#EC4899","#A78BFA","#F59E0B","#84CC16","#EF4444"];
@@ -60,7 +62,7 @@ const SEAT_DOTS = [
 ];
 
 // 순수 내빈 전용 테이블 (참석자 좌석 배정 제외 대상)
-const VIP_TABLE_IDS = [3, 4, 10];
+const VIP_TABLE_IDS = [3, 4];
 const ALL_TABLE_IDS = Array.from({ length: 30 }, (_, i) => i + 1);
 
 const ATTENDEE_TABLES = ALL_TABLE_IDS.filter(id => !VIP_TABLE_IDS.includes(id)).map(id => ({
