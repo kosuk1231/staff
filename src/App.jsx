@@ -153,6 +153,13 @@ const INITIAL_SUPPLIES = [
   { id: 19, name: "상패", qty: 6, assignee: "번동보호작업장", done: false, category: "구입" },
 ];
 
+
+const EVENT_META = {
+  title: "서울복지 4.0 Staff",
+  dateText: "2026. 4. 22 (수) 15:00 · 백범김구기념관",
+  badge: "40",
+};
+
 // ============================================================
 // THEME
 // ============================================================
@@ -1150,11 +1157,16 @@ function EmergencyTab({ emergencies, setEmergencies, staffTeams }) {
 // ============================================================
 // TAB: AWARDS
 // ============================================================
-function AwardsTab() {
+function AwardsTab({ awardCategories }) {
   const [categories, setCategories] = useState(
-    AWARD_CATEGORIES.map((c) => ({ ...c, recipients: c.recipients.map((r, i) => ({ ...r, called: false, id: `${c.id}-${i}` })) }))
+    awardCategories.map((c) => ({ ...c, recipients: c.recipients.map((r, i) => ({ ...r, called: false, id: `${c.id}-${i}` })) }))
   );
-  const [activeCategory, setActiveCategory] = useState("a1");
+  const [activeCategory, setActiveCategory] = useState(awardCategories[0]?.id || "a1");
+
+  useEffect(() => {
+    setCategories(awardCategories.map((c) => ({ ...c, recipients: c.recipients.map((r, i) => ({ ...r, called: false, id: `${c.id}-${i}` })) })));
+    setActiveCategory(awardCategories[0]?.id || "a1");
+  }, [awardCategories]);
 
   const toggleCalled = (catId, recipId) => {
     setCategories((prev) => prev.map((c) => c.id === catId ? {
@@ -1455,8 +1467,9 @@ function SeatingMapTab({ attendees, vipGuests, onRefreshVip }) {
 // ============================================================
 // TAB: SUPPLIES
 // ============================================================
-function SuppliesTab() {
-  const [supplies, setSupplies] = useState(INITIAL_SUPPLIES);
+function SuppliesTab({ initialSupplies }) {
+  const [supplies, setSupplies] = useState(initialSupplies);
+  useEffect(() => { setSupplies(initialSupplies); }, [initialSupplies]);
   const [filterCat, setFilterCat] = useState("전체");
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
@@ -1950,6 +1963,27 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState("dashboard");
+  const [eventMeta, setEventMeta] = useState(EVENT_META);
+  const [program, setProgram] = useState(PROGRAM);
+  const [awardCategories, setAwardCategories] = useState(AWARD_CATEGORIES);
+  const [initialSupplies, setInitialSupplies] = useState(INITIAL_SUPPLIES);
+
+  useEffect(() => {
+    const loadEventConfig = async () => {
+      try {
+        const res = await fetch("/event-config.json", { cache: "no-store" });
+        if (!res.ok) return;
+        const cfg = await res.json();
+        if (cfg.eventMeta) setEventMeta(prev => ({ ...prev, ...cfg.eventMeta }));
+        if (Array.isArray(cfg.program)) setProgram(cfg.program);
+        if (Array.isArray(cfg.awardCategories)) setAwardCategories(cfg.awardCategories);
+        if (Array.isArray(cfg.initialSupplies)) setInitialSupplies(cfg.initialSupplies);
+      } catch (e) {
+        console.warn("event-config load skipped", e);
+      }
+    };
+    loadEventConfig();
+  }, []);
   const [vipGuests, setVipGuests] = useState([]);
   const [attendees, setAttendees] = useState([]);
   const [notices, setNotices] = useState([]);
@@ -2070,13 +2104,13 @@ export default function App() {
             background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accentDark} 100%)`,
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "14px", fontWeight: 800, color: "#0a1616", flexShrink: 0,
-          }}>40</div>
+          }}>{eventMeta.badge}</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: "16px", fontWeight: 800, color: T.accent, letterSpacing: "-0.3px" }}>
-              서울복지 4.0 Staff
+              {eventMeta.title}
             </div>
             <div style={{ fontSize: "12px", color: T.textSec }}>
-              2026. 4. 22 (수) 15:00 · 백범김구기념관
+              {eventMeta.dateText}
             </div>
           </div>
         </div>
@@ -2084,7 +2118,7 @@ export default function App() {
 
       {/* Content */}
       <div ref={contentRef} className="app-content">
-        {tab === "dashboard" && <DashboardTab vipGuests={vipGuests} attendees={attendees} notices={notices} emergencies={emergencies} program={PROGRAM} setTab={setTab} />}
+        {tab === "dashboard" && <DashboardTab vipGuests={vipGuests} attendees={attendees} notices={notices} emergencies={emergencies} program={program} setTab={setTab} />}
         {tab === "vip" && <VipTab guests={vipGuests} setGuests={setVipGuests} />}
         {tab === "guestbook" && <GuestbookTab />}
         {tab === "attendees" && (
@@ -2115,8 +2149,8 @@ export default function App() {
         {tab === "seatmap" && <SeatingMapTab attendees={attendees} vipGuests={vipGuests} onRefreshVip={fetchVipSeating} />}
         {tab === "notices" && <NoticesTab notices={notices} setNotices={setNotices} />}
         {tab === "emergency" && <EmergencyTab emergencies={emergencies} setEmergencies={setEmergencies} staffTeams={staffTeams} />}
-        {tab === "awards" && <AwardsTab />}
-        {tab === "supplies" && <SuppliesTab />}
+        {tab === "awards" && <AwardsTab awardCategories={awardCategories} />}
+        {tab === "supplies" && <SuppliesTab initialSupplies={initialSupplies} />}
         {tab === "staff" && <StaffTab staffTeams={staffTeams} setStaffTeams={setStaffTeams} />}
       </div>
 
